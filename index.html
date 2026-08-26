@@ -3,7 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>まぜキャラ - キャラクター画像・背景写真 自然合成ツール</title>
+<title>まぜキャラ - 2次元キャラクター・背景写真 馴染ませツール</title>
+<meta name="description" content="2次元キャラクターと背景写真を、光・影・色を整えて自然に馴染ませ、ブラウザ内だけでPNG書き出しできる無料ツールです。">
+<meta name="theme-color" content="#c73557">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:title" content="まぜキャラ - 2次元キャラクター・背景写真 馴染ませツール">
+<meta property="og:description" content="2次元キャラクターと背景写真を、光・影・色を整えて自然に馴染ませ、ブラウザ内だけでPNG書き出しできる無料ツールです。">
+<link rel="manifest" href="manifest.webmanifest">
 <!-- Favicon & App Icons -->
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
@@ -11,7 +18,7 @@
 <!-- Google Fonts: Mochiy Pop One (タイトル用) & Zen Maru Gothic (UI用) -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&amp;family=Zen+Maru+Gothic:wght@400;500;700;900&amp;display=swap" rel="stylesheet">
 <style>
   :root {
     --bg-main: #f0f3f8;
@@ -19,8 +26,8 @@
     --bg-card: #ffffff;
     --bg-input: #f4f6fb;
     --bg-input-focus: #eef2f9;
-    --accent: #ff6b8b;
-    --accent-hover: #ff5277;
+    --accent: #c73557;
+    --accent-hover: #a92645;
     --accent-light: #fff0f3;
     --accent-subtle: rgba(255, 107, 139, 0.12);
     --secondary: #6c5ce7;
@@ -28,7 +35,7 @@
     --secondary-subtle: rgba(108, 92, 231, 0.12);
     --text-main: #2d3436;
     --text-sub: #636e72;
-    --text-muted: #95a5a6;
+    --text-muted: #5f6f7e;
     --border: #e4e8f0;
     --border-hover: #cbd5e1;
     --shadow-soft: 0 4px 14px rgba(108, 92, 231, 0.06), 0 1px 3px rgba(0,0,0,0.03);
@@ -398,7 +405,7 @@
     font-size: 0.72rem;
     padding: 3px 9px;
     background: var(--accent-light);
-    color: var(--accent);
+    color: #9f2340;
     border: 1px solid rgba(255, 107, 139, 0.2);
     border-radius: var(--radius-full);
     font-weight: 700;
@@ -454,6 +461,26 @@
   .sidebar-bottom-link:hover {
     color: var(--accent);
     text-decoration: underline;
+  }
+
+  .upload-status {
+    min-height: 1.2em;
+    margin-top: 8px;
+    color: #a61b36;
+    font-size: 0.76rem;
+    font-weight: 700;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
   }
 
   /* 自動マッチングカード */
@@ -1314,7 +1341,8 @@
 </div>
 
 <!-- プレビューエリア -->
-<div class="preview-container" id="previewContainer">
+<main class="preview-container" id="previewContainer">
+  <h1 class="sr-only">まぜキャラ：2次元キャラクターと背景写真の馴染ませツール</h1>
   <div class="preview-topbar">
     <div class="preview-toolbar">
       <button class="tool-btn" id="compareBtn" title="長押しまたはクリックで合成前と比較">
@@ -1361,17 +1389,17 @@
   <div class="preview-bottombar">
     <div class="zoom-control-wrap" title="プレビュー表示ズーム">
       <svg class="zoom-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/><path d="M11 8v6"/><path d="M8 11h6"/></svg>
-      <input type="range" id="viewZoom" min="50" max="250" value="100">
+      <input type="range" id="viewZoom" min="50" max="250" value="100" aria-label="プレビュー表示ズーム">
       <span id="viewZoomVal">100%</span>
       <button class="zoom-reset-btn" id="zoomResetBtn" title="ズーム・位置リセット (100%)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
       </button>
     </div>
   </div>
-</div>
+</main>
 
 <!-- コントロールサイドバー -->
-<div class="sidebar" id="mainSidebar">
+<aside class="sidebar" id="mainSidebar" aria-label="合成画像の設定">
   <div class="sidebar-header">
     <div class="brand">
       <div class="brand-icon-wrap">
@@ -1421,14 +1449,15 @@
         <label class="file-btn">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 15h18"/><path d="M15 3v18"/></svg>
           <span>背景写真</span>
-          <input type="file" id="bgInput" accept="image/*">
+          <input type="file" id="bgInput" accept="image/jpeg,image/png,image/webp">
         </label>
         <label class="file-btn">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>
           <span>キャラクター (透過)</span>
-          <input type="file" id="charaInput" accept="image/*">
+          <input type="file" id="charaInput" accept="image/jpeg,image/png,image/webp">
         </label>
       </div>
+      <p class="upload-status" id="uploadStatus" role="status" aria-live="polite"></p>
     </div>
 
     <!-- 背景自動マッチングカード -->
@@ -1843,7 +1872,7 @@
       <span>利用規約・注意事項</span>
     </a>
   </div>
-</div>
+</aside>
 
 <script>
   const canvas = document.getElementById('mainCanvas');
@@ -1851,7 +1880,56 @@
 
   let bgImg = null;
   let charaImg = null;
+
+  // 高性能キャッシュバッファ
+  let cachedBgCanvas = document.createElement('canvas');
+  let isBgDirty = true;
+
   let bgBlurredCanvas = document.createElement('canvas');
+  let isBgBlurDirty = true;
+
+  const dofCanvas = document.createElement('canvas');
+
+  let cachedCharaBaseCanvas = document.createElement('canvas');
+  let isCharaBaseDirty = true;
+
+  let cachedCastShadowCanvas = document.createElement('canvas');
+  let isCastShadowDirty = true;
+  let cachedCastPad = 0;
+  let cachedCastW = 0;
+  let cachedCastH = 0;
+
+  let cachedContactShadowCanvas = document.createElement('canvas');
+  let isContactShadowDirty = true;
+  let cachedContactCenterX = 0;
+  let cachedContactCenterY = 0;
+
+  // フィルムグレインのメモ化キャッシュ
+  const noisePatternCache = new Map();
+
+  function invalidateBg() {
+    isBgDirty = true;
+    isBgBlurDirty = true;
+  }
+
+  function invalidateChara() {
+    isCharaBaseDirty = true;
+    isCastShadowDirty = true;
+    isContactShadowDirty = true;
+  }
+
+  function invalidateCastShadow() {
+    isCastShadowDirty = true;
+  }
+
+  function invalidateContactShadow() {
+    isContactShadowDirty = true;
+  }
+
+  function invalidateAll() {
+    invalidateBg();
+    invalidateChara();
+  }
 
   let pipetteTarget = 'none';
   let isSettingSpotPos = false;
@@ -1859,6 +1937,36 @@
   let isCharaFlipped = false;
   let spotPosX = 50;
   let spotPosY = 30;
+
+  const MAX_IMAGE_BYTES = 20 * 1024 * 1024;
+  const MAX_IMAGE_PIXELS = 24 * 1000 * 1000;
+  const SUPPORTED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+  const uploadStatus = document.getElementById('uploadStatus');
+
+  function setUploadStatus(message = '') {
+    uploadStatus.textContent = message;
+  }
+
+  function addControlAccessibility() {
+    const colorLabels = {
+      shadowColor: '環境暗部色', lightColor: '環境明部色', spotColor: 'スポットライトの色', rimColor: 'リム光色'
+    };
+    const checkboxLabels = {
+      contactToggle: '接地影を有効にする', spotToggle: 'スポットライトを有効にする',
+      bgBlurToggle: '背景ボケを有効にする', gradingToggle: '色調・トーン補正を有効にする',
+      wrapToggle: 'ライトラップを有効にする', rimToggle: 'リムライトを有効にする', grainToggle: 'フィルムグレインを有効にする'
+    };
+
+    document.querySelectorAll('input[type="range"]').forEach((input) => {
+      if (input.hasAttribute('aria-label')) return;
+      const label = input.closest('.param-row')?.querySelector('.param-label > span:first-child')?.textContent?.trim();
+      if (label) input.setAttribute('aria-label', label);
+    });
+    Object.entries(colorLabels).forEach(([id, label]) => document.getElementById(id)?.setAttribute('aria-label', label));
+    Object.entries(checkboxLabels).forEach(([id, label]) => document.getElementById(id)?.setAttribute('aria-label', label));
+  }
+
+  addControlAccessibility();
 
   let grainTarget = 'all'; // 'all' | 'chara' | 'bg'
 
@@ -1880,14 +1988,24 @@
     const item = document.getElementById(itemId);
     const header = item.querySelector('.accordion-header');
     
+    function onToggleChanged(toggle) {
+      item.classList.toggle('open', toggle.checked);
+      if (toggleId === 'contactToggle') {
+        invalidateContactShadow();
+      } else if (toggleId === 'bgBlurToggle') {
+        invalidateBg();
+        updateBgBlurCache();
+      }
+      requestRender();
+    }
+
     header.addEventListener('click', (e) => {
       if (toggleId && e.target.closest('.switch')) return;
       
       if (toggleId) {
         const toggle = document.getElementById(toggleId);
         toggle.checked = !toggle.checked;
-        item.classList.toggle('open', toggle.checked);
-        requestRender();
+        onToggleChanged(toggle);
       } else {
         item.classList.toggle('open');
       }
@@ -1896,8 +2014,7 @@
     if (toggleId) {
       const toggle = document.getElementById(toggleId);
       toggle.addEventListener('change', () => {
-        item.classList.toggle('open', toggle.checked);
-        requestRender();
+        onToggleChanged(toggle);
       });
     }
   }
@@ -1913,16 +2030,25 @@
     const header = item.querySelector('.sub-accordion-header');
     const toggle = document.getElementById(toggleId);
 
+    function onSubToggleChanged() {
+      item.classList.toggle('open', toggle.checked);
+      if (toggleId === 'gradingToggle') {
+        invalidateAll();
+        updateBgBlurCache();
+      } else if (['wrapToggle', 'rimToggle', 'grainToggle'].includes(toggleId)) {
+        invalidateChara();
+      }
+      requestRender();
+    }
+
     header.addEventListener('click', (e) => {
       if (e.target.closest('.switch')) return;
       toggle.checked = !toggle.checked;
-      item.classList.toggle('open', toggle.checked);
-      requestRender();
+      onSubToggleChanged();
     });
 
     toggle.addEventListener('change', () => {
-      item.classList.toggle('open', toggle.checked);
-      requestRender();
+      onSubToggleChanged();
     });
 
     if (toggle.checked) item.classList.add('open');
@@ -1939,6 +2065,7 @@
       document.querySelectorAll('#grainTargetSegment .segment-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       grainTarget = btn.getAttribute('data-target');
+      invalidateChara();
       requestRender();
     });
   });
@@ -2216,6 +2343,7 @@
     // プリセットのアクティブ表示を解除
     document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
 
+    invalidateAll();
     updateBgBlurCache();
     requestRender();
   }
@@ -2391,13 +2519,15 @@
     tCtx.putImageData(imgData, 0, 0);
   }
 
-  // 背景画像を取得（色調補正がONの場合は補正済みCanvasを返す）
+  // 背景画像を取得（色調補正済みキャッシュを返す）
   function getProcessedBgCanvas() {
     if (!bgImg) return null;
-    const bCanvas = document.createElement('canvas');
-    bCanvas.width = canvas.width;
-    bCanvas.height = canvas.height;
-    const bCtx = bCanvas.getContext('2d');
+    if (!isBgDirty && cachedBgCanvas && cachedBgCanvas.width === canvas.width && cachedBgCanvas.height === canvas.height) {
+      return cachedBgCanvas;
+    }
+    cachedBgCanvas.width = canvas.width;
+    cachedBgCanvas.height = canvas.height;
+    const bCtx = cachedBgCanvas.getContext('2d');
     bCtx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
 
     const isGradingOn = !isComparingBefore && document.getElementById('gradingToggle').checked;
@@ -2407,9 +2537,12 @@
       const bgSaturation = parseFloat(document.getElementById('bgSaturation').value);
       const bgTemp = parseFloat(document.getElementById('bgTemp').value);
 
-      applyColorGradingToCanvas(bCanvas, bgBright, bgContrast, bgSaturation, bgTemp);
+      if (bgBright !== 0 || bgContrast !== 0 || bgSaturation !== 0 || bgTemp !== 0) {
+        applyColorGradingToCanvas(cachedBgCanvas, bgBright, bgContrast, bgSaturation, bgTemp);
+      }
     }
-    return bCanvas;
+    isBgDirty = false;
+    return cachedBgCanvas;
   }
 
   function updateBgBlurCache() {
@@ -2417,6 +2550,7 @@
     const bgBlur = parseFloat(document.getElementById('bgBlur').value);
     const procBg = getProcessedBgCanvas();
     bgBlurredCanvas = createFastBlurredCanvas(procBg || bgImg, canvas.width, canvas.height, bgBlur);
+    isBgBlurDirty = false;
   }
 
   // ----------------------------------------------------
@@ -2756,24 +2890,31 @@
     const cCtx = cutCanvas.getContext('2d');
     cCtx.drawImage(rawLoadedImg, cropRect.x, cropRect.y, cropRect.w, cropRect.h, 0, 0, cutCanvas.width, cutCanvas.height);
 
-    const croppedImg = new Image();
-    croppedImg.onload = () => {
-      panOffsetX = 0;
-      panOffsetY = 0;
-      updateViewZoom(100);
-      if (cropTargetType === 'bg') {
-        bgImg = croppedImg;
-        canvas.width = bgImg.width;
-        canvas.height = bgImg.height;
-        applyPreset('standard');
-        showGestureGuideToast();
-      } else {
-        charaImg = croppedImg;
-      }
-      cropModal.classList.remove('active');
-      requestRender();
-    };
-    croppedImg.src = cutCanvas.toDataURL('image/png');
+    cutCanvas.toBlob((blob) => {
+      if (!blob) return;
+      const blobUrl = URL.createObjectURL(blob);
+      const croppedImg = new Image();
+      croppedImg.onload = () => {
+        panOffsetX = 0;
+        panOffsetY = 0;
+        updateViewZoom(100);
+        if (cropTargetType === 'bg') {
+          bgImg = croppedImg;
+          canvas.width = bgImg.width;
+          canvas.height = bgImg.height;
+          invalidateBg();
+          applyPreset('standard');
+          showGestureGuideToast();
+        } else {
+          charaImg = croppedImg;
+          invalidateChara();
+        }
+        cropModal.classList.remove('active');
+        URL.revokeObjectURL(blobUrl);
+        requestRender();
+      };
+      croppedImg.src = blobUrl;
+    }, 'image/png');
   });
 
   document.getElementById('cropCancelBtn').addEventListener('click', () => {
@@ -2784,10 +2925,12 @@
       bgImg = rawLoadedImg;
       canvas.width = bgImg.width;
       canvas.height = bgImg.height;
+      invalidateBg();
       applyPreset('standard');
       showGestureGuideToast();
     } else {
       charaImg = rawLoadedImg;
+      invalidateChara();
     }
     cropModal.classList.remove('active');
     requestRender();
@@ -2799,29 +2942,43 @@
     autoAnalyzeAndMatchLighting(bgImg);
   });
 
-  document.getElementById('bgInput').addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  function loadImageForEditing(file, type) {
+    if (!SUPPORTED_IMAGE_TYPES.has(file.type)) {
+      setUploadStatus('JPEG・PNG・WebP形式の画像を選択してください。');
+      return;
+    }
+    if (file.size > MAX_IMAGE_BYTES) {
+      setUploadStatus('画像ファイルは20MB以下にしてください。');
+      return;
+    }
+
     const reader = new FileReader();
+    reader.onerror = () => setUploadStatus('画像ファイルを読み込めませんでした。');
     reader.onload = (evt) => {
       const img = new Image();
-      img.onload = () => openCropper(img, 'bg');
+      img.onerror = () => setUploadStatus('対応していない画像形式です。');
+      img.onload = () => {
+        if (img.width * img.height > MAX_IMAGE_PIXELS) {
+          setUploadStatus('画像は2,400万画素以下にしてください。');
+          return;
+        }
+        setUploadStatus('');
+        openCropper(img, type);
+      };
       img.src = evt.target.result;
     };
     reader.readAsDataURL(file);
+  }
+
+  document.getElementById('bgInput').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) loadImageForEditing(file, 'bg');
     e.target.value = '';
   });
 
   document.getElementById('charaInput').addEventListener('change', (e) => {
     const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      const img = new Image();
-      img.onload = () => openCropper(img, 'chara');
-      img.src = evt.target.result;
-    };
-    reader.readAsDataURL(file);
+    if (file) loadImageForEditing(file, 'chara');
     e.target.value = '';
   });
 
@@ -2883,17 +3040,36 @@
     el.addEventListener('input', () => {
       const displayVal = p.transform ? p.transform(el.value) : el.value;
       valEl.textContent = displayVal + p.unit;
-      if (p.id === 'bgBlur' || p.id.startsWith('bg')) {
+
+      if (p.id.startsWith('bg') || p.id === 'bgBlur') {
+        invalidateBg();
         updateBgBlurCache();
+      } else if (['charaScale', 'multiplyOpacity', 'overlayOpacity', 'lightAngle', 'rimOpacity', 'rimWidth', 'rimBlur', 'bright', 'contrast', 'saturation', 'temp', 'grainOpacity', 'grainScale'].includes(p.id)) {
+        invalidateChara();
+      } else if (['shadowBlur', 'shadowWaveAmp', 'shadowWaveAngle'].includes(p.id)) {
+        invalidateCastShadow();
+      } else if (['contactOpacity', 'contactBlur', 'contactSize'].includes(p.id)) {
+        invalidateContactShadow();
       }
+
       requestRender();
     });
   });
 
-  document.getElementById('shadowColor').addEventListener('input', requestRender);
-  document.getElementById('lightColor').addEventListener('input', requestRender);
+  document.getElementById('shadowColor').addEventListener('input', () => {
+    invalidateChara();
+    invalidateShadows();
+    requestRender();
+  });
+  document.getElementById('lightColor').addEventListener('input', () => {
+    invalidateChara();
+    requestRender();
+  });
   document.getElementById('spotColor').addEventListener('input', requestRender);
-  document.getElementById('rimColor').addEventListener('input', requestRender);
+  document.getElementById('rimColor').addEventListener('input', () => {
+    invalidateChara();
+    requestRender();
+  });
 
   // 影の傾きクイック方向切り替え
   function setShadowAngle(angle) {
@@ -3021,6 +3197,7 @@
   flipBtn.addEventListener('click', () => {
     isCharaFlipped = !isCharaFlipped;
     flipBtn.classList.toggle('active', isCharaFlipped);
+    invalidateChara();
     requestRender();
   });
 
@@ -3254,6 +3431,7 @@
       document.getElementById('subColorGrading').classList.toggle('open', p.gradingOn);
     }
 
+    invalidateAll();
     updateBgBlurCache();
     requestRender();
   }
@@ -3265,6 +3443,7 @@
   // リセット（ライティング・色調等の設定のみ初期化し、キャラクターのサイズと位置は維持）
   document.getElementById('resetBtn').addEventListener('click', () => {
     applyPreset('standard');
+    invalidateAll();
     updateBgBlurCache();
     requestRender();
   });
@@ -3485,11 +3664,16 @@
       const dofFade = parseFloat(document.getElementById('dofFade').value) / 100;
 
       if (isBgBlurOn && bgBlur > 0) {
-        const dofCanvas = document.createElement('canvas');
-        dofCanvas.width = canvas.width;
-        dofCanvas.height = canvas.height;
+        if (isBgBlurDirty) {
+          updateBgBlurCache();
+        }
+        if (dofCanvas.width !== canvas.width || dofCanvas.height !== canvas.height) {
+          dofCanvas.width = canvas.width;
+          dofCanvas.height = canvas.height;
+        }
         const dofCtx = dofCanvas.getContext('2d');
-
+        dofCtx.clearRect(0, 0, dofCanvas.width, dofCanvas.height);
+        dofCtx.globalCompositeOperation = 'source-over';
         dofCtx.drawImage(bgBlurredCanvas, 0, 0, canvas.width, canvas.height);
         dofCtx.globalCompositeOperation = 'destination-in';
 
@@ -3549,7 +3733,7 @@
     const shadowColor = document.getElementById('shadowColor').value;
     const lightColor = document.getElementById('lightColor').value;
 
-    // 2. 落ち影 (Cast Shadow)
+    // 2. 落ち影 (Cast Shadow) キャッシュ付き
     const castOpacity = parseFloat(document.getElementById('castShadowOpacity').value) / 100;
     const shadowLengthRaw = parseFloat(document.getElementById('shadowLength').value) / 100;
     const shadowAngleRad = (parseFloat(document.getElementById('shadowAngle').value) * Math.PI) / 180;
@@ -3558,31 +3742,38 @@
     const shadowWaveAngle = parseFloat(document.getElementById('shadowWaveAngle').value);
 
     if (castOpacity > 0 && Math.abs(shadowLengthRaw) > 0.01) {
-      const pad = Math.ceil(shadowBlur * 1.5 + shadowWaveAmp * 1.5);
-      const sCanvas = document.createElement('canvas');
-      sCanvas.width = Math.round(charaW + pad * 2);
-      sCanvas.height = Math.round(charaH + pad * 2);
-      const sCtx = sCanvas.getContext('2d');
+      if (isCastShadowDirty || cachedCastW !== Math.round(charaW) || cachedCastH !== Math.round(charaH)) {
+        cachedCastPad = Math.ceil(shadowBlur * 1.5 + shadowWaveAmp * 1.5);
+        cachedCastW = Math.round(charaW);
+        cachedCastH = Math.round(charaH);
 
-      sCtx.save();
-      if (isCharaFlipped) {
-        sCtx.translate(pad + charaW / 2, pad + charaH / 2);
-        sCtx.scale(-1, 1);
-        sCtx.translate(-(pad + charaW / 2), -(pad + charaH / 2));
+        const sCanvas = document.createElement('canvas');
+        sCanvas.width = Math.round(cachedCastW + cachedCastPad * 2);
+        sCanvas.height = Math.round(cachedCastH + cachedCastPad * 2);
+        const sCtx = sCanvas.getContext('2d');
+
+        sCtx.save();
+        if (isCharaFlipped) {
+          sCtx.translate(cachedCastPad + cachedCastW / 2, cachedCastPad + cachedCastH / 2);
+          sCtx.scale(-1, 1);
+          sCtx.translate(-(cachedCastPad + cachedCastW / 2), -(cachedCastPad + cachedCastH / 2));
+        }
+        sCtx.fillStyle = shadowColor;
+        sCtx.fillRect(cachedCastPad, cachedCastPad, cachedCastW, cachedCastH);
+        sCtx.globalCompositeOperation = 'destination-in';
+        sCtx.drawImage(charaImg, cachedCastPad, cachedCastPad, cachedCastW, cachedCastH);
+        sCtx.restore();
+
+        let processedShadow = shadowWaveAmp > 0 
+          ? applyWaveDistortion(sCanvas, shadowWaveAmp, shadowWaveAngle)
+          : sCanvas;
+
+        cachedCastShadowCanvas = shadowBlur > 0 
+          ? createFastBlurredCanvas(processedShadow, processedShadow.width, processedShadow.height, shadowBlur)
+          : processedShadow;
+
+        isCastShadowDirty = false;
       }
-      sCtx.fillStyle = shadowColor;
-      sCtx.fillRect(pad, pad, charaW, charaH);
-      sCtx.globalCompositeOperation = 'destination-in';
-      sCtx.drawImage(charaImg, pad, pad, charaW, charaH);
-      sCtx.restore();
-
-      let processedShadow = shadowWaveAmp > 0 
-        ? applyWaveDistortion(sCanvas, shadowWaveAmp, shadowWaveAngle)
-        : sCanvas;
-
-      const finalShadow = shadowBlur > 0 
-        ? createFastBlurredCanvas(processedShadow, processedShadow.width, processedShadow.height, shadowBlur)
-        : processedShadow;
 
       ctx.save();
       ctx.globalCompositeOperation = 'multiply';
@@ -3590,18 +3781,15 @@
 
       ctx.translate(posX, posY);
       const skewX = Math.tan(shadowAngleRad);
-
-      // shadowLengthRaw > 0 (プラス: 手前へ伸びる)
-      // shadowLengthRaw < 0 (マイナス: 奥へ伸びる)
       const scaleY = -shadowLengthRaw;
       const skewFactor = -skewX;
 
       ctx.transform(1, 0, skewFactor, scaleY, 0, 0);
-      ctx.drawImage(finalShadow, -charaW / 2 - pad, -charaH - pad);
+      ctx.drawImage(cachedCastShadowCanvas, -charaW / 2 - cachedCastPad, -charaH - cachedCastPad);
       ctx.restore();
     }
 
-    // 3. 接地影 (Contact Shadow)
+    // 3. 接地影 (Contact Shadow) キャッシュ付き
     const isContactOn = document.getElementById('contactToggle').checked;
     const contactOpacity = parseFloat(document.getElementById('contactOpacity').value) / 100;
     const contactBlur = parseFloat(document.getElementById('contactBlur').value);
@@ -3612,162 +3800,197 @@
       const radiusY = Math.max(2, (charaW * 0.08) * contactSizeScale);
       const blurPad = Math.ceil(contactBlur * 1.5);
 
-      const cShadowCanvas = document.createElement('canvas');
-      cShadowCanvas.width = Math.round(radiusX * 2 + blurPad * 2);
-      cShadowCanvas.height = Math.round(radiusY * 2 + blurPad * 2);
-      const csCtx = cShadowCanvas.getContext('2d');
+      if (isContactShadowDirty || cachedContactShadowCanvas.width === 0) {
+        const cShadowCanvas = document.createElement('canvas');
+        cShadowCanvas.width = Math.round(radiusX * 2 + blurPad * 2);
+        cShadowCanvas.height = Math.round(radiusY * 2 + blurPad * 2);
+        const csCtx = cShadowCanvas.getContext('2d');
 
-      const centerX = cShadowCanvas.width / 2;
-      const centerY = cShadowCanvas.height / 2;
+        cachedContactCenterX = cShadowCanvas.width / 2;
+        cachedContactCenterY = cShadowCanvas.height / 2;
 
-      const grad = csCtx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radiusX);
-      grad.addColorStop(0, shadowColor);
-      grad.addColorStop(0.6, shadowColor);
-      grad.addColorStop(1, 'rgba(0,0,0,0)');
-      csCtx.fillStyle = grad;
-      csCtx.beginPath();
-      csCtx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, Math.PI * 2);
-      csCtx.fill();
+        const grad = csCtx.createRadialGradient(cachedContactCenterX, cachedContactCenterY, 0, cachedContactCenterX, cachedContactCenterY, radiusX);
+        grad.addColorStop(0, shadowColor);
+        grad.addColorStop(0.6, shadowColor);
+        grad.addColorStop(1, 'rgba(0,0,0,0)');
+        csCtx.fillStyle = grad;
+        csCtx.beginPath();
+        csCtx.ellipse(cachedContactCenterX, cachedContactCenterY, radiusX, radiusY, 0, 0, Math.PI * 2);
+        csCtx.fill();
 
-      const finalContactShadow = contactBlur > 0
-        ? createFastBlurredCanvas(cShadowCanvas, cShadowCanvas.width, cShadowCanvas.height, contactBlur)
-        : cShadowCanvas;
+        cachedContactShadowCanvas = contactBlur > 0
+          ? createFastBlurredCanvas(cShadowCanvas, cShadowCanvas.width, cShadowCanvas.height, contactBlur)
+          : cShadowCanvas;
+
+        isContactShadowDirty = false;
+      }
 
       ctx.save();
       ctx.globalCompositeOperation = 'multiply';
       ctx.globalAlpha = contactOpacity;
-      ctx.drawImage(finalContactShadow, posX - centerX, posY - centerY);
+      ctx.drawImage(cachedContactShadowCanvas, posX - cachedContactCenterX, posY - cachedContactCenterY);
       ctx.restore();
     }
 
-    // 4. キャラクター本体バッファの構築
-    const cCanvas = document.createElement('canvas');
-    cCanvas.width = Math.round(charaW);
-    cCanvas.height = Math.round(charaH);
-    const cCtx = cCanvas.getContext('2d');
+    // 4. キャラクター本体バッファ（色調補正・環境光・リムライト等）
+    // 位置移動と無関係な重い処理を cachedCharaBaseCanvas にキャッシュ
+    const cW = Math.round(charaW);
+    const cH = Math.round(charaH);
 
-    cCtx.save();
-    if (isCharaFlipped) {
-      cCtx.translate(charaW, 0);
-      cCtx.scale(-1, 1);
-    }
-    cCtx.drawImage(charaImg, 0, 0, charaW, charaH);
-    cCtx.restore();
-
-    // 4-0. Pro Mode: キャラクター色調・トーン補正（ピクセル直接操作）
-    const isGradingOn = document.getElementById('gradingToggle').checked;
-    if (isGradingOn) {
-      const bright = parseFloat(document.getElementById('bright').value);
-      const contrast = parseFloat(document.getElementById('contrast').value);
-      const saturation = parseFloat(document.getElementById('saturation').value);
-      const temp = parseFloat(document.getElementById('temp').value);
-
-      applyColorGradingToCanvas(cCanvas, bright, contrast, saturation, temp);
-    }
-
-    // 4-1. 環境光グラデーション
-    const lightAngleRad = (parseFloat(document.getElementById('lightAngle').value) * Math.PI) / 180;
-    const cos = Math.cos(lightAngleRad);
-    const sin = Math.sin(lightAngleRad);
-    const halfW = charaW / 2;
-    const halfH = charaH / 2;
-    const x0 = halfW - cos * halfW;
-    const y0 = halfH - sin * halfH;
-    const x1 = halfW + cos * halfW;
-    const y1 = halfH + sin * halfH;
-
-    const envGrad = cCtx.createLinearGradient(x0, y0, x1, y1);
-    envGrad.addColorStop(0, lightColor);
-    envGrad.addColorStop(1, shadowColor);
-
-    // 乗算レイヤー合成
-    const multOpacity = parseFloat(document.getElementById('multiplyOpacity').value) / 100;
-    if (multOpacity > 0) {
-      const mCanvas = document.createElement('canvas');
-      mCanvas.width = Math.round(charaW);
-      mCanvas.height = Math.round(charaH);
-      const mCtx = mCanvas.getContext('2d');
-
-      mCtx.drawImage(cCanvas, 0, 0);
-      mCtx.globalCompositeOperation = 'source-atop';
-      mCtx.fillStyle = envGrad;
-      mCtx.fillRect(0, 0, charaW, charaH);
+    if (isCharaBaseDirty || cachedCharaBaseCanvas.width !== cW || cachedCharaBaseCanvas.height !== cH) {
+      cachedCharaBaseCanvas.width = cW;
+      cachedCharaBaseCanvas.height = cH;
+      const cCtx = cachedCharaBaseCanvas.getContext('2d');
+      cCtx.clearRect(0, 0, cW, cH);
 
       cCtx.save();
-      cCtx.globalCompositeOperation = 'multiply';
-      cCtx.globalAlpha = multOpacity;
-      cCtx.drawImage(mCanvas, 0, 0);
-      cCtx.restore();
-    }
-
-    // オーバーレイレイヤー合成
-    const overOpacity = parseFloat(document.getElementById('overlayOpacity').value) / 100;
-    if (overOpacity > 0) {
-      const oCanvas = document.createElement('canvas');
-      oCanvas.width = Math.round(charaW);
-      oCanvas.height = Math.round(charaH);
-      const oCtx = oCanvas.getContext('2d');
-
-      oCtx.drawImage(cCanvas, 0, 0);
-      oCtx.globalCompositeOperation = 'source-atop';
-      oCtx.fillStyle = envGrad;
-      oCtx.fillRect(0, 0, charaW, charaH);
-
-      cCtx.save();
-      cCtx.globalCompositeOperation = 'overlay';
-      cCtx.globalAlpha = overOpacity;
-      cCtx.drawImage(oCanvas, 0, 0);
-      cCtx.restore();
-    }
-
-    // 4-2. Pro Mode: リムライト (Rim Light)
-    const isRimOn = document.getElementById('rimToggle').checked;
-    const rimOpacity = parseFloat(document.getElementById('rimOpacity').value) / 100;
-    if (isRimOn && rimOpacity > 0) {
-      const rimWidth = parseFloat(document.getElementById('rimWidth').value);
-      const rimBlur = parseFloat(document.getElementById('rimBlur').value);
-      const rimColor = document.getElementById('rimColor').value;
-
-      const rimAngleRad = lightAngleRad;
-      const offsetX = -Math.cos(rimAngleRad) * rimWidth;
-      const offsetY = -Math.sin(rimAngleRad) * rimWidth;
-
-      const rCanvas = document.createElement('canvas');
-      rCanvas.width = Math.round(charaW);
-      rCanvas.height = Math.round(charaH);
-      const rCtx = rCanvas.getContext('2d');
-
-      rCtx.save();
       if (isCharaFlipped) {
-        rCtx.translate(charaW, 0);
-        rCtx.scale(-1, 1);
+        cCtx.translate(cW, 0);
+        cCtx.scale(-1, 1);
       }
-      rCtx.drawImage(charaImg, 0, 0, charaW, charaH);
-      rCtx.restore();
-
-      rCtx.globalCompositeOperation = 'destination-out';
-      rCtx.save();
-      if (isCharaFlipped) {
-        rCtx.translate(charaW, 0);
-        rCtx.scale(-1, 1);
-      }
-      rCtx.drawImage(charaImg, offsetX, offsetY, charaW, charaH);
-      rCtx.restore();
-
-      rCtx.globalCompositeOperation = 'source-in';
-      rCtx.fillStyle = rimColor;
-      rCtx.fillRect(0, 0, charaW, charaH);
-
-      const blurredRim = rimBlur > 0
-        ? createFastBlurredCanvas(rCanvas, charaW, charaH, rimBlur)
-        : rCanvas;
-
-      cCtx.save();
-      cCtx.globalCompositeOperation = 'screen';
-      cCtx.globalAlpha = rimOpacity;
-      cCtx.drawImage(blurredRim, 0, 0);
+      cCtx.drawImage(charaImg, 0, 0, cW, cH);
       cCtx.restore();
+
+      // 4-0. Pro Mode: キャラクター色調・トーン補正（ピクセル直接操作）
+      const isGradingOn = document.getElementById('gradingToggle').checked;
+      if (isGradingOn) {
+        const bright = parseFloat(document.getElementById('bright').value);
+        const contrast = parseFloat(document.getElementById('contrast').value);
+        const saturation = parseFloat(document.getElementById('saturation').value);
+        const temp = parseFloat(document.getElementById('temp').value);
+
+        applyColorGradingToCanvas(cachedCharaBaseCanvas, bright, contrast, saturation, temp);
+      }
+
+      // 4-1. 環境光グラデーション
+      const lightAngleRad = (parseFloat(document.getElementById('lightAngle').value) * Math.PI) / 180;
+      const cos = Math.cos(lightAngleRad);
+      const sin = Math.sin(lightAngleRad);
+      const halfW = cW / 2;
+      const halfH = cH / 2;
+      const x0 = halfW - cos * halfW;
+      const y0 = halfH - sin * halfH;
+      const x1 = halfW + cos * halfW;
+      const y1 = halfH + sin * halfH;
+
+      const envGrad = cCtx.createLinearGradient(x0, y0, x1, y1);
+      envGrad.addColorStop(0, lightColor);
+      envGrad.addColorStop(1, shadowColor);
+
+      // 乗算レイヤー合成
+      const multOpacity = parseFloat(document.getElementById('multiplyOpacity').value) / 100;
+      if (multOpacity > 0) {
+        const mCanvas = document.createElement('canvas');
+        mCanvas.width = cW;
+        mCanvas.height = cH;
+        const mCtx = mCanvas.getContext('2d');
+
+        mCtx.drawImage(cachedCharaBaseCanvas, 0, 0);
+        mCtx.globalCompositeOperation = 'source-atop';
+        mCtx.fillStyle = envGrad;
+        mCtx.fillRect(0, 0, cW, cH);
+
+        cCtx.save();
+        cCtx.globalCompositeOperation = 'multiply';
+        cCtx.globalAlpha = multOpacity;
+        cCtx.drawImage(mCanvas, 0, 0);
+        cCtx.restore();
+      }
+
+      // オーバーレイレイヤー合成
+      const overOpacity = parseFloat(document.getElementById('overlayOpacity').value) / 100;
+      if (overOpacity > 0) {
+        const oCanvas = document.createElement('canvas');
+        oCanvas.width = cW;
+        oCanvas.height = cH;
+        const oCtx = oCanvas.getContext('2d');
+
+        oCtx.drawImage(cachedCharaBaseCanvas, 0, 0);
+        oCtx.globalCompositeOperation = 'source-atop';
+        oCtx.fillStyle = envGrad;
+        oCtx.fillRect(0, 0, cW, cH);
+
+        cCtx.save();
+        cCtx.globalCompositeOperation = 'overlay';
+        cCtx.globalAlpha = overOpacity;
+        cCtx.drawImage(oCanvas, 0, 0);
+        cCtx.restore();
+      }
+
+      // 4-2. Pro Mode: リムライト (Rim Light)
+      const isRimOn = document.getElementById('rimToggle').checked;
+      const rimOpacity = parseFloat(document.getElementById('rimOpacity').value) / 100;
+      if (isRimOn && rimOpacity > 0) {
+        const rimWidth = parseFloat(document.getElementById('rimWidth').value);
+        const rimBlur = parseFloat(document.getElementById('rimBlur').value);
+        const rimColor = document.getElementById('rimColor').value;
+
+        const rimAngleRad = lightAngleRad;
+        const offsetX = -Math.cos(rimAngleRad) * rimWidth;
+        const offsetY = -Math.sin(rimAngleRad) * rimWidth;
+
+        const rCanvas = document.createElement('canvas');
+        rCanvas.width = cW;
+        rCanvas.height = cH;
+        const rCtx = rCanvas.getContext('2d');
+
+        rCtx.save();
+        if (isCharaFlipped) {
+          rCtx.translate(cW, 0);
+          rCtx.scale(-1, 1);
+        }
+        rCtx.drawImage(charaImg, 0, 0, cW, cH);
+        rCtx.restore();
+
+        rCtx.globalCompositeOperation = 'destination-out';
+        rCtx.save();
+        if (isCharaFlipped) {
+          rCtx.translate(cW, 0);
+          rCtx.scale(-1, 1);
+        }
+        rCtx.drawImage(charaImg, offsetX, offsetY, cW, cH);
+        rCtx.restore();
+
+        rCtx.globalCompositeOperation = 'source-in';
+        rCtx.fillStyle = rimColor;
+        rCtx.fillRect(0, 0, cW, cH);
+
+        const blurredRim = rimBlur > 0
+          ? createFastBlurredCanvas(rCanvas, cW, cH, rimBlur)
+          : rCanvas;
+
+        cCtx.save();
+        cCtx.globalCompositeOperation = 'screen';
+        cCtx.globalAlpha = rimOpacity;
+        cCtx.drawImage(blurredRim, 0, 0);
+        cCtx.restore();
+      }
+
+      // 4-4. Pro Mode: キャラクター単体へのフィルムグレイン (grainTarget === 'chara')
+      if (isGrainOn && grainTarget === 'chara' && grainOpacity > 0) {
+        const grainTex = getNoisePattern(cW, cH, grainScale);
+        cCtx.save();
+        cCtx.globalCompositeOperation = 'overlay';
+        cCtx.globalAlpha = grainOpacity;
+        cCtx.drawImage(grainTex, 0, 0, cW, cH);
+        cCtx.restore();
+      }
+
+      // アルファチャンネル保護
+      cCtx.save();
+      cCtx.globalCompositeOperation = 'destination-in';
+      if (isCharaFlipped) {
+        cCtx.translate(cW, 0);
+        cCtx.scale(-1, 1);
+      }
+      cCtx.drawImage(charaImg, 0, 0, cW, cH);
+      cCtx.restore();
+
+      isCharaBaseDirty = false;
     }
+
+    // キャラ本体を描画
+    ctx.drawImage(cachedCharaBaseCanvas, charaLeft, charaTop);
 
     // 4-3. Pro Mode: ライトラップ (Light Wrap / 光の回り込み)
     const isWrapOn = document.getElementById('wrapToggle').checked;
@@ -3777,15 +4000,15 @@
       const wrapThreshold = parseFloat(document.getElementById('wrapThreshold').value) / 100;
 
       const wrapBgCanvas = document.createElement('canvas');
-      wrapBgCanvas.width = Math.round(charaW);
-      wrapBgCanvas.height = Math.round(charaH);
+      wrapBgCanvas.width = cW;
+      wrapBgCanvas.height = cH;
       const wBgCtx = wrapBgCanvas.getContext('2d');
 
       const procBg = getProcessedBgCanvas();
-      wBgCtx.drawImage(procBg || bgImg, charaLeft, charaTop, charaW, charaH, 0, 0, charaW, charaH);
+      wBgCtx.drawImage(procBg || bgImg, charaLeft, charaTop, cW, cH, 0, 0, cW, cH);
 
       if (wrapThreshold > 0) {
-        const wData = wBgCtx.getImageData(0, 0, charaW, charaH);
+        const wData = wBgCtx.getImageData(0, 0, cW, cH);
         const d = wData.data;
         const threshVal = wrapThreshold * 255;
         for (let i = 0; i < d.length; i += 4) {
@@ -3797,61 +4020,39 @@
         wBgCtx.putImageData(wData, 0, 0);
       }
 
-      const blurredBg = createFastBlurredCanvas(wrapBgCanvas, charaW, charaH, wrapRadius);
+      const blurredBg = createFastBlurredCanvas(wrapBgCanvas, cW, cH, wrapRadius);
 
       const edgeMaskCanvas = document.createElement('canvas');
-      edgeMaskCanvas.width = Math.round(charaW);
-      edgeMaskCanvas.height = Math.round(charaH);
+      edgeMaskCanvas.width = cW;
+      edgeMaskCanvas.height = cH;
       const emCtx = edgeMaskCanvas.getContext('2d');
 
       emCtx.save();
       if (isCharaFlipped) {
-        emCtx.translate(charaW, 0);
+        emCtx.translate(cW, 0);
         emCtx.scale(-1, 1);
       }
-      emCtx.drawImage(charaImg, 0, 0, charaW, charaH);
+      emCtx.drawImage(charaImg, 0, 0, cW, cH);
       emCtx.restore();
 
-      const innerBlurred = createFastBlurredCanvas(edgeMaskCanvas, charaW, charaH, wrapRadius * 0.8);
+      const innerBlurred = createFastBlurredCanvas(edgeMaskCanvas, cW, cH, wrapRadius * 0.8);
       emCtx.globalCompositeOperation = 'destination-out';
       emCtx.drawImage(innerBlurred, 0, 0);
 
       const finalWrap = document.createElement('canvas');
-      finalWrap.width = Math.round(charaW);
-      finalWrap.height = Math.round(charaH);
+      finalWrap.width = cW;
+      finalWrap.height = cH;
       const fwCtx = finalWrap.getContext('2d');
       fwCtx.drawImage(blurredBg, 0, 0);
       fwCtx.globalCompositeOperation = 'destination-in';
       fwCtx.drawImage(edgeMaskCanvas, 0, 0);
 
-      cCtx.save();
-      cCtx.globalCompositeOperation = 'screen';
-      cCtx.globalAlpha = wrapOpacity;
-      cCtx.drawImage(finalWrap, 0, 0);
-      cCtx.restore();
+      ctx.save();
+      ctx.globalCompositeOperation = 'screen';
+      ctx.globalAlpha = wrapOpacity;
+      ctx.drawImage(finalWrap, charaLeft, charaTop);
+      ctx.restore();
     }
-
-    // 4-4. Pro Mode: キャラクター単体へのフィルムグレイン (grainTarget === 'chara')
-    if (isGrainOn && grainTarget === 'chara' && grainOpacity > 0) {
-      const grainTex = getNoisePattern(charaW, charaH, grainScale);
-      cCtx.save();
-      cCtx.globalCompositeOperation = 'overlay';
-      cCtx.globalAlpha = grainOpacity;
-      cCtx.drawImage(grainTex, 0, 0, charaW, charaH);
-      cCtx.restore();
-    }
-
-    // アルファチャンネル保護
-    cCtx.save();
-    cCtx.globalCompositeOperation = 'destination-in';
-    if (isCharaFlipped) {
-      cCtx.translate(charaW, 0);
-      cCtx.scale(-1, 1);
-    }
-    cCtx.drawImage(charaImg, 0, 0, charaW, charaH);
-    cCtx.restore();
-
-    ctx.drawImage(cCanvas, charaLeft, charaTop);
 
     // 5. スポットライト
     const isSpotOn = document.getElementById('spotToggle').checked;
@@ -3921,13 +4122,18 @@
     }
   }
 
-  // PNG書き出し
+  // PNG書き出し (toBlob + ObjectURLで高解像度時のBase64メモリ増大・OOMを完全防止)
   document.getElementById('exportBtn').addEventListener('click', () => {
     if (!bgImg && !charaImg) return;
-    const link = document.createElement('a');
-    link.download = 'mazechara_studio.png';
-    link.href = canvas.toDataURL('image/png');
-    link.click();
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.download = 'mazechara_studio.png';
+      link.href = url;
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+    }, 'image/png');
   });
 </script>
 </body>
