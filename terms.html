@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>利用規約・注意事項 - まぜキャラ</title>
+  <!-- Favicon & App Icons -->
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #ff6b8b;
+      --primary-hover: #ff5277;
+      --accent: #4a90e2;
+      --bg-color: #f6f8fb;
+      --card-bg: #ffffff;
+      --text-main: #2d3436;
+      --text-muted: #636e72;
+      --border-color: #e2e8f0;
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+      --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.06);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Zen Maru Gothic', sans-serif;
+      background: var(--bg-color);
+      color: var(--text-main);
+      line-height: 1.8;
+      padding: 0;
+      margin: 0;
+    }
+
+    /* ヘッダー */
+    .header {
+      background: #ffffff;
+      border-bottom: 1px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .header-inner {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text-main);
+    }
+
+    .logo-badge {
+      width: 34px;
+      height: 34px;
+      background: linear-gradient(135deg, #ff6b8b, #ff8e53);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+    }
+
+    .logo-text {
+      font-family: 'Mochiy Pop One', sans-serif;
+      font-size: 1.15rem;
+      background: linear-gradient(135deg, #ff6b8b, #ff8e53);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .header-nav {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .nav-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-decoration: none;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+
+    .nav-link:hover {
+      color: var(--primary);
+      background: rgba(255, 107, 139, 0.08);
+    }
+
+    .nav-link.active {
+      color: var(--primary);
+      background: rgba(255, 107, 139, 0.12);
+    }
+
+    .back-btn {
+      background: var(--primary);
+      color: #ffffff !important;
+      padding: 8px 16px;
+      border-radius: 20px;
+    }
+
+    .back-btn:hover {
+      background: var(--primary-hover);
+      transform: translateY(-1px);
+    }
+
+    /* メインコンテナ */
+    .container {
+      max-width: 900px;
+      margin: 32px auto 60px;
+      padding: 0 20px;
+    }
+
+    .page-hero {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+
+    .page-title {
+      font-size: 1.8rem;
+      font-weight: 900;
+      color: var(--text-main);
+      margin-bottom: 8px;
+    }
+
+    .page-desc {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    /* セクション・カード */
+    .doc-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 28px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .card-title {
+      font-size: 1.2rem;
+      font-weight: 900;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #f1f3f9;
+    }
+
+    .card-title svg {
+      color: var(--primary);
+      flex-shrink: 0;
+    }
+
+    .doc-card p {
+      margin-bottom: 14px;
+      font-size: 0.92rem;
+      color: #3d4852;
+    }
+
+    .doc-card p:last-child {
+      margin-bottom: 0;
+    }
+
+    .doc-list {
+      margin-left: 20px;
+      margin-bottom: 14px;
+      font-size: 0.92rem;
+      color: #3d4852;
+    }
+
+    .doc-list li {
+      margin-bottom: 8px;
+    }
+
+    .privacy-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #e8f5e9;
+      color: #2e7d32;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    /* フッター */
+    .footer {
+      background: #ffffff;
+      border-top: 1px solid var(--border-color);
+      padding: 28px 20px;
+      text-align: center;
+      font-size: 0.88rem;
+      color: var(--text-muted);
+    }
+
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 12px;
+    }
+
+    .footer-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-weight: 700;
+      transition: color 0.2s;
+    }
+
+    .footer-links a:hover {
+      color: var(--primary);
+    }
+
+    .footer-credit {
+      margin-top: 8px;
+    }
+
+    .footer-credit a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .footer-credit a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 600px) {
+      .card-title {
+        font-size: 1.1rem;
+      }
+      .doc-card {
+        padding: 20px 16px;
+      }
+      .page-title {
+        font-size: 1.4rem;
+      }
+      .header-nav .nav-link:not(.back-btn) {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ヘッダー -->
+  <header class="header">
+    <div class="header-inner">
+      <a href="index.html" class="logo-wrap">
+        <div class="logo-badge">
+          <svg width="22" height="22" viewBox="0 0 64 64" fill="none">
+            <circle cx="18" cy="18" r="8" fill="#ffffff" opacity="0.95"/>
+            <circle cx="18" cy="18" r="4.5" fill="#ff6b8b"/>
+            <circle cx="46" cy="18" r="8" fill="#ffffff" opacity="0.95"/>
+            <circle cx="46" cy="18" r="4.5" fill="#ff6b8b"/>
+            <rect x="38" y="9" width="7" height="3" rx="1.5" fill="#ffffff" opacity="0.9"/>
+            <circle cx="32" cy="35" r="19" fill="#ffffff"/>
+            <circle cx="32" cy="35" r="15" fill="#2d343c"/>
+            <circle cx="32" cy="35" r="7.5" fill="#12161a"/>
+            <circle cx="29.5" cy="32.5" r="3" fill="#ffffff"/>
+            <circle cx="34.8" cy="37.2" r="1.4" fill="#ffffff" opacity="0.85"/>
+            <circle cx="19.5" cy="42.5" r="2.5" fill="#ff8ca5"/>
+            <circle cx="44.5" cy="42.5" r="2.5" fill="#ff8ca5"/>
+            <path d="M30 48 Q32 50.5 34 48" fill="none" stroke="#ff6b8b" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <span class="logo-text">まぜキャラ</span>
+      </a>
+      <nav class="header-nav">
+        <a href="manual.html" class="nav-link">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span>使い方マニュアル</span>
+        </a>
+        <a href="terms.html" class="nav-link active">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          <span>利用規約・注意事項</span>
+        </a>
+        <a href="index.html" class="nav-link back-btn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
+          <span>アプリに戻る</span>
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- メインコンテンツ -->
+  <main class="container">
+    <div class="page-hero">
+      <h1 class="page-title">利用規約・プライバシー・注意事項</h1>
+      <p class="page-desc">まぜキャラを安心・安全にご利用いただくためのご案内です。</p>
+    </div>
+
+    <!-- 1. プライバシーと画像データの取り扱い -->
+    <section class="doc-card">
+      <h2 class="card-title">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        プライバシーと画像データの取り扱い（完全ローカル処理）
+      </h2>
+      <div class="privacy-badge">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        サーバー送信・保存なし
+      </div>
+      <p>
+        まぜキャラでアップロードされた背景写真およびキャラクター画像は、<strong>すべてご利用中の端末（Webブラウザ内）でのみ処理・合成</strong>されます。
+      </p>
+      <p>
+        画像データや編集内容が外部サーバーへ送信・アップロード・保存されることは一切ありません。プライベートな写真やオリジナルのイラストも安心してお使いいただけます。
+      </p>
+    </section>
+
+    <!-- 2. 著作権・キャラクター画像の利用に関する注意事項 -->
+    <section class="doc-card">
+      <h2 class="card-title">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        著作権・肖像権に関する注意事項
+      </h2>
+      <p>
+        本ツールで合成に使用する画像については、ユーザーご自身の責任において著作権・肖像権・二次創作ガイドライン等の権利関係をご確認の上でご利用ください。
+      </p>
+      <ul class="doc-list">
+        <li>第三者の著作物（アニメ・ゲーム・漫画等のキャラクター画像）を利用する場合は、各権利元が定めるファンアート・二次創作ガイドラインを遵守してください。</li>
+        <li>背景写真に人物が写り込んでいる場合など、他者の肖像権やプライバシーを侵害しないようご留意ください。</li>
+        <li>公序良俗に反する用途、他者を誹謗中傷する目的での画像作成・公開は固くお断りいたします。</li>
+      </ul>
+    </section>
+
+    <!-- 3. 免責事項 -->
+    <section class="doc-card">
+      <h2 class="card-title">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        免責事項
+      </h2>
+      <p>
+        本ツールは現状有姿（as-is）で提供されており、制作者は本ツールの動作の完全性、正確性、特定目的への適合性についていかなる保証も行いません。
+      </p>
+      <p>
+        本ツールの利用または利用不能によって生じた直接的・間接的な損害、ならびにユーザー間またはユーザーと第三者との間で生じた紛争等について、制作者は一切の責任を負いかねます。
+      </p>
+    </section>
+
+    <!-- 4. 推奨環境 -->
+    <section class="doc-card">
+      <h2 class="card-title">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        推奨動作環境
+      </h2>
+      <p>
+        HTML5 Canvas / CSS3 Backdrop-filter に対応したモダンブラウザで快適にご利用いただけます。
+      </p>
+      <ul class="doc-list">
+        <li><strong>PC:</strong> Google Chrome / Safari / Microsoft Edge / Mozilla Firefox（各最新版）</li>
+        <li><strong>スマートフォン / タブレット:</strong> iOS Safari（iOS 15以降） / Android Chrome（最新版）</li>
+      </ul>
+    </section>
+
+    <!-- 5. AIの利用方針について -->
+    <section class="doc-card">
+      <h2 class="card-title">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a8 8 0 0 0-8 8c0 3.31 2.01 6.16 4.88 7.37L9 22h6l.12-4.63C17.99 16.16 20 13.31 20 10a8 8 0 0 0-8-8z"/><line x1="10" y1="10" x2="10" y2="10"/><line x1="14" y1="10" x2="14" y2="10"/></svg>
+        AI（人工知能）の利用方針について
+      </h2>
+      <p>
+        「まぜキャラ」では、ユーザーの皆様に安心・安全にご利用いただくため、AIの利用範囲について以下のように明確に定めています。
+      </p>
+      <ul class="doc-list">
+        <li><strong>プログラムの設計・開発:</strong> 本ツールのソースコード制作・UI設計・アルゴリズム実装には、AIアシスタントを活用して構築しています。</li>
+        <li><strong>ユーザー画像の加工・合成・自動マッチでのAI不使用:</strong> ユーザー様がアップロードされた背景写真やキャラクター画像の解析・画像加工・エフェクト処理、および「背景自動マッチ」機能には、<strong>生成AIや外部の機械学習モデル（クラウドAI・ローカルAI問わず）は一切使用しておりません。</strong></li>
+      </ul>
+      <p style="margin-top: 12px;">
+        すべての画像解析・加工は、ご利用中のブラウザ内にて純粋な数学的・幾何学的な画像処理アルゴリズム（ピクセル走査・Canvas行列変換）のみで高速に実行されます。画像データがAIの学習素材として収集・送信される心配も一切ございません。
+      </p>
+    </section>
+
+    <!-- 6. 自動判定・自動マッチングに使われている技術解説 -->
+    <section class="doc-card">
+      <h2 class="card-title">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        自動判定・自動マッチングに使われている技術
+      </h2>
+      <p>
+        「まぜキャラ」の自動処理機能は、以下のクラシックかつ決定論的な画像処理アルゴリズムによって構築されています。
+      </p>
+      
+      <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 12px;">
+        <div style="background: #f8fafc; padding: 14px 18px; border-radius: 12px; border-left: 4px solid var(--primary);">
+          <strong style="color: var(--text-main); font-size: 0.95rem;">1. 明暗重心解析（Center of Mass）</strong>
+          <p style="font-size: 0.88rem; color: var(--text-muted); margin-top: 4px;">
+            背景写真の各ピクセルの輝度（Luminance: $Y = 0.299R + 0.587G + 0.114B$）を重みとして全体の明るさの重心座標を算出し、主要な光源が左右・上下のどの位置にあるかを幾何学的に判定します。
+          </p>
+        </div>
+
+        <div style="background: #f8fafc; padding: 14px 18px; border-radius: 12px; border-left: 4px solid var(--accent);">
+          <strong style="color: var(--text-main); font-size: 0.95rem;">2. マルチレイヤー明度勾配（Luminance Gradient）</strong>
+          <p style="font-size: 0.88rem; color: var(--text-muted); margin-top: 4px;">
+            画像の上部（空・光源エリア）と下部（地面・床エリア）をレイヤー分割して局所明度差をスキャンし、空の強い明るさによる誤判定を防ぎつつ、逆光（Backlight）や順光の比率を正確に算出します。
+          </p>
+        </div>
+
+        <div style="background: #f8fafc; padding: 14px 18px; border-radius: 12px; border-left: 4px solid #10b981;">
+          <strong style="color: var(--text-main); font-size: 0.95rem;">3. ヒストグラム・コントラスト解析</strong>
+          <p style="font-size: 0.88rem; color: var(--text-muted); margin-top: 4px;">
+            背景の明暗ヒストグラムからダイナミックレンジと標準偏差を計算し、直射日光による「濃くシャープな影（ハードシャドウ）」か、曇天・日陰による「薄く柔らかな影（ソフトシャドウ）」かを判定して影の不透明度・ぼかし量を最適化します。
+          </p>
+        </div>
+
+        <div style="background: #f8fafc; padding: 14px 18px; border-radius: 12px; border-left: 4px solid #8b5cf6;">
+          <strong style="color: var(--text-main); font-size: 0.95rem;">4. RGB色温度・環境光サンプリング</strong>
+          <p style="font-size: 0.88rem; color: var(--text-muted); margin-top: 4px;">
+            背景全体のRGB平均値およびキャラクター接地付近のピクセル色をサンプリングし、写真の環境光カラー（夕焼けの赤み、青空の青み、木々の緑など）を抽出してキャラクターの色調やライトラップに反映します。
+          </p>
+        </div>
+
+        <div style="background: #f8fafc; padding: 14px 18px; border-radius: 12px; border-left: 4px solid #f59e0b;">
+          <strong style="color: var(--text-main); font-size: 0.95rem;">5. アルファチャンネル・極限バウンディングボックス走査</strong>
+          <p style="font-size: 0.88rem; color: var(--text-muted); margin-top: 4px;">
+            キャラクター透過PNGのアルファ値（Alpha &gt; 0）をピクセル単位で高速走査し、イラストが実際に描かれている最小矩形領域（Bounding Box）をミリ単位で検出して自動トリミング枠を算出します。
+          </p>
+        </div>
+
+        <div style="background: #f8fafc; padding: 14px 18px; border-radius: 12px; border-left: 4px solid #3b82f6;">
+          <strong style="color: var(--text-main); font-size: 0.95rem;">6. 2D Canvas アフィン変換（Affine Transformation）</strong>
+          <p style="font-size: 0.88rem; color: var(--text-muted); margin-top: 4px;">
+            HTML5 Canvas の <code>ctx.transform(1, 0, -skewX, -shadowScaleY, 0, 0)</code> 行列演算により、キャラクターの接地面を基点としてパースペクティブ（透視投影）に整合した自然な落ち影をリアルタイム描画します。
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. フォントおよびオープンソースライセンスについて -->
+    <section class="doc-card">
+      <h2 class="card-title">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        使用フォント・ライセンスについて
+      </h2>
+      <p>
+        本ツールで使用しているすべてのフォントおよび素材は、商用・個人利用ともに許可された自由なオープンソースライセンスに基づいています。
+      </p>
+      <ul class="doc-list" style="margin-top: 10px;">
+        <li>
+          <strong>Zen Maru Gothic（ゼン丸ゴシック）:</strong><br>
+          配布元: Google Fonts / 制作: Yoshimichi Ohira (Zen Font Project)<br>
+          ライセンス: <a href="https://openfontlicense.org" target="_blank" rel="noopener noreferrer" style="color:var(--primary); font-weight:700;">SIL Open Font License 1.1</a>（商用・個人利用完全無料）
+        </li>
+        <li>
+          <strong>Mochiy Pop One（モチー ポップ One）:</strong><br>
+          配布元: Google Fonts / 制作: 自主制作フォント (Fontworks / Google Fonts)<br>
+          ライセンス: <a href="https://openfontlicense.org" target="_blank" rel="noopener noreferrer" style="color:var(--primary); font-weight:700;">SIL Open Font License 1.1</a>（商用・個人利用完全無料）
+        </li>
+        <li>
+          <strong>アイコン・UIグラフィック:</strong><br>
+          自作ベクターSVGおよびオープンソースアイコン（MIT / ISC License 準拠）
+        </li>
+        <li>
+          <strong>外部プログラム依存:</strong><br>
+          外部JavaScriptライブラリへの依存はなく、完全な Vanilla JavaScript &amp; HTML5 Canvas API のみで動作しています。
+        </li>
+      </ul>
+    </section>
+  </main>
+
+  <!-- フッター -->
+  <footer class="footer">
+    <div class="footer-links">
+      <a href="index.html">アプリホーム</a>
+      <a href="manual.html">使い方マニュアル</a>
+      <a href="terms.html">利用規約・注意事項</a>
+    </div>
+    <div class="footer-credit">
+      制作者・お問い合わせ: <a href="https://x.com/yoshimana" target="_blank" rel="noopener noreferrer">ɐuɐɯı̣ɥsoʎ (@yoshimana) ↗</a>
+    </div>
+  </footer>
+
+</body>
+</html>

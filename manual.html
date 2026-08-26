@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>使い方マニュアル - まぜキャラ</title>
+  <!-- Favicon & App Icons -->
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #ff6b8b;
+      --primary-hover: #ff5277;
+      --accent: #4a90e2;
+      --bg-color: #f6f8fb;
+      --card-bg: #ffffff;
+      --text-main: #2d3436;
+      --text-muted: #636e72;
+      --border-color: #e2e8f0;
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+      --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.06);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Zen Maru Gothic', sans-serif;
+      background: var(--bg-color);
+      color: var(--text-main);
+      line-height: 1.7;
+      padding: 0;
+      margin: 0;
+    }
+
+    /* ヘッダー */
+    .header {
+      background: #ffffff;
+      border-bottom: 1px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .header-inner {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text-main);
+    }
+
+    .logo-badge {
+      width: 34px;
+      height: 34px;
+      background: linear-gradient(135deg, #ff6b8b, #ff8e53);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+    }
+
+    .logo-text {
+      font-family: 'Mochiy Pop One', sans-serif;
+      font-size: 1.15rem;
+      background: linear-gradient(135deg, #ff6b8b, #ff8e53);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .header-nav {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .nav-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-decoration: none;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+
+    .nav-link:hover {
+      color: var(--primary);
+      background: rgba(255, 107, 139, 0.08);
+    }
+
+    .nav-link.active {
+      color: var(--primary);
+      background: rgba(255, 107, 139, 0.12);
+    }
+
+    .back-btn {
+      background: var(--primary);
+      color: #ffffff !important;
+      padding: 8px 16px;
+      border-radius: 20px;
+    }
+
+    .back-btn:hover {
+      background: var(--primary-hover);
+      transform: translateY(-1px);
+    }
+
+    /* メインコンテナ */
+    .container {
+      max-width: 900px;
+      margin: 32px auto 60px;
+      padding: 0 20px;
+    }
+
+    .page-hero {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+
+    .page-title {
+      font-size: 1.8rem;
+      font-weight: 900;
+      color: var(--text-main);
+      margin-bottom: 8px;
+    }
+
+    .page-desc {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    /* セクション・カード */
+    .doc-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 28px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .card-title {
+      font-size: 1.25rem;
+      font-weight: 900;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #f1f3f9;
+    }
+
+    .card-title svg {
+      color: var(--primary);
+      flex-shrink: 0;
+    }
+
+    /* ステップ */
+    .step-list {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .step-item {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+    }
+
+    .step-num {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #ff6b8b, #ff8e53);
+      color: #ffffff;
+      font-weight: 900;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .step-content {
+      flex: 1;
+    }
+
+    .step-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 4px;
+    }
+
+    .step-text {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    /* 機能グリッド */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+      margin-top: 12px;
+    }
+
+    .feature-item {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    .feature-name {
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--text-main);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .feature-desc {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    /* フッター */
+    .footer {
+      background: #ffffff;
+      border-top: 1px solid var(--border-color);
+      padding: 28px 20px;
+      text-align: center;
+      font-size: 0.88rem;
+      color: var(--text-muted);
+    }
+
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 12px;
+    }
+
+    .footer-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-weight: 700;
+      transition: color 0.2s;
+    }
+
+    .footer-links a:hover {
+      color: var(--primary);
+    }
+
+    .footer-credit {
+      margin-top: 8px;
+    }
+
+    .footer-credit a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .footer-credit a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 600px) {
+      .card-title {
+        font-size: 1.1rem;
+      }
+      .doc-card {
+        padding: 20px 16px;
+      }
+      .page-title {
+        font-size: 1.4rem;
+      }
+      .header-nav .nav-link:not(.back-btn) {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ヘッダー -->
+  <header class="header">
+    <div class="header-inner">
+      <a href="index.html" class="logo-wrap">
+        <div class="logo-badge">
+          <svg width="22" height="22" viewBox="0 0 64 64" fill="none">
+            <circle cx="18" cy="18" r="8" fill="#ffffff" opacity="0.95"/>
+            <circle cx="18" cy="18" r="4.5" fill="#ff6b8b"/>
+            <circle cx="46" cy="18" r="8" fill="#ffffff" opacity="0.95"/>
+            <circle cx="46" cy="18" r="4.5" fill="#ff6b8b"/>
+            <rect x="38" y="9" width="7" height="3" rx="1.5" fill="#ffffff" opacity="0.9"/>
+            <circle cx="32" cy="35" r="19" fill="#ffffff"/>
+            <circle cx="32" cy="35" r="15" fill="#2d343c"/>
+            <circle cx="32" cy="35" r="7.5" fill="#12161a"/>
+            <circle cx="29.5" cy="32.5" r="3" fill="#ffffff"/>
+            <circle cx="34.8" cy="37.2" r="1.4" fill="#ffffff" opacity="0.85"/>
+            <circle cx="19.5" cy="42.5" r="2.5" fill="#ff8ca5"/>
+            <circle cx="44.5" cy="42.5" r="2.5" fill="#ff8ca5"/>
+            <path d="M30 48 Q32 50.5 34 48" fill="none" stroke="#ff6b8b" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <span class="logo-text">まぜキャラ</span>
+      </a>
+      <nav class="header-nav">
+        <a href="manual.html" class="nav-link active">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span>使い方マニュアル</span>
+        </a>
+        <a href="terms.html" class="nav-link">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          <span>利用規約・注意事項</span>
+        </a>
+        <a href="index.html" class="nav-link back-btn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
+          <span>アプリに戻る</span>
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- メインコンテンツ -->
+  <main class="container">
+    <div class="page-hero">
+      <h1 class="page-title">まぜキャラ 使い方マニュアル</h1>
+      <p class="page-desc">背景写真とキャラクター透過PNGを合成し、リアルなライティングと影で自然に馴染ませるツールの操作ガイドです。</p>
+    </div>
+
+    <!-- 1. 基本の流れ -->
+    <section class="doc-card">
+      <h2 class="card-title">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        基本の合成ステップ
+      </h2>
+      <div class="step-list">
+        <div class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <div class="step-title">背景写真とキャラクター画像をアップロード</div>
+            <div class="step-text">「背景写真をアップロード」から風景写真を、「キャラクターPNGをアップロード」から背景が透明なキャラクター画像を読み込みます。読み込み時にトリミング画面が開き、必要に応じて範囲を調整できます。キャラクターPNGは透明な余白が自動でカットされます。</div>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <div class="step-title">キャラクターのサイズと位置を調整</div>
+            <div class="step-text">プレビュー画面上でキャラクターを直接ドラッグするか、設定パネルの「サイズ」「位置X」「位置Y」スライダーで配置を決めます。ホイール操作やピンチ操作での拡大縮小・移動にも対応しています。</div>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <div class="step-title">「自動マッチ」またはプリセットで光を馴染ませる</div>
+            <div class="step-text">「自動マッチ」ボタンを押すと、写真の色温度・明暗・光源の向き・影の濃さが自動解析され、一瞬で写真の雰囲気に調和します。「晴天」「夕暮れ」「夜景」などのクイックプリセットも利用できます。</div>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <div class="step-title">影やライティングの微調整</div>
+            <div class="step-text">落ち影の方向（手前/奥、左/右）や濃さ、足元の接地影、リムライト（輪郭光）などを細かく調整し、よりリアルな存在感を作ります。</div>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">5</div>
+          <div class="step-content">
+            <div class="step-title">画像を保存（PNG書き出し）</div>
+            <div class="step-text">画面下の「画像を保存」ボタンを押すと、高画質な合成PNG画像がダウンロードされます。</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. 主な機能ガイド -->
+    <section class="doc-card">
+      <h2 class="card-title">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        主要機能の解説
+      </h2>
+      <div class="feature-grid">
+        <div class="feature-item">
+          <div class="feature-name">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3L12 3z"/></svg>
+            背景から自動適応（自動マッチ）
+          </div>
+          <div class="feature-desc">写真全体の明暗バランス、色温度、直射光の方向、コントラストを解析し、キャラクターのライティングと影を最適値に自動設定します。</div>
+        </div>
+
+        <div class="feature-item">
+          <div class="feature-name">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="12" rx="10" ry="6"/><path d="M12 2v20"/></svg>
+            落ち影 & 接地影
+          </div>
+          <div class="feature-desc">キャラクターが地面に落とす影を生成。ワンタップで「左倒し/右倒し」「奥へ/手前へ」を切り替え可能。足元の接地影で浮遊感を防ぎます。</div>
+        </div>
+
+        <div class="feature-item">
+          <div class="feature-name">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/></svg>
+            環境光 & スポイト
+          </div>
+          <div class="feature-desc">写真の明部色・暗部色を乗算・オーバーレイ合成。スポイト機能で写真内の地面や空をタップして直接色を抽出できます。</div>
+        </div>
+
+        <div class="feature-item">
+          <div class="feature-name">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            ライトラップ & リムライト
+          </div>
+          <div class="feature-desc">明るい背景光がキャラクターの輪郭へ自然に回り込む「ライトラップ」と、逆光時のエッジを光らせる「リムライト」を搭載。</div>
+        </div>
+
+        <div class="feature-item">
+          <div class="feature-name">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/></svg>
+            被写界深度（背景ボケ）
+          </div>
+          <div class="feature-desc">一眼レフカメラで撮影したような背景の奥行きボケをシミュレート。キャラクターの足元から奥にかけて自然にぼかすことができます。</div>
+        </div>
+
+        <div class="feature-item">
+          <div class="feature-name">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            Before / After 比較
+          </div>
+          <div class="feature-desc">画面右上の「長押しでBefore」ボタンを押している間、エフェクト適用前の素の合成状態に切り替わり、効果を比較確認できます。</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. スマホ・タッチ操作のコツ -->
+    <section class="doc-card">
+      <h2 class="card-title">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+        スマートフォンでの操作
+      </h2>
+      <div class="step-list">
+        <div class="step-item">
+          <div class="step-num"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg></div>
+          <div class="step-content">
+            <div class="step-title">1本指ドラッグでキャラクター配置</div>
+            <div class="step-text">プレビュー画面を1本指でドラッグすると、キャラクターを直感的に移動できます。</div>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="8" cy="8" r="3"/><circle cx="16" cy="16" r="3"/></svg></div>
+          <div class="step-content">
+            <div class="step-title">2本指スワイプ & ピンチでプレビュー操作</div>
+            <div class="step-text">2本指でスワイプするとプレビュー全体を上下左右にパン移動、2本指を開閉（ピンチ）すると拡大縮小が可能です。</div>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></div>
+          <div class="step-content">
+            <div class="step-title">「パネルを下げる」で全画面プレビュー</div>
+            <div class="step-text">右上の「パネルを下げる」ボタンを押すと設定パネルが下部に格納され、縦長写真でも画面いっぱいに広く表示されます。</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- フッター -->
+  <footer class="footer">
+    <div class="footer-links">
+      <a href="index.html">アプリホーム</a>
+      <a href="manual.html">使い方マニュアル</a>
+      <a href="terms.html">利用規約・注意事項</a>
+    </div>
+    <div class="footer-credit">
+      制作者・お問い合わせ: <a href="https://x.com/yoshimana" target="_blank" rel="noopener noreferrer">ɐuɐɯı̣ɥsoʎ (@yoshimana) ↗</a>
+    </div>
+  </footer>
+
+</body>
+</html>
