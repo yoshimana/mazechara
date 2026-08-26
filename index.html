@@ -2368,23 +2368,30 @@
       return c;
     }
 
-    const scale = Math.max(0.015, 1 / (1 + blurAmount * 0.35));
-    const sw = Math.max(4, Math.round(width * scale));
-    const sh = Math.max(4, Math.round(height * scale));
+    // ネイティブ GPU 加速ガウシアンブラー（縮小モアレ・まだらノイズが100%ゼロ）
+    if ('filter' in cContext) {
+      cContext.filter = `blur(${Math.max(1, blurAmount)}px)`;
+      cContext.drawImage(srcImg, 0, 0, width, height);
+      cContext.filter = 'none';
+      return c;
+    }
+
+    // フォールバック
+    const scale = Math.max(0.1, 1 / (1 + blurAmount * 0.15));
+    const sw = Math.max(8, Math.round(width * scale));
+    const sh = Math.max(8, Math.round(height * scale));
 
     const temp = document.createElement('canvas');
     temp.width = sw;
     temp.height = sh;
     const tempCtx = temp.getContext('2d');
     tempCtx.imageSmoothingEnabled = true;
-    tempCtx.imageSmoothingQuality = 'medium';
-
+    tempCtx.imageSmoothingQuality = 'high';
     tempCtx.drawImage(srcImg, 0, 0, sw, sh);
 
     cContext.imageSmoothingEnabled = true;
-    cContext.imageSmoothingQuality = 'medium';
+    cContext.imageSmoothingQuality = 'high';
     cContext.drawImage(temp, 0, 0, width, height);
-
     return c;
   }
 
@@ -4080,8 +4087,8 @@
         wBgCtx.putImageData(wData, 0, 0);
       }
 
-      // 周囲光をたっぷりと滑らかに拡散
-      const blurredBg = createFastBlurredCanvas(wrapBgCanvas, wrapW, wrapH, wrapRadius * 1.6);
+      // 周囲光をたっぷりと均一に拡散（背景の石畳やタイルの目地・模様の透けを完全に溶かす）
+      const blurredBg = createFastBlurredCanvas(wrapBgCanvas, wrapW, wrapH, wrapRadius * 2.5);
 
       // 1. キャラクタの正確なアルファマスクをパディング領域内に描画
       const charaMaskCanvas = document.createElement('canvas');
@@ -4106,8 +4113,8 @@
       const emCtx = edgeMaskCanvas.getContext('2d');
       emCtx.drawImage(charaMaskCanvas, 0, 0);
 
-      // 内側へ向かって滑らかにフェードするマスクを計算
-      const innerBlurred = createFastBlurredCanvas(charaMaskCanvas, wrapW, wrapH, wrapRadius * 0.85);
+      // 内側へ向かってシルキーにフェードするマスクを計算
+      const innerBlurred = createFastBlurredCanvas(charaMaskCanvas, wrapW, wrapH, wrapRadius * 0.9);
       emCtx.globalCompositeOperation = 'destination-out';
       emCtx.drawImage(innerBlurred, 0, 0);
 
