@@ -1457,6 +1457,9 @@
           <input type="file" id="charaInput" accept="image/jpeg,image/png,image/webp">
         </label>
       </div>
+      <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 6px; line-height: 1.4;">
+        最大4,800万画素（50MB）対応。高解像度画像は端末内（ブラウザローカル）で快適な編集解像度に自動最適化されます。
+      </div>
       <p class="upload-status" id="uploadStatus" role="status" aria-live="polite"></p>
     </div>
 
@@ -1938,10 +1941,16 @@
   let spotPosX = 50;
   let spotPosY = 30;
 
-  const MAX_IMAGE_BYTES = 20 * 1024 * 1024;
-  const MAX_IMAGE_PIXELS = 24 * 1000 * 1000;
+  const MAX_IMAGE_BYTES = 50 * 1024 * 1024;
+  const MAX_RAW_IMAGE_PIXELS = 48 * 1000 * 1000;
   const SUPPORTED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
   const uploadStatus = document.getElementById('uploadStatus');
+
+  function getTargetMaxEditPixels() {
+    const isMobileDevice = window.innerWidth <= 900 || ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+    // モバイル・タブレット: 最大1,600万画素(16MP)、PC: 最大2,400万画素(24MP)
+    return isMobileDevice ? 16 * 1000 * 1000 : 24 * 1000 * 1000;
+  }
 
   function setUploadStatus(message = '') {
     uploadStatus.textContent = message;
@@ -2948,26 +2957,63 @@
       return;
     }
     if (file.size > MAX_IMAGE_BYTES) {
-      setUploadStatus('画像ファイルは20MB以下にしてください。');
+      setUploadStatus('画像ファイルは50MB以下にしてください。');
       return;
     }
 
-    const reader = new FileReader();
-    reader.onerror = () => setUploadStatus('画像ファイルを読み込めませんでした。');
-    reader.onload = (evt) => {
-      const img = new Image();
-      img.onerror = () => setUploadStatus('対応していない画像形式です。');
-      img.onload = () => {
-        if (img.width * img.height > MAX_IMAGE_PIXELS) {
-          setUploadStatus('画像は2,400万画素以下にしてください。');
-          return;
-        }
-        setUploadStatus('');
-        openCropper(img, type);
-      };
-      img.src = evt.target.result;
+    const objectUrl = URL.createObjectURL(file);
+    const img = new Image();
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      setUploadStatus('対応していない画像形式、または読み込めないファイルです。');
     };
-    reader.readAsDataURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      const rawPixels = img.width * img.height;
+
+      if (rawPixels > MAX_RAW_IMAGE_PIXELS) {
+        setUploadStatus('画像は最大4,800万画素（48MP）以下にしてください。');
+        return;
+      }
+
+      const maxEditPixels = getTargetMaxEditPixels();
+      if (rawPixels > maxEditPixels) {
+        // 端末メモリ保護と快適な編集のため、端末内（ブラウザローカル）で安全な解像度へ自動リサイズ
+        const scale = Math.sqrt(maxEditPixels / rawPixels);
+        const targetW = Math.max(1, Math.round(img.width * scale));
+        const targetH = Math.max(1, Math.round(img.height * scale));
+
+        const rCanvas = document.createElement('canvas');
+        rCanvas.width = targetW;
+        rCanvas.height = targetH;
+        const rCtx = rCanvas.getContext('2d');
+        rCtx.imageSmoothingEnabled = true;
+        rCtx.imageSmoothingQuality = 'high';
+        rCtx.drawImage(img, 0, 0, targetW, targetH);
+
+        rCanvas.toBlob((blob) => {
+          if (!blob) {
+            setUploadStatus('画像の処理に失敗しました。');
+            return;
+          }
+          const blobUrl = URL.createObjectURL(blob);
+          const resizedImg = new Image();
+          resizedImg.onload = () => {
+            URL.revokeObjectURL(blobUrl);
+            const mp = (rawPixels / 1000000).toFixed(0);
+            const targetMp = ((targetW * targetH) / 1000000).toFixed(0);
+            setUploadStatus(`高解像度画像（${mp}MP）を端末内で快適に編集できるよう最適解像度（${targetMp}MP: ${targetW}×${targetH}）に自動調整しました。`);
+            openCropper(resizedImg, type);
+          };
+          resizedImg.src = blobUrl;
+        }, 'image/png');
+        return;
+      }
+
+      setUploadStatus('');
+      openCropper(img, type);
+    };
+    img.src = objectUrl;
   }
 
   document.getElementById('bgInput').addEventListener('change', (e) => {
