@@ -1856,6 +1856,31 @@
           </div>
         </div>
 
+        <!-- 5. ビネット効果 (周辺光量) -->
+        <div class="sub-accordion-item" id="subVignette">
+          <div class="sub-accordion-header">
+            <span>5. ビネット効果 (周辺光量)</span>
+            <label class="switch">
+              <input type="checkbox" id="vignetteToggle" checked>
+              <span class="slider-toggle"></span>
+            </label>
+          </div>
+          <div class="sub-accordion-body">
+            <div class="param-row">
+              <div class="param-label"><span>周辺光量 (暗 ← オフ → 明)</span><span id="vignetteVal" class="param-value">オフ</span></div>
+              <input type="range" id="vignette" min="-100" max="100" value="0">
+            </div>
+            <div class="param-row">
+              <div class="param-label"><span>効果範囲</span><span id="vignetteRadiusVal" class="param-value">50%</span></div>
+              <input type="range" id="vignetteRadius" min="20" max="100" value="50">
+            </div>
+            <div class="param-row">
+              <div class="param-label"><span>境界のぼかし</span><span id="vignetteFeatherVal" class="param-value">60%</span></div>
+              <input type="range" id="vignetteFeather" min="20" max="100" value="60">
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
 
@@ -1962,7 +1987,8 @@
     const checkboxLabels = {
       contactToggle: '接地影を有効にする', spotToggle: 'スポットライトを有効にする',
       bgBlurToggle: '背景ボケを有効にする', gradingToggle: '色調・トーン補正を有効にする',
-      wrapToggle: 'ライトラップを有効にする', rimToggle: 'リムライトを有効にする', grainToggle: 'フィルムグレインを有効にする'
+      wrapToggle: 'ライトラップを有効にする', rimToggle: 'リムライトを有効にする', grainToggle: 'フィルムグレインを有効にする',
+      vignetteToggle: 'ビネット効果を有効にする'
     };
 
     document.querySelectorAll('input[type="range"]').forEach((input) => {
@@ -2066,6 +2092,7 @@
   setupSubAccordion('subRim', 'rimToggle');
   setupSubAccordion('subGrain', 'grainToggle');
   setupSubAccordion('subColorGrading', 'gradingToggle');
+  setupSubAccordion('subVignette', 'vignetteToggle');
 
   // フィルムグレイン対象セグメント切り替え
   document.querySelectorAll('#grainTargetSegment .segment-btn').forEach(btn => {
@@ -3082,7 +3109,11 @@
     { id: 'bgBright', unit: '%' },
     { id: 'bgContrast', unit: '%' },
     { id: 'bgSaturation', unit: '%' },
-    { id: 'bgTemp', unit: '%' }
+    { id: 'bgTemp', unit: '%' },
+    // ビネット効果
+    { id: 'vignette', unit: '', transform: v => { const n = parseInt(v, 10); if (n === 0) return 'オフ'; return n < 0 ? '暗 ' + Math.abs(n) + '%' : '明 ' + n + '%'; } },
+    { id: 'vignetteRadius', unit: '%' },
+    { id: 'vignetteFeather', unit: '%' }
   ];
 
   standardParams.forEach(p => {
@@ -3351,7 +3382,8 @@
       rimOn: true, rimOpacity: 40, rimWidth: 4, rimBlur: 3,
       grainOn: false, grainTarget: 'all', gradingOn: true,
       bright: 0, contrast: 0, saturation: 0, temp: 0,
-      bgBright: 0, bgContrast: 0, bgSaturation: 0, bgTemp: 0
+      bgBright: 0, bgContrast: 0, bgSaturation: 0, bgTemp: 0,
+      vignette: 0, vignetteRadius: 50, vignetteFeather: 60, vignetteOn: true
     },
     sunny: {
       shadowColor: '#2b3a4a', lightColor: '#fff8e7', rimColor: '#ffffff',
@@ -3364,7 +3396,8 @@
       rimOn: true, rimOpacity: 60, rimWidth: 5, rimBlur: 2,
       grainOn: true, grainOpacity: 12, grainScale: 15, grainTarget: 'all', gradingOn: true,
       bright: 2, contrast: 8, saturation: 5, temp: 8,
-      bgBright: 0, bgContrast: 0, bgSaturation: 0, bgTemp: 0
+      bgBright: 0, bgContrast: 0, bgSaturation: 0, bgTemp: 0,
+      vignette: 15, vignetteRadius: 55, vignetteFeather: 65, vignetteOn: true
     },
     cloudy: {
       shadowColor: '#282e38', lightColor: '#e2e7f0', rimColor: '#f1f5f9',
@@ -3377,7 +3410,8 @@
       rimOn: false,
       grainOn: false, grainTarget: 'all', gradingOn: true,
       bright: -2, contrast: -4, saturation: -3, temp: -5,
-      bgBright: 0, bgContrast: 0, bgSaturation: 0, bgTemp: 0
+      bgBright: 0, bgContrast: 0, bgSaturation: 0, bgTemp: 0,
+      vignette: -10, vignetteRadius: 50, vignetteFeather: 60, vignetteOn: true
     },
     sunset: {
       shadowColor: '#2c1524', lightColor: '#ff8a50', rimColor: '#ffd166',
@@ -3390,7 +3424,8 @@
       rimOn: true, rimOpacity: 75, rimWidth: 6, rimBlur: 4,
       grainOn: true, grainOpacity: 16, grainScale: 15, grainTarget: 'all', gradingOn: true,
       bright: -4, contrast: 10, saturation: 10, temp: 25,
-      bgBright: 0, bgContrast: 0, bgSaturation: 0, bgTemp: 0
+      bgBright: 0, bgContrast: 0, bgSaturation: 0, bgTemp: 0,
+      vignette: -20, vignetteRadius: 50, vignetteFeather: 55, vignetteOn: true
     },
     night: {
       shadowColor: '#0a0d18', lightColor: '#4cc9f0', rimColor: '#7209b7',
@@ -3403,7 +3438,8 @@
       rimOn: true, rimOpacity: 65, rimWidth: 5, rimBlur: 4,
       grainOn: true, grainOpacity: 20, grainScale: 18, grainTarget: 'all', gradingOn: true,
       bright: -12, contrast: 15, saturation: -5, temp: -18,
-      bgBright: 0, bgContrast: 0, bgSaturation: 0, bgTemp: 0
+      bgBright: 0, bgContrast: 0, bgSaturation: 0, bgTemp: 0,
+      vignette: -35, vignetteRadius: 45, vignetteFeather: 50, vignetteOn: true
     },
     indoor: {
       shadowColor: '#2b231f', lightColor: '#ffe8d6', rimColor: '#fff1e6',
@@ -3416,7 +3452,8 @@
       rimOn: false,
       grainOn: false, grainTarget: 'all', gradingOn: true,
       bright: 0, contrast: -3, saturation: 3, temp: 10,
-      bgBright: 0, bgContrast: 0, bgSaturation: 0, bgTemp: 0
+      bgBright: 0, bgContrast: 0, bgSaturation: 0, bgTemp: 0,
+      vignette: -5, vignetteRadius: 50, vignetteFeather: 60, vignetteOn: true
     }
   };
 
@@ -3481,6 +3518,10 @@
     if (p.gradingOn !== undefined) {
       document.getElementById('gradingToggle').checked = p.gradingOn;
       document.getElementById('subColorGrading').classList.toggle('open', p.gradingOn);
+    }
+    if (p.vignetteOn !== undefined) {
+      document.getElementById('vignetteToggle').checked = p.vignetteOn;
+      document.getElementById('subVignette').classList.toggle('open', p.vignetteOn);
     }
 
     invalidateAll();
@@ -4195,7 +4236,49 @@
       ctx.restore();
     }
 
-    // 6. 全体へのフィルムグレイン (grainTarget === 'all')
+    // 6. ビネット効果 (周辺光量調整: 左スライドで暗いビネット、右スライドで明るいビネット、中央でオフ)
+    const isVignetteOn = document.getElementById('vignetteToggle')?.checked ?? true;
+    const vignetteVal = parseFloat(document.getElementById('vignette')?.value || 0);
+
+    if (isVignetteOn && vignetteVal !== 0) {
+      const vRadius = parseFloat(document.getElementById('vignetteRadius')?.value || 50) / 100;
+      const vFeather = parseFloat(document.getElementById('vignetteFeather')?.value || 60) / 100;
+
+      const cx = canvas.width / 2;
+      const cy = canvas.height / 2;
+      const maxDim = Math.sqrt(cx * cx + cy * cy);
+      
+      const innerR = Math.max(0, maxDim * vRadius * (1 - vFeather * 0.7));
+      const outerR = Math.max(innerR + 1, maxDim * (0.6 + vRadius * 0.5));
+
+      const vGrad = ctx.createRadialGradient(cx, cy, innerR, cx, cy, outerR);
+
+      if (vignetteVal < 0) {
+        // 暗いビネット (周辺減光)
+        const vAlpha = (Math.abs(vignetteVal) / 100) * 0.85;
+        vGrad.addColorStop(0, 'rgba(0, 0, 0, 0)');
+        vGrad.addColorStop(0.3, 'rgba(0, 0, 0, 0)');
+        vGrad.addColorStop(1, `rgba(0, 0, 0, ${vAlpha})`);
+
+        ctx.save();
+        ctx.fillStyle = vGrad;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.restore();
+      } else {
+        // 明るいビネット (ホワイトビネット)
+        const vAlpha = (vignetteVal / 100) * 0.75;
+        vGrad.addColorStop(0, 'rgba(255, 255, 255, 0)');
+        vGrad.addColorStop(0.3, 'rgba(255, 255, 255, 0)');
+        vGrad.addColorStop(1, `rgba(255, 255, 255, ${vAlpha})`);
+
+        ctx.save();
+        ctx.fillStyle = vGrad;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.restore();
+      }
+    }
+
+    // 7. 全体へのフィルムグレイン (grainTarget === 'all')
     if (isGrainOn && grainTarget === 'all' && grainOpacity > 0) {
       const wholeNoise = getNoisePattern(canvas.width, canvas.height, grainScale);
       ctx.save();
