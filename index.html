@@ -4046,7 +4046,7 @@
       const wrapThreshold = parseFloat(document.getElementById('wrapThreshold').value) / 100;
 
       // キャラクタ外側の周囲光をしっかり捉えるため、外側に十分なパディングを確保
-      const wrapPad = Math.ceil(wrapRadius * 2.5);
+      const wrapPad = Math.ceil(wrapRadius * 2.2);
       const wrapW = Math.round(cW + wrapPad * 2);
       const wrapH = Math.round(cH + wrapPad * 2);
 
@@ -4067,8 +4067,8 @@
       if (wrapThreshold > 0) {
         const wData = wBgCtx.getImageData(0, 0, wrapW, wrapH);
         const d = wData.data;
-        const gamma = 1 + wrapThreshold * 2.5;
-        const boost = 1 + wrapThreshold * 0.5;
+        const gamma = 1 + wrapThreshold * 2.0;
+        const boost = 1 + wrapThreshold * 0.4;
         for (let i = 0; i < d.length; i += 4) {
           const luma = (0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]) / 255;
           const factor = Math.pow(luma, gamma) * boost;
@@ -4081,36 +4081,41 @@
       }
 
       // 周囲光をたっぷりと滑らかに拡散
-      const blurredBg = createFastBlurredCanvas(wrapBgCanvas, wrapW, wrapH, wrapRadius * 1.5);
+      const blurredBg = createFastBlurredCanvas(wrapBgCanvas, wrapW, wrapH, wrapRadius * 1.6);
 
-      // キャラクタの輪郭エッジ用マスクをパディング領域内で生成
+      // 1. キャラクタの正確なアルファマスクをパディング領域内に描画
+      const charaMaskCanvas = document.createElement('canvas');
+      charaMaskCanvas.width = wrapW;
+      charaMaskCanvas.height = wrapH;
+      const cmCtx = charaMaskCanvas.getContext('2d');
+
+      cmCtx.save();
+      if (isCharaFlipped) {
+        cmCtx.translate(wrapPad + cW, wrapPad);
+        cmCtx.scale(-1, 1);
+      } else {
+        cmCtx.translate(wrapPad, wrapPad);
+      }
+      cmCtx.drawImage(charaImg, 0, 0, cW, cH);
+      cmCtx.restore();
+
+      // 2. スリットや細い隙間の誤判定を防ぐ外周エッジマスクの生成
       const edgeMaskCanvas = document.createElement('canvas');
       edgeMaskCanvas.width = wrapW;
       edgeMaskCanvas.height = wrapH;
       const emCtx = edgeMaskCanvas.getContext('2d');
+      emCtx.drawImage(charaMaskCanvas, 0, 0);
 
-      emCtx.save();
-      if (isCharaFlipped) {
-        emCtx.translate(wrapPad + cW, wrapPad);
-        emCtx.scale(-1, 1);
-      } else {
-        emCtx.translate(wrapPad, wrapPad);
-      }
-      emCtx.drawImage(charaImg, 0, 0, cW, cH);
-      emCtx.restore();
-
-      // 内側ぼかしマスクとの差分を取り、極めて滑らかな輪郭フェードマスクを作成
-      const innerMaskCanvas = document.createElement('canvas');
-      innerMaskCanvas.width = wrapW;
-      innerMaskCanvas.height = wrapH;
-      const imCtx = innerMaskCanvas.getContext('2d');
-      imCtx.drawImage(edgeMaskCanvas, 0, 0);
-
-      const innerBlurred = createFastBlurredCanvas(innerMaskCanvas, wrapW, wrapH, wrapRadius * 0.75);
+      // 内側へ向かって滑らかにフェードするマスクを計算
+      const innerBlurred = createFastBlurredCanvas(charaMaskCanvas, wrapW, wrapH, wrapRadius * 0.85);
       emCtx.globalCompositeOperation = 'destination-out';
       emCtx.drawImage(innerBlurred, 0, 0);
 
-      // 拡散した背景光を滑らかなエッジマスクで切り抜き
+      // 3. 元のキャラクタ領域内に厳密に限定（外側のはみ出しやスリット外のゴミを確実にカット）
+      emCtx.globalCompositeOperation = 'destination-in';
+      emCtx.drawImage(charaMaskCanvas, 0, 0);
+
+      // 4. 拡散した背景光を滑らかなエッジマスクで切り抜き
       const finalWrap = document.createElement('canvas');
       finalWrap.width = wrapW;
       finalWrap.height = wrapH;
@@ -4119,7 +4124,7 @@
       fwCtx.globalCompositeOperation = 'destination-in';
       fwCtx.drawImage(edgeMaskCanvas, 0, 0);
 
-      // キャラクターにスクリーン合成
+      // 5. キャラクターにスクリーン合成
       ctx.save();
       ctx.globalCompositeOperation = 'screen';
       ctx.globalAlpha = wrapOpacity;
