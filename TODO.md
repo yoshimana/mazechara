@@ -8,6 +8,8 @@
   - [ ] `app-portal/robots.txt` から `Disallow: /app/mazechara/` を削除
   - [ ] `app-portal/sitemap.xml` に `mazechara` / `manual.html` / `terms.html` を再追加
   - [ ] `index.html`, `manual.html`, `terms.html` の `<meta name="robots" content="noindex, nofollow">` を削除
+- [ ] 【後で実施】パスワード認証機能（Auth Gate Module）の削除
+  - [ ] `index.html`, `manual.html`, `terms.html` の `[AUTH GATE MODULE]` ブロックを削除
 - [x] 既存コードベース（index.html）の実装状況・合成ロジックの調査
 - [x] 機能要件・Pro Mode（ライトラップ、リムライト、グレイン、被写界深度等）の設計および実装
 - [x] 落ち影・接地影のアフィン変換幾何学（前後左右の傾き・スケール）の根本修正
