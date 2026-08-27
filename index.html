@@ -1685,8 +1685,8 @@
       </div>
       <div class="accordion-body">
         <div class="param-row">
-          <div class="param-label"><span>奥のぼかし量</span><span id="bgBlurVal" class="param-value">6px</span></div>
-          <input type="range" id="bgBlur" min="0" max="30" value="6">
+          <div class="param-label"><span>奥のぼかし量</span><span id="bgBlurVal" class="param-value">0.3%</span></div>
+          <input type="range" id="bgBlur" min="0" max="50" value="3" step="1">
         </div>
         <div class="param-row">
           <div class="param-label"><span>ピント境界位置</span><span id="dofBoundaryVal" class="param-value">80%</span></div>
@@ -2589,9 +2589,11 @@
 
   function updateBgBlurCache() {
     if (!bgImg) return;
-    const bgBlur = parseFloat(document.getElementById('bgBlur').value);
+    const bgBlurPercent = parseFloat(document.getElementById('bgBlur').value) / 10; // 0.0%〜5.0%
+    const maxDim = Math.max(canvas.width, canvas.height);
+    const blurPx = Math.max(0, (maxDim * (bgBlurPercent / 100)));
     const procBg = getProcessedBgCanvas();
-    bgBlurredCanvas = createFastBlurredCanvas(procBg || bgImg, canvas.width, canvas.height, bgBlur);
+    bgBlurredCanvas = createFastBlurredCanvas(procBg || bgImg, canvas.width, canvas.height, blurPx);
     isBgBlurDirty = false;
   }
 
@@ -3090,7 +3092,7 @@
     { id: 'contactSize', unit: '%' },
     { id: 'dofBoundary', unit: '%' },
     { id: 'dofFade', unit: '%' },
-    { id: 'bgBlur', unit: 'px' },
+    { id: 'bgBlur', unit: '%', transform: v => (parseFloat(v) / 10).toFixed(1) },
     // Pro Mode パラメータ
     { id: 'wrapOpacity', unit: '%' },
     { id: 'wrapRadius', unit: 'px' },
@@ -3391,7 +3393,7 @@
       shadowAngle: 45, shadowLength: 85, castShadowOpacity: 65, shadowBlur: 4, shadowWaveAmp: 2,
       contactOn: true, contactOpacity: 25, contactBlur: 10, contactSize: 20,
       spotOn: false, spotColor: '#fff9e6', spotOpacity: 35, spotSize: 18, spotBlur: 65, spotAngleX: -15, spotAngleY: 20,
-      bgBlurOn: true, bgBlur: 8, dofBoundary: 85, dofFade: 35,
+      bgBlurOn: true, bgBlur: 3, dofBoundary: 85, dofFade: 35,
       wrapOn: true, wrapOpacity: 45, wrapRadius: 16, wrapThreshold: 50,
       rimOn: true, rimOpacity: 60, rimWidth: 5, rimBlur: 2,
       grainOn: true, grainOpacity: 12, grainScale: 15, grainTarget: 'all', gradingOn: true,
@@ -3405,7 +3407,7 @@
       shadowAngle: 25, shadowLength: 35, castShadowOpacity: 30, shadowBlur: 22, shadowWaveAmp: 0,
       contactOn: true, contactOpacity: 30, contactBlur: 18, contactSize: 25,
       spotOn: false, spotColor: '#edf2f7', spotOpacity: 25, spotSize: 20, spotBlur: 70, spotAngleX: 0, spotAngleY: 0,
-      bgBlurOn: true, bgBlur: 6, dofBoundary: 80, dofFade: 45,
+      bgBlurOn: true, bgBlur: 2, dofBoundary: 80, dofFade: 45,
       wrapOn: true, wrapOpacity: 25, wrapRadius: 12, wrapThreshold: 35,
       rimOn: false,
       grainOn: false, grainTarget: 'all', gradingOn: true,
@@ -3419,7 +3421,7 @@
       shadowAngle: 55, shadowLength: 120, castShadowOpacity: 55, shadowBlur: 14, shadowWaveAmp: 0,
       contactOn: true, contactOpacity: 20, contactBlur: 15, contactSize: 25,
       spotOn: false, spotColor: '#ffb07c', spotOpacity: 45, spotSize: 22, spotBlur: 60, spotAngleX: -25, spotAngleY: -10,
-      bgBlurOn: true, bgBlur: 10, dofBoundary: 80, dofFade: 40,
+      bgBlurOn: true, bgBlur: 4, dofBoundary: 80, dofFade: 40,
       wrapOn: true, wrapOpacity: 55, wrapRadius: 20, wrapThreshold: 35,
       rimOn: true, rimOpacity: 75, rimWidth: 6, rimBlur: 4,
       grainOn: true, grainOpacity: 16, grainScale: 15, grainTarget: 'all', gradingOn: true,
@@ -3433,7 +3435,7 @@
       shadowAngle: -25, shadowLength: 40, castShadowOpacity: 70, shadowBlur: 12, shadowWaveAmp: 0,
       contactOn: true, contactOpacity: 35, contactBlur: 20, contactSize: 20,
       spotOn: false, spotColor: '#4cc9f0', spotOpacity: 40, spotSize: 20, spotBlur: 70, spotAngleX: 0, spotAngleY: 0,
-      bgBlurOn: true, bgBlur: 12, dofBoundary: 75, dofFade: 30,
+      bgBlurOn: true, bgBlur: 5, dofBoundary: 75, dofFade: 30,
       wrapOn: true, wrapOpacity: 40, wrapRadius: 15, wrapThreshold: 60,
       rimOn: true, rimOpacity: 65, rimWidth: 5, rimBlur: 4,
       grainOn: true, grainOpacity: 20, grainScale: 18, grainTarget: 'all', gradingOn: true,
@@ -3447,7 +3449,7 @@
       shadowAngle: 20, shadowLength: 35, castShadowOpacity: 35, shadowBlur: 18, shadowWaveAmp: 0,
       contactOn: true, contactOpacity: 15, contactBlur: 25, contactSize: 30,
       spotOn: false, spotColor: '#ffe8d6', spotOpacity: 30, spotSize: 15, spotBlur: 55, spotAngleX: 10, spotAngleY: -15,
-      bgBlurOn: true, bgBlur: 5, dofBoundary: 80, dofFade: 50,
+      bgBlurOn: true, bgBlur: 2, dofBoundary: 80, dofFade: 50,
       wrapOn: true, wrapOpacity: 30, wrapRadius: 10, wrapThreshold: 35,
       rimOn: false,
       grainOn: false, grainTarget: 'all', gradingOn: true,
