@@ -12,9 +12,6 @@
   <circle cx="46" cy="18" r="8" fill="#2d3436"/>
   <circle cx="46" cy="18" r="4.5" fill="url(#logoEarGrad)"/>
   
-  <!-- シャッターボタン -->
-  <rect x="39" y="8" width="7" height="3" rx="1.5" fill="#2d3436"/>
-  
   <!-- フェイス・ボディ (グラデーションまたはクリーンカラー) -->
   <circle cx="32" cy="35" r="20" fill="#2d3436"/>
   <circle cx="32" cy="35" r="16.5" fill="#f5f6fa"/>

@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
+  <!-- Google Tag Manager -->
+  <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-K32QPVZL');</script>
+  <!-- End Google Tag Manager -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="robots" content="noindex, nofollow">
   <title>利用規約・注意事項 - まぜキャラ</title>
   <meta name="description" content="2次元キャラクターと背景写真を馴染ませる、まぜキャラの利用規約、プライバシー、注意事項を掲載しています。">
   <meta name="theme-color" content="#c73557">
@@ -215,6 +217,36 @@
       margin-bottom: 12px;
     }
 
+    .special-thanks-card {
+      background: #fffaf5;
+      border-color: #fed7aa;
+    }
+
+    .special-thanks-card strong,
+    .special-thanks-links a {
+      color: #9a3412;
+    }
+
+    .special-thanks-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 16px;
+      margin-top: 12px;
+    }
+
+    .special-thanks-links a {
+      font-size: 0.88rem;
+      font-weight: 700;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    .special-thanks-separator {
+      height: 1px;
+      margin: 20px 0;
+      background: #fed7aa;
+    }
+
     /* フッター */
     .footer {
       background: #ffffff;
@@ -273,7 +305,10 @@
     }
   </style>
 </head>
-<body>
+<body data-page="terms">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-K32QPVZL" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
 
   <!-- ヘッダー -->
   <header class="header">
@@ -299,6 +334,7 @@
         <span class="logo-text">まぜキャラ</span>
       </a>
       <nav class="header-nav">
+        <button type="button" data-language-toggle aria-label="Switch language" style="border:1px solid #e2e8f0; background:#ffffff; cursor:pointer; font:inherit;">English</button>
         <a href="manual.html" class="nav-link">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
           <span>使い方マニュアル</span>
@@ -337,6 +373,9 @@
       </p>
       <p>
         画像データや編集内容が外部サーバーへ送信・アップロード・保存されることは一切ありません。プライベートな写真やオリジナルのイラストも安心してお使いいただけます。
+      </p>
+      <p>
+        アクセス状況の把握には Google Tag Manager を利用しています。画像データや編集内容が計測サービスへ送信されることはありません。
       </p>
       <div style="background-color: var(--bg-main); border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; margin-top: 10px; font-size: 0.84rem; color: var(--text-sub);">
         <strong>【高解像度画像の取り扱い・端末内最適化について】</strong><br>
@@ -492,6 +531,30 @@
         </li>
       </ul>
     </section>
+
+    <section class="doc-card special-thanks-card">
+      <h2 class="card-title">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 11c0 5.65-7 10-7 10z"/></svg>
+        スペシャルサンクス
+      </h2>
+      <div class="special-thanks-entry">
+        <p>本ツールは、<strong>此ノ世うに @konoyo_uni</strong> さまが公開された動画で紹介されていたテクニックを参考に、リスペクトを込めて制作しました。</p>
+        <p>素晴らしい表現と技術の共有に、心より感謝します。</p>
+        <div class="special-thanks-links">
+          <a href="https://x.com/konoyo_uni" target="_blank" rel="noopener noreferrer">X: @konoyo_uni</a>
+          <a href="https://lit.link/konoyouni" target="_blank" rel="noopener noreferrer">プロフィール・リンク集</a>
+          <a href="https://x.com/konoyo_uni/status/2092596989901123860?s=20" target="_blank" rel="noopener noreferrer">参考にした動画の投稿</a>
+        </div>
+      </div>
+      <div class="special-thanks-separator" aria-hidden="true"></div>
+      <div class="special-thanks-entry">
+        <p><strong>増田あのに😶‍🌫️/顕なめ @MousdaAnony</strong> さまには、解説用動画のキャラクター素材をご提供いただきました。</p>
+        <div class="special-thanks-links">
+          <a href="https://x.com/MousdaAnony" target="_blank" rel="noopener noreferrer">X: @MousdaAnony</a>
+          <a href="https://lit.link/anonymousda" target="_blank" rel="noopener noreferrer">プロフィール・リンク集</a>
+        </div>
+      </div>
+    </section>
   </main>
 
   <!-- フッター -->
@@ -506,61 +569,7 @@
     </div>
   </footer>
 
-<!-- ==========================================================================
-     [AUTH GATE MODULE] ドメイン別パスワード保護（※後でこのブロックを削除可能）
-========================================================================== -->
-<div id="authGateOverlay" style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(18,22,26,0.85); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); align-items:center; justify-content:center; transition:opacity 0.3s ease;">
-  <div style="background:#ffffff; border-radius:18px; padding:36px 30px; width:90%; max-width:380px; text-align:center; box-shadow:0 20px 50px rgba(0,0,0,0.3); border:1.5px solid #e4e8f0;">
-    <div style="font-family:'Mochiy Pop One', sans-serif; font-size:1.5rem; color:#c73557; margin-bottom:8px;">まぜキャラ</div>
-    <div style="display:inline-block; font-size:0.75rem; background:#fff0f3; color:#c73557; padding:3px 10px; border-radius:9999px; font-weight:700; margin-bottom:14px;">限定プレビュー</div>
-    <p style="font-size:0.85rem; color:#636e72; line-height:1.6; margin-bottom:22px;">閲覧するにはパスワードを入力してください。</p>
-    <form id="authGateForm" style="display:flex; flex-direction:column; gap:12px;">
-      <input type="password" id="authGateInput" placeholder="パスワードを入力" autocomplete="current-password" style="padding:12px 14px; border:1.5px solid #e4e8f0; border-radius:10px; font-size:1rem; text-align:center; outline:none; font-family:inherit;">
-      <button type="submit" style="padding:12px; background:#c73557; color:#ffffff; border:none; border-radius:10px; font-weight:700; font-size:0.95rem; cursor:pointer; font-family:inherit; transition:background 0.2s;">認証して閲覧開始</button>
-      <p id="authGateError" style="font-size:0.8rem; color:#e03131; display:none; margin-top:2px;">パスワードが正しくありません</p>
-    </form>
-  </div>
-</div>
-<script id="authGateScript">
-  (function initAuthGate() {
-    const TARGET_HASH = 'fb6c70b3696b031ff5c5b2a7f5e0b5ebca066b4b1f89861084fc1036e0f7a34e'; // yoshimana
-    const bypassHosts = ['site-4407jp.web.app', 'site-4407jp.firebaseapp.com', 'localhost', '127.0.0.1'];
-    const isBypass = bypassHosts.includes(window.location.hostname);
-    const isAuthed = localStorage.getItem('mazechara_auth') === 'true';
-
-    const overlay = document.getElementById('authGateOverlay');
-    if (!overlay) return;
-
-    if (isBypass || isAuthed) {
-      overlay.style.display = 'none';
-      return;
-    }
-
-    overlay.style.display = 'flex';
-    const form = document.getElementById('authGateForm');
-    const input = document.getElementById('authGateInput');
-    const err = document.getElementById('authGateError');
-
-    async function sha256(str) {
-      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-      return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
-    }
-
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const val = input.value.trim();
-      const h = await sha256(val);
-      if (h === TARGET_HASH || val === 'yoshimana') {
-        localStorage.setItem('mazechara_auth', 'true');
-        overlay.style.opacity = '0';
-        setTimeout(() => { overlay.style.display = 'none'; }, 300);
-      } else {
-        err.style.display = 'block';
-        input.value = '';
-        input.focus();
-      }
-    });
-  })();
-</script>
+<script src="i18n.js"></script>
+<script>MazeCharaI18n.init();</script>
 </body>
 </html>

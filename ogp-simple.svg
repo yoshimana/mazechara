@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">まぜキャラ — イラスト馴染ませツール</title>
+  <desc id="desc">まぜキャラのシンプルなOGP用画像</desc>
+  <defs>
+    <style>@import url('https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&amp;display=swap');</style>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#fffaf7"/>
+      <stop offset="1" stop-color="#eef7ff"/>
+    </linearGradient>
+    <linearGradient id="line" x1="0" y1="0" x2="1" y2="0">
+      <stop stop-color="#ff8eaa"/>
+      <stop offset="1" stop-color="#82c9ef"/>
+    </linearGradient>
+    <linearGradient id="title" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="60%" stop-color="#2d3436"/>
+      <stop offset="100%" stop-color="#ff6b8b"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="12" stdDeviation="14" flood-color="#536577" flood-opacity=".16"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <circle cx="-30" cy="12" r="230" fill="#ffe5ec" opacity=".52"/>
+  <circle cx="1195" cy="630" r="280" fill="#dff1ff" opacity=".72"/>
+  <circle cx="1095" cy="90" r="78" fill="none" stroke="#ffd6e0" stroke-width="2" opacity=".8"/>
+  <circle cx="1025" cy="150" r="18" fill="#a8dff7" opacity=".45"/>
+  <g transform="translate(430 151)" filter="url(#shadow)">
+    <circle cx="170" cy="154" r="139" fill="#fff" opacity=".92"/>
+    <g transform="translate(70 54) scale(3.125)">
+      <defs>
+        <linearGradient id="logoEarGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#ff85a1"/>
+          <stop offset="100%" stop-color="#ff6b8b"/>
+        </linearGradient>
+      </defs>
+      <circle cx="18" cy="18" r="8" fill="#2d3436"/><circle cx="18" cy="18" r="4.5" fill="url(#logoEarGrad)"/>
+      <circle cx="46" cy="18" r="8" fill="#2d3436"/><circle cx="46" cy="18" r="4.5" fill="url(#logoEarGrad)"/>
+      <circle cx="32" cy="35" r="20" fill="#2d3436"/><circle cx="32" cy="35" r="16.5" fill="#f5f6fa"/>
+      <circle cx="32" cy="35" r="14.5" fill="#2d343c"/><circle cx="32" cy="35" r="10.5" fill="#1e242a"/><circle cx="32" cy="35" r="7.5" fill="#12161a"/>
+      <circle cx="29.5" cy="32.5" r="3.2" fill="#fff"/><circle cx="35" cy="37.5" r="1.5" fill="#fff" opacity=".85"/>
+      <circle cx="19" cy="43" r="2.8" fill="#ff8ca5" opacity=".9"/><circle cx="45" cy="43" r="2.8" fill="#ff8ca5" opacity=".9"/>
+      <path d="M29.5 49 Q32 52 34.5 49" fill="none" stroke="#ff6b8b" stroke-width="1.8" stroke-linecap="round"/>
+    </g>
+  </g>
+  <text x="600" y="462" text-anchor="middle" fill="url(#title)" font-family="'Mochiy Pop One', sans-serif" font-size="55" letter-spacing="3">まぜキャラ</text>
+  <rect x="425" y="494" width="350" height="5" rx="2.5" fill="url(#line)"/>
+  <text x="600" y="538" text-anchor="middle" fill="#627180" font-family="Arial, sans-serif" font-size="22" font-weight="700" letter-spacing="3">二次元 ✖︎ 三次元</text>
+  <text x="600" y="579" text-anchor="middle" fill="#627180" font-family="Arial, sans-serif" font-size="27" font-weight="600" letter-spacing="2">イラスト馴染ませツール</text>
+</svg>

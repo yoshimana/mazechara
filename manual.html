@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
+  <!-- Google Tag Manager -->
+  <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-K32QPVZL');</script>
+  <!-- End Google Tag Manager -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="robots" content="noindex, nofollow">
   <title>使い方マニュアル - まぜキャラ</title>
   <meta name="description" content="2次元キャラクターと背景写真を自然に馴染ませる、まぜキャラの使い方と主要機能を案内します。">
   <meta name="theme-color" content="#c73557">
@@ -154,6 +156,30 @@
       font-size: 0.95rem;
     }
 
+    .credit-card {
+      background: #f8fbff;
+      border-color: #bfdbfe;
+    }
+
+    .credit-card strong,
+    .credit-card a {
+      color: #1d4ed8;
+    }
+
+    .credit-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 16px;
+      margin-top: 12px;
+    }
+
+    .credit-links a {
+      font-size: 0.88rem;
+      font-weight: 700;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
     /* セクション・カード */
     .doc-card {
       background: var(--card-bg);
@@ -223,6 +249,14 @@
     .step-text {
       font-size: 0.9rem;
       color: var(--text-muted);
+    }
+
+    .auto-match-note {
+      margin-top: 8px;
+      color: #2563eb;
+      font-size: 0.84rem;
+      font-weight: 700;
+      line-height: 1.65;
     }
 
     /* 機能グリッド */
@@ -314,7 +348,10 @@
     }
   </style>
 </head>
-<body>
+<body data-page="manual">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-K32QPVZL" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
 
   <!-- ヘッダー -->
   <header class="header">
@@ -340,6 +377,7 @@
         <span class="logo-text">まぜキャラ</span>
       </a>
       <nav class="header-nav">
+        <button type="button" data-language-toggle aria-label="Switch language" style="border:1px solid #e2e8f0; background:#ffffff; cursor:pointer; font:inherit;">English</button>
         <a href="manual.html" class="nav-link active">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
           <span>使い方マニュアル</span>
@@ -360,8 +398,20 @@
   <main class="container">
     <div class="page-hero">
       <h1 class="page-title">まぜキャラ 使い方マニュアル</h1>
-      <p class="page-desc">2次元キャラクターと背景写真を、ライティングと影で自然に馴染ませるツールの操作ガイドです。</p>
+      <p class="page-desc">2次元キャラクターと背景写真を自然に馴染ませるための操作ガイドです。</p>
     </div>
+
+    <section class="doc-card credit-card">
+      <h2 class="card-title">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 11c0 5.65-7 10-7 10z"/></svg>
+        技術参考・クレジット
+      </h2>
+      <p>本ツールは、<strong>此ノ世うに @konoyo_uni</strong> さまが公開された動画のテクニックを参考に、リスペクトを込めて制作しています。</p>
+      <div class="credit-links">
+        <a href="https://x.com/konoyo_uni" target="_blank" rel="noopener noreferrer">X: @konoyo_uni</a>
+        <a href="https://lit.link/konoyouni" target="_blank" rel="noopener noreferrer">プロフィール・リンク集</a>
+      </div>
+    </section>
 
     <!-- 1. 基本の流れ -->
     <section class="doc-card">
@@ -374,35 +424,36 @@
           <div class="step-num">1</div>
           <div class="step-content">
             <div class="step-title">背景写真とキャラクター画像をアップロード</div>
-            <div class="step-text">「背景写真」から風景写真を、「キャラクター (透過)」から背景が透明なキャラクター画像を読み込みます（最大4,800万画素・50MBまで対応）。高解像度画像はお使いの端末（PC: 最大2,400万画素、スマホ: 最大1,600万画素）に合わせて端末内（ブラウザローカル）で安全・快適な解像度へ自動最適化されます。読み込み時にトリミング画面が開き、キャラクターPNGは透明な余白が自動でカットされます。</div>
+            <div class="step-text">背景写真と、背景が透明なキャラクター画像を読み込みます。<br>最大4,800万画素・50MBまで対応し、高解像度画像は端末内で編集用の解像度に自動調整されます。<br>読み込み後はトリミング画面が開き、キャラクターPNGの透明な余白は自動でカットされます。</div>
           </div>
         </div>
         <div class="step-item">
           <div class="step-num">2</div>
           <div class="step-content">
             <div class="step-title">キャラクターのサイズと位置を調整</div>
-            <div class="step-text">プレビュー画面上でキャラクターを直接ドラッグするか、設定パネルの「サイズ」「位置X」「位置Y」スライダーで配置を決めます。ホイール操作やピンチ操作での拡大縮小・移動にも対応しています。</div>
+            <div class="step-text">プレビュー上でドラッグするか、「サイズ」「位置X」「位置Y」で配置します。<br>ホイールやピンチ操作でも拡大・縮小できます。</div>
           </div>
         </div>
         <div class="step-item">
           <div class="step-num">3</div>
           <div class="step-content">
             <div class="step-title">「自動マッチ」またはプリセットで光を馴染ませる</div>
-            <div class="step-text">「自動マッチ」ボタンを押すと、写真の色温度・明暗・光源の向き・影の濃さが自動解析され、一瞬で写真の雰囲気に調和します。「晴天」「夕暮れ」「夜景」などのクイックプリセットも利用できます。</div>
+            <div class="step-text">「自動マッチ」で、写真の色温度・明暗・光の向き・影の濃さを自動調整します。<br>「晴天」「夕暮れ」「夜景」などのプリセットも使えます。</div>
+            <p class="auto-match-note">自動マッチは設定の目安です。<br>写真やキャラクターによっては、影やライティングを手動で調整してください。</p>
           </div>
         </div>
         <div class="step-item">
           <div class="step-num">4</div>
           <div class="step-content">
             <div class="step-title">影やライティングの微調整</div>
-            <div class="step-text">落ち影の方向（手前/奥、左/右）や濃さ、足元の接地影、リムライト（輪郭光）などを細かく調整し、よりリアルな存在感を作ります。</div>
+            <div class="step-text">落ち影の向きと濃さ、接地影、リムライトを調整できます。<br>背景に合わせて仕上げてください。</div>
           </div>
         </div>
         <div class="step-item">
           <div class="step-num">5</div>
           <div class="step-content">
             <div class="step-title">画像を保存（高画質JPEG書き出し）</div>
-            <div class="step-text">画面下の「合成画像を書き出す」ボタンを押すと、軽量で高画質な合成JPEG画像（.jpg）がダウンロードされます。</div>
+            <div class="step-text">画面下の「合成画像を書き出す」を押すと、合成したJPEG画像をダウンロードできます。</div>
           </div>
         </div>
       </div>
@@ -420,7 +471,7 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3L12 3z"/></svg>
             背景から自動適応（自動マッチ）
           </div>
-          <div class="feature-desc">写真全体の明暗バランス、色温度、直射光の方向、コントラストを解析し、キャラクターのライティングと影を最適値に自動設定します。</div>
+          <div class="feature-desc">写真の明暗、色温度、光の向きを解析し、ライティングと影を自動設定します。</div>
         </div>
 
         <div class="feature-item">
@@ -428,7 +479,7 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="12" rx="10" ry="6"/><path d="M12 2v20"/></svg>
             落ち影 & 接地影
           </div>
-          <div class="feature-desc">キャラクターが地面に落とす影を生成。ワンタップで「左倒し/右倒し」「奥へ/手前へ」を切り替え可能。足元の接地影で浮遊感を防ぎます。</div>
+          <div class="feature-desc">落ち影の向きと長さを調整できます。接地影でキャラクターの浮遊感を抑えます。</div>
         </div>
 
         <div class="feature-item">
@@ -436,7 +487,7 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/></svg>
             環境光 & スポイト
           </div>
-          <div class="feature-desc">写真の明部色・暗部色を乗算・オーバーレイ合成。スポイト機能で写真内の地面や空をタップして直接色を抽出できます。</div>
+          <div class="feature-desc">写真の明部・暗部の色を反映します。スポイトで写真内の色を直接選べます。</div>
         </div>
 
         <div class="feature-item">
@@ -444,7 +495,7 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
             ライトラップ & リムライト
           </div>
-          <div class="feature-desc">明るい背景光がキャラクターの輪郭へ自然に回り込む「ライトラップ」と、逆光時のエッジを光らせる「リムライト」を搭載。</div>
+          <div class="feature-desc">背景の光を輪郭へ回り込ませ、逆光時のエッジを明るくできます。</div>
         </div>
 
         <div class="feature-item">
@@ -452,7 +503,7 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/></svg>
             被写界深度（背景ボケ）
           </div>
-          <div class="feature-desc">一眼レフカメラで撮影したような背景の奥行きボケをシミュレート。キャラクターの足元から奥にかけて自然にぼかすことができます。</div>
+          <div class="feature-desc">キャラクターの足元から奥へ向かう、自然な背景ボケを作れます。</div>
         </div>
 
         <div class="feature-item">
@@ -460,7 +511,7 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
             周辺光量（ビネット効果）
           </div>
-          <div class="feature-desc">写真の四隅の明るさをコントロール。左スライドでレトロ・映画的な暗い周辺減光、右スライドでふんわり明るいホワイトビネット、中央でオフに設定できます。</div>
+          <div class="feature-desc">写真の四隅を暗く、または明るく調整できます。中央でオフです。</div>
         </div>
 
         <div class="feature-item">
@@ -468,7 +519,7 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
             Before / After 比較
           </div>
-          <div class="feature-desc">画面右上の「長押しでBefore」ボタンを押している間、エフェクト適用前の素の合成状態に切り替わり、効果を比較確認できます。</div>
+          <div class="feature-desc">ボタンを押している間、エフェクト適用前の状態と比較できます。</div>
         </div>
       </div>
     </section>
@@ -484,21 +535,21 @@
           <div class="step-num"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg></div>
           <div class="step-content">
             <div class="step-title">1本指ドラッグでキャラクター配置</div>
-            <div class="step-text">プレビュー画面を1本指でドラッグすると、キャラクターを直感的に移動できます。</div>
+            <div class="step-text">プレビューを1本指でドラッグすると、キャラクターを移動できます。</div>
           </div>
         </div>
         <div class="step-item">
           <div class="step-num"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="8" cy="8" r="3"/><circle cx="16" cy="16" r="3"/></svg></div>
           <div class="step-content">
             <div class="step-title">2本指スワイプ & ピンチでプレビュー操作</div>
-            <div class="step-text">2本指でスワイプするとプレビュー全体を上下左右にパン移動、2本指を開閉（ピンチ）すると拡大縮小が可能です。</div>
+            <div class="step-text">2本指でスワイプするとプレビューを移動できます。<br>ピンチで拡大・縮小できます。</div>
           </div>
         </div>
         <div class="step-item">
           <div class="step-num"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></div>
           <div class="step-content">
             <div class="step-title">「パネルを下げる」で全画面プレビュー</div>
-            <div class="step-text">右上の「パネルを下げる」ボタンを押すと設定パネルが下部に格納され、縦長写真でも画面いっぱいに広く表示されます。</div>
+            <div class="step-text">右上の「パネルを下げる」を押すと、プレビューを広く表示できます。</div>
           </div>
         </div>
       </div>
@@ -517,61 +568,7 @@
     </div>
   </footer>
 
-<!-- ==========================================================================
-     [AUTH GATE MODULE] ドメイン別パスワード保護（※後でこのブロックを削除可能）
-========================================================================== -->
-<div id="authGateOverlay" style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(18,22,26,0.85); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); align-items:center; justify-content:center; transition:opacity 0.3s ease;">
-  <div style="background:#ffffff; border-radius:18px; padding:36px 30px; width:90%; max-width:380px; text-align:center; box-shadow:0 20px 50px rgba(0,0,0,0.3); border:1.5px solid #e4e8f0;">
-    <div style="font-family:'Mochiy Pop One', sans-serif; font-size:1.5rem; color:#c73557; margin-bottom:8px;">まぜキャラ</div>
-    <div style="display:inline-block; font-size:0.75rem; background:#fff0f3; color:#c73557; padding:3px 10px; border-radius:9999px; font-weight:700; margin-bottom:14px;">限定プレビュー</div>
-    <p style="font-size:0.85rem; color:#636e72; line-height:1.6; margin-bottom:22px;">閲覧するにはパスワードを入力してください。</p>
-    <form id="authGateForm" style="display:flex; flex-direction:column; gap:12px;">
-      <input type="password" id="authGateInput" placeholder="パスワードを入力" autocomplete="current-password" style="padding:12px 14px; border:1.5px solid #e4e8f0; border-radius:10px; font-size:1rem; text-align:center; outline:none; font-family:inherit;">
-      <button type="submit" style="padding:12px; background:#c73557; color:#ffffff; border:none; border-radius:10px; font-weight:700; font-size:0.95rem; cursor:pointer; font-family:inherit; transition:background 0.2s;">認証して閲覧開始</button>
-      <p id="authGateError" style="font-size:0.8rem; color:#e03131; display:none; margin-top:2px;">パスワードが正しくありません</p>
-    </form>
-  </div>
-</div>
-<script id="authGateScript">
-  (function initAuthGate() {
-    const TARGET_HASH = 'fb6c70b3696b031ff5c5b2a7f5e0b5ebca066b4b1f89861084fc1036e0f7a34e'; // yoshimana
-    const bypassHosts = ['site-4407jp.web.app', 'site-4407jp.firebaseapp.com', 'localhost', '127.0.0.1'];
-    const isBypass = bypassHosts.includes(window.location.hostname);
-    const isAuthed = localStorage.getItem('mazechara_auth') === 'true';
-
-    const overlay = document.getElementById('authGateOverlay');
-    if (!overlay) return;
-
-    if (isBypass || isAuthed) {
-      overlay.style.display = 'none';
-      return;
-    }
-
-    overlay.style.display = 'flex';
-    const form = document.getElementById('authGateForm');
-    const input = document.getElementById('authGateInput');
-    const err = document.getElementById('authGateError');
-
-    async function sha256(str) {
-      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-      return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
-    }
-
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const val = input.value.trim();
-      const h = await sha256(val);
-      if (h === TARGET_HASH || val === 'yoshimana') {
-        localStorage.setItem('mazechara_auth', 'true');
-        overlay.style.opacity = '0';
-        setTimeout(() => { overlay.style.display = 'none'; }, 300);
-      } else {
-        err.style.display = 'block';
-        input.value = '';
-        input.focus();
-      }
-    });
-  })();
-</script>
+<script src="i18n.js"></script>
+<script>MazeCharaI18n.init();</script>
 </body>
 </html>
