@@ -2514,7 +2514,8 @@
 
       if (shouldApplyDirection) {
         const sourceScreenAngle = Math.atan2(sourceY, sourceX) * 180 / Math.PI;
-        calculatedLightAngle = Math.round(((sourceScreenAngle - 180 + 540) % 360) - 180);
+        // 光源の向きは、0°=右・-90°=上・90°=下として光源がある方向を直接表す。
+        calculatedLightAngle = Math.round(((sourceScreenAngle + 540) % 360) - 180);
         const shadowX = -sourceX;
         const shadowY = -sourceY;
         calculatedShadowAngle = Math.round((Math.atan2(-shadowY, -shadowX) * 180 / Math.PI + 360) % 360);
@@ -4383,8 +4384,9 @@
       const y1 = halfH + sin * halfH;
 
       const envGrad = cCtx.createLinearGradient(x0, y0, x1, y1);
-      envGrad.addColorStop(0, lightColor);
-      envGrad.addColorStop(1, shadowColor);
+      // 光源角度が指す側を明部、その反対側を暗部にする。
+      envGrad.addColorStop(0, shadowColor);
+      envGrad.addColorStop(1, lightColor);
 
       // 乗算レイヤー合成
       const multOpacity = parseFloat(document.getElementById('multiplyOpacity').value) / 100;
@@ -4439,6 +4441,7 @@
         const rimColor = document.getElementById('rimColor').value;
 
         const rimAngleRad = lightAngleRad;
+        // 光源角度が指す側の輪郭を残すため、差分マスクは反対側へずらす。
         const offsetX = -Math.cos(rimAngleRad) * rimWidth;
         const offsetY = -Math.sin(rimAngleRad) * rimWidth;
 
