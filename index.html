@@ -1465,16 +1465,46 @@
       z-index: 20;
       background: #ffffff;
       box-shadow: 0 -8px 20px rgba(0, 0, 0, 0.1);
-      opacity: 0;
-      pointer-events: none;
-      transform: translateY(105%);
-      transition: opacity 0.18s ease, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-
-    .sidebar.mobile-actions-visible .sidebar-bottom-actions {
       opacity: 1;
       pointer-events: auto;
       transform: translateY(0);
+    }
+
+    .sidebar-bottom-link-row,
+    .sidebar-creator-credit {
+      overflow: hidden;
+      max-height: 0;
+      padding-top: 0;
+      padding-bottom: 0;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(14px);
+      transition:
+        max-height 0.46s cubic-bezier(0.22, 1, 0.36, 1),
+        padding 0.46s cubic-bezier(0.22, 1, 0.36, 1),
+        opacity 0.28s ease,
+        transform 0.46s cubic-bezier(0.22, 1, 0.36, 1),
+        visibility 0s linear 0.46s;
+    }
+
+    .sidebar.mobile-actions-visible .sidebar-bottom-link-row {
+      max-height: 64px;
+      padding-top: 2px;
+      padding-bottom: 10px;
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+      transition-delay: 0s;
+    }
+
+    .sidebar.mobile-actions-visible .sidebar-creator-credit {
+      max-height: 48px;
+      padding-top: 0;
+      padding-bottom: 12px;
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+      transition-delay: 0.06s, 0.06s, 0.08s, 0.06s, 0s;
     }
 
     .btn-primary {
