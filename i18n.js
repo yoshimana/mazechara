@@ -17,7 +17,7 @@
     '影の濃さ': 'Shadow opacity', '影のぼかし': 'Shadow blur', '影の歪み強度': 'Shadow distortion', '影の歪み角度': 'Distortion angle',
     '接地影 (足元の影)': 'Contact shadow (at feet)', '影の位置': 'Shadow position', '影のサイズ': 'Shadow size', 'スポットライト': 'Spotlight', 'ライト色': 'Light color', '位置を指定': 'Set position', '位置を決定': 'Confirm position', 'キャラとの重なり': 'Layer relative to character', 'キャラの後ろ': 'Behind character', 'キャラの前': 'In front of character',
     '濃さ': 'Opacity', 'ぼかし': 'Blur', '角度 X': 'Angle X', '角度 Y': 'Angle Y', '背景ボケ (被写界深度)': 'Background blur (depth of field)',
-    'ぼかし量': 'Blur amount', '境界位置': 'Boundary position', 'ボケの滑らかさ': 'Blur smoothness', '詳細なじませ': 'Advanced blending',
+    'ぼかし量': 'Blur amount', '境界位置': 'Boundary position', 'ボケの滑らかさ': 'Blur smoothness', '詳細溶け込み': 'Advanced blending',
     '1. 色調・トーン補正': '1. Color & tone', 'キャラクター調整': 'Character', '背景写真調整': 'Background', '明るさ (露出)': 'Brightness (exposure)', 'コントラスト': 'Contrast', '彩度': 'Saturation',
     '色温度 (冷 ← → 温)': 'Color temperature (cool ← → warm)', '背景の明るさ': 'Background brightness', '背景のコントラスト': 'Background contrast', '背景の彩度': 'Background saturation', '背景の色温度 (冷 ← → 温)': 'Background temperature (cool ← → warm)',
     '2. ライトラップ (光の回り込み)': '2. Light wrap', '回り込み幅 (半径)': 'Wrap width (radius)', '明度閾値 (明るい背景のみ)': 'Brightness threshold (bright backgrounds only)',
@@ -27,7 +27,7 @@
     '初期化': 'Reset', '画像を保存／共有': 'Save / Share image', '利用規約・注意事項': 'Terms & notices', '制作者・お問い合わせ:': 'Creator & contact:',
     '使い方マニュアル': 'Manual', 'アプリに戻る': 'Back to app', 'アプリホーム': 'App home', '技術参考・クレジット': 'Technique reference & credit', 'プロフィール・リンク集': 'Profile & links', 'スペシャルサンクス': 'Special thanks', '参考にした動画の投稿': 'Referenced video post',
     '増田あのに😶‍🌫️/顕なめ @MousdaAnony さまには、解説用動画のキャラクター素材をご提供いただきました。': 'Character assets for the tutorial video were kindly provided by 増田あのに😶‍🌫️/顕なめ @MousdaAnony.',
-    'アクセス状況の把握には Google Tag Manager を利用しています。画像データや編集内容が計測サービスへ送信されることはありません。': 'Google Tag Manager is used to understand site traffic. Image data and editing content are not sent to analytics services.'
+    'アクセス状況の把握には Google Analytics を利用しています。画像データや編集内容が計測サービスへ送信されることはありません。': 'Google Analytics is used to understand site traffic. Image data and editing content are not sent to analytics services.'
   };
 
   function normalized(value) { return value.replace(/\s+/g, ' ').trim(); }

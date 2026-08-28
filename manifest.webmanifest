@@ -1,7 +1,7 @@
 {
   "name": "まぜキャラ",
   "short_name": "まぜキャラ",
-  "description": "2次元キャラクターと背景写真をブラウザ内で自然に馴染ませるツール",
+  "description": "二次元キャラクターを三次元の背景写真へ自然に溶け込ませるツール",
   "lang": "ja",
   "start_url": "./",
   "display": "standalone",

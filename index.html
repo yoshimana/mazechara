@@ -1,31 +1,36 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<!-- Google Tag Manager -->
-<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-K32QPVZL');</script>
-<!-- End Google Tag Manager -->
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5LV900JPPB"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-5LV900JPPB');
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>まぜキャラ - 2次元キャラクター・背景写真 馴染ませツール</title>
-<meta name="description" content="2次元キャラクターと背景写真を、光・影・色を整えて自然に馴染ませ、ブラウザ内だけで高画質画像として書き出しできる無料ツールです。">
+<title>まぜキャラ - 二次元✖️三次元・キャラ溶け込みツール</title>
+<meta name="description" content="二次元キャラクターを三次元の背景写真へ、光・影・色を整えて自然に溶け込ませ、ブラウザ内だけで高画質画像として保存・共有できる無料ツールです。">
 <link rel="canonical" href="https://4407.jp/app/mazechara/">
 <meta name="theme-color" content="#c73557">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="ja_JP">
-<meta property="og:title" content="まぜキャラ - 2次元キャラクター・背景写真 馴染ませツール">
-<meta property="og:description" content="2次元キャラクターと背景写真を、光・影・色を整えて自然に馴染ませ、ブラウザ内だけで高画質画像として書き出しできる無料ツールです。">
+<meta property="og:title" content="まぜキャラ - 二次元✖️三次元・キャラ溶け込みツール">
+<meta property="og:description" content="二次元キャラクターを三次元の背景写真へ、光・影・色を整えて自然に溶け込ませ、ブラウザ内だけで高画質画像として保存・共有できる無料ツールです。">
 <meta property="og:url" content="https://4407.jp/app/mazechara/">
 <meta property="og:image" content="https://4407.jp/app/mazechara/ogp.png">
 <meta property="og:image:secure_url" content="https://4407.jp/app/mazechara/ogp.png">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="まぜキャラ — 二次元 ✖︎ 三次元 イラスト馴染ませツール">
+<meta property="og:image:alt" content="まぜキャラ — 二次元✖️三次元・キャラ溶け込みツール">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="まぜキャラ - 2次元キャラクター・背景写真 馴染ませツール">
-<meta name="twitter:description" content="2次元キャラクターと背景写真を、光・影・色を整えて自然に馴染ませ、ブラウザ内だけで高画質画像として書き出しできる無料ツールです。">
+<meta name="twitter:title" content="まぜキャラ - 二次元✖️三次元・キャラ溶け込みツール">
+<meta name="twitter:description" content="二次元キャラクターを三次元の背景写真へ、光・影・色を整えて自然に溶け込ませ、ブラウザ内だけで高画質画像として保存・共有できる無料ツールです。">
 <meta name="twitter:image" content="https://4407.jp/app/mazechara/ogp.png">
-<meta name="twitter:image:alt" content="まぜキャラ — 二次元 ✖︎ 三次元 イラスト馴染ませツール">
+<meta name="twitter:image:alt" content="まぜキャラ — 二次元✖️三次元・キャラ溶け込みツール">
 <link rel="manifest" href="manifest.webmanifest">
 <!-- Favicon & App Icons -->
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -1213,7 +1218,8 @@
       flex: 0 0 40vh;
       min-height: 180px;
       max-height: 45vh;
-      padding: 10px;
+      justify-content: flex-start;
+      padding: 52px 10px 10px;
       background: radial-gradient(circle at center, #ffffff 0%, #e2e8f0 100%);
       transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
@@ -1368,7 +1374,17 @@
       padding: 12px 14px 176px;
       gap: 12px;
       scroll-padding-bottom: 176px;
+      scroll-padding-top: 12px;
+      scroll-snap-type: y proximity;
       -webkit-overflow-scrolling: touch;
+    }
+
+    .sidebar-content > .section-item-wrap,
+    .sidebar-content > .auto-match-card,
+    .sidebar-content > .presets-section,
+    .sidebar-content > .accordion-item {
+      scroll-snap-align: start;
+      scroll-snap-stop: normal;
     }
 
     .sidebar-footer {
@@ -1437,11 +1453,16 @@
 
   @media (max-width: 480px) {
     .preview-container {
-      flex: 0 0 36vh;
-      max-height: 40vh;
+      flex: 1 1 auto;
+      min-height: 0;
+      max-height: none;
     }
     canvas {
-      max-height: calc(36vh - 20px);
+      max-height: 100%;
+    }
+    .sidebar {
+      flex: 0 0 clamp(300px, 42dvh, 350px);
+      height: clamp(300px, 42dvh, 350px);
     }
     .presets-grid {
       grid-template-columns: repeat(3, 1fr);
@@ -1455,10 +1476,6 @@
 </style>
 </head>
 <body data-page="index">
-<!-- Google Tag Manager (noscript) -->
-<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-K32QPVZL" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-<!-- End Google Tag Manager (noscript) -->
-
 <!-- トリミングモーダル -->
 <div class="crop-modal" id="cropModal">
   <div class="crop-header">
@@ -1487,7 +1504,7 @@
 
 <!-- プレビューエリア -->
 <main class="preview-container" id="previewContainer">
-  <h1 class="sr-only">まぜキャラ：2次元キャラクターと背景写真の馴染ませツール</h1>
+  <h1 class="sr-only">まぜキャラ：二次元✖️三次元・キャラ溶け込みツール</h1>
   <div class="preview-topbar">
     <div class="preview-toolbar">
       <button class="tool-btn" id="compareBtn" title="長押しまたはクリックで合成前と比較">
@@ -1665,50 +1682,6 @@
       </div>
     </div>
 
-    <!-- 環境光 -->
-    <div class="section-item-wrap">
-      <div class="section-title">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
-        <span>環境光 & ライティング</span>
-      </div>
-      <div class="control-group">
-        <div class="color-picker-row">
-          <div class="color-picker-left">
-            <input type="color" id="shadowColor" value="#1a2530">
-            <span style="font-size:0.8rem; font-weight:700;">環境暗部色</span>
-          </div>
-          <button class="action-btn" id="pickShadowBtn">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m14 7 3 3L8.5 18.5H5.5v-3L14 7z"/><path d="M18 4l2 2-1.5 1.5-2-2L18 4z"/></svg>
-            <span>スポイト</span>
-          </button>
-        </div>
-
-        <div class="color-picker-row">
-          <div class="color-picker-left">
-            <input type="color" id="lightColor" value="#ffeedd">
-            <span style="font-size:0.8rem; font-weight:700;">環境明部色</span>
-          </div>
-          <button class="action-btn" id="pickLightBtn">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m14 7 3 3L8.5 18.5H5.5v-3L14 7z"/><path d="M18 4l2 2-1.5 1.5-2-2L18 4z"/></svg>
-            <span>スポイト</span>
-          </button>
-        </div>
-
-        <div class="param-row">
-          <div class="param-label"><span>環境光（乗算）</span><span id="multiplyOpacityVal" class="param-value">50%</span></div>
-          <input type="range" id="multiplyOpacity" min="0" max="100" value="50">
-        </div>
-        <div class="param-row">
-          <div class="param-label"><span>光感・鮮やかさ（オーバーレイ）</span><span id="overlayOpacityVal" class="param-value">40%</span></div>
-          <input type="range" id="overlayOpacity" min="0" max="100" value="40">
-        </div>
-        <div class="param-row">
-          <div class="param-label"><span>光源の向き</span><span id="lightAngleVal" class="param-value">-45°</span></div>
-          <input type="range" id="lightAngle" min="-180" max="180" value="-45">
-        </div>
-      </div>
-    </div>
-
     <!-- 落ち影 -->
     <div class="section-item-wrap">
       <div class="section-title">
@@ -1749,6 +1722,50 @@
         <div class="param-row">
           <div class="param-label"><span>影の歪み角度</span><span id="shadowWaveAngleVal" class="param-value">0°</span></div>
           <input type="range" id="shadowWaveAngle" min="-180" max="180" value="0">
+        </div>
+      </div>
+    </div>
+
+    <!-- 環境光 -->
+    <div class="section-item-wrap">
+      <div class="section-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+        <span>環境光 & ライティング</span>
+      </div>
+      <div class="control-group">
+        <div class="color-picker-row">
+          <div class="color-picker-left">
+            <input type="color" id="shadowColor" value="#1a2530">
+            <span style="font-size:0.8rem; font-weight:700;">環境暗部色</span>
+          </div>
+          <button class="action-btn" id="pickShadowBtn">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m14 7 3 3L8.5 18.5H5.5v-3L14 7z"/><path d="M18 4l2 2-1.5 1.5-2-2L18 4z"/></svg>
+            <span>スポイト</span>
+          </button>
+        </div>
+
+        <div class="color-picker-row">
+          <div class="color-picker-left">
+            <input type="color" id="lightColor" value="#ffeedd">
+            <span style="font-size:0.8rem; font-weight:700;">環境明部色</span>
+          </div>
+          <button class="action-btn" id="pickLightBtn">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m14 7 3 3L8.5 18.5H5.5v-3L14 7z"/><path d="M18 4l2 2-1.5 1.5-2-2L18 4z"/></svg>
+            <span>スポイト</span>
+          </button>
+        </div>
+
+        <div class="param-row">
+          <div class="param-label"><span>環境光（乗算）</span><span id="multiplyOpacityVal" class="param-value">50%</span></div>
+          <input type="range" id="multiplyOpacity" min="0" max="100" value="50">
+        </div>
+        <div class="param-row">
+          <div class="param-label"><span>光感・鮮やかさ（オーバーレイ）</span><span id="overlayOpacityVal" class="param-value">40%</span></div>
+          <input type="range" id="overlayOpacity" min="0" max="100" value="40">
+        </div>
+        <div class="param-row">
+          <div class="param-label"><span>光源の向き</span><span id="lightAngleVal" class="param-value">-45°</span></div>
+          <input type="range" id="lightAngle" min="-180" max="180" value="-45">
         </div>
       </div>
     </div>
@@ -1861,12 +1878,12 @@
     </div>
 
     <!-- ============================================
-         PRO MODE (詳細なじませ機能 アコーディオン)
+         PRO MODE (詳細溶け込み機能 アコーディオン)
     ============================================ -->
     <div class="accordion-item" id="accordionPro">
       <div class="accordion-header">
         <div class="accordion-title-wrap">
-          <span class="accordion-title-text">詳細なじませ</span>
+          <span class="accordion-title-text">詳細溶け込み</span>
         </div>
         <svg class="accordion-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
       </div>
@@ -2548,7 +2565,7 @@
     setParamVal('multiplyOpacity', calculatedMultiply);
     setParamVal('overlayOpacity', calculatedOverlay);
 
-    // 詳細なじませのトグルをONに
+    // 詳細溶け込みのトグルをONに
     document.getElementById('gradingToggle').checked = true;
     document.getElementById('subColorGrading').classList.add('open');
     document.getElementById('wrapToggle').checked = true;
@@ -4580,7 +4597,7 @@
       const shareData = {
         files: [file],
         title: 'まぜキャラ',
-        text: 'まぜキャラで作りました\n#まぜキャラ\nhttps://4407.jp/app/mazechara/'
+        text: 'まぜキャラで作りました\n#まぜキャラ #イラスト溶け込み\nhttps://4407.jp/app/mazechara/'
       };
 
       if (navigator.share && navigator.canShare?.({ files: [file] })) {
