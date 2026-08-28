@@ -2947,6 +2947,10 @@
   function getNoisePattern(width, height, scale) {
     const nw = Math.max(64, Math.round(width / (scale || 1.5)));
     const nh = Math.max(64, Math.round(height / (scale || 1.5)));
+    const cacheKey = `${nw}x${nh}`;
+    const cachedPattern = noisePatternCache.get(cacheKey);
+    if (cachedPattern) return cachedPattern;
+
     const nCanvas = document.createElement('canvas');
     nCanvas.width = nw;
     nCanvas.height = nh;
@@ -2962,6 +2966,12 @@
       data[i + 3] = 255;
     }
     nCtx.putImageData(imgData, 0, 0);
+
+    // サイズ変更を繰り返してもメモリが増え続けないよう、直近8種類だけ保持する。
+    if (noisePatternCache.size >= 8) {
+      noisePatternCache.delete(noisePatternCache.keys().next().value);
+    }
+    noisePatternCache.set(cacheKey, nCanvas);
     return nCanvas;
   }
 
