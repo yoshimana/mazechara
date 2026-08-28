@@ -295,6 +295,97 @@
       line-height: 1.6;
     }
 
+    /* 実画面つき詳細ガイド */
+    .detail-guide-list {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .detail-guide-item {
+      display: grid;
+      grid-template-columns: minmax(250px, 0.9fr) minmax(280px, 1.1fr);
+      gap: 20px;
+      align-items: start;
+      padding: 18px;
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+    }
+
+    .manual-shot-stack {
+      display: grid;
+      gap: 10px;
+    }
+
+    .manual-shot-link {
+      display: block;
+      overflow: hidden;
+      border: 1px solid #dbe3ef;
+      border-radius: 10px;
+      background: #ffffff;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .manual-shot {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .manual-shot.tall {
+      max-height: 430px;
+      object-fit: cover;
+      object-position: top;
+    }
+
+    .shot-caption {
+      margin-top: 6px;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      text-align: center;
+    }
+
+    .detail-guide-title {
+      margin-bottom: 8px;
+      font-size: 1rem;
+      font-weight: 900;
+      color: var(--text-main);
+    }
+
+    .detail-guide-group-title {
+      margin: 4px 0 -4px;
+      padding: 2px 4px;
+      color: var(--text-main);
+      font-size: 1.05rem;
+      font-weight: 900;
+    }
+
+    .detail-guide-text {
+      margin-bottom: 10px;
+      color: var(--text-muted);
+      font-size: 0.88rem;
+    }
+
+    .detail-points {
+      padding-left: 1.2em;
+      color: var(--text-muted);
+      font-size: 0.84rem;
+    }
+
+    .detail-points li + li { margin-top: 5px; }
+
+    .detail-note {
+      margin-top: 10px;
+      padding: 9px 11px;
+      background: #eaf3ff;
+      border-left: 3px solid #3b82f6;
+      border-radius: 6px;
+      color: #1e4f91;
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+
     /* フッター */
     .footer {
       background: #ffffff;
@@ -338,6 +429,10 @@
     }
 
     @media (max-width: 600px) {
+      .detail-guide-item {
+        grid-template-columns: 1fr;
+        padding: 14px;
+      }
       .card-title {
         font-size: 1.1rem;
       }
@@ -425,7 +520,7 @@
           <div class="step-num">1</div>
           <div class="step-content">
             <div class="step-title">背景写真とキャラクター画像をアップロード</div>
-            <div class="step-text">背景写真と、背景が透明なキャラクター画像を読み込みます。<br>最大4,800万画素・50MBまで対応し、高解像度画像は端末内で編集用の解像度に自動調整されます。<br>読み込み後はトリミング画面が開き、キャラクターPNGの透明な余白は自動でカットされます。</div>
+            <div class="step-text">背景写真と、背景が透明なキャラクター画像を読み込みます。<br>最大4,800万画素・50MBまで対応し、高解像度画像は端末内で編集用の解像度に自動調整されます。<br>読み込み後はトリミング画面が開き、キャラクターPNGの透明な余白は自動でカットされます。<br><br>キャラクター画像では、ヘッダーの「ゴミ除去」で周囲の孤立した文字・記号・小さな要素を除去できます。<br>「除去サイズ」を上げるほど、大きな孤立要素やキャラに近い線まで除去されます。<br>100％では強く除去されるため、必要な髪飾りやエフェクトまで消えていないか確認してください。<br>「ゴミ除去」をもう一度押すと、除去前の状態へ戻せます。</div>
           </div>
         </div>
         <div class="step-item">
@@ -555,6 +650,218 @@
         </div>
       </div>
     </section>
+
+    <!-- 4. 実画面つき詳細ガイド -->
+    <section class="doc-card">
+      <h2 class="card-title">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 9h8M8 13h5M8 17h3"/></svg>
+        機能別 詳細ガイド
+      </h2>
+      <div class="detail-guide-list">
+        <article class="detail-guide-item">
+          <div class="manual-shot-stack">
+            <a class="manual-shot-link" href="manual-assets/upload.png" target="_blank"><img class="manual-shot" src="manual-assets/upload.png" alt="背景写真とキャラクター画像のアップロード画面"></a>
+            <a class="manual-shot-link" href="manual-assets/crop-cleanup-active.png" target="_blank"><img class="manual-shot" src="manual-assets/crop-cleanup-active.png" alt="ゴミ除去を有効にした状態と除去サイズスライダー"></a>
+          </div>
+          <div>
+            <h3 class="detail-guide-title">1. 画像の読み込み・トリミング・ゴミ除去</h3>
+            <p class="detail-guide-text">背景写真と透過キャラクター画像を読み込み、使用範囲を決めます。</p>
+            <ul class="detail-points">
+              <li>背景写真はJPEG・PNG・WebP、キャラクターは透過PNGがおすすめです。</li>
+              <li>「ゴミ除去」を押すと「除去サイズ」が表示されます。</li>
+              <li>数値を上げるほど、大きくてキャラに近い孤立要素まで除去します。</li>
+              <li>ボタンをもう一度押すと元画像へ戻ります。</li>
+            </ul>
+            <p class="detail-note">100％は強力です。必要な髪飾り・武器・エフェクトが残っているか確認してください。</p>
+          </div>
+        </article>
+
+        <article class="detail-guide-item">
+          <div class="manual-shot-stack">
+            <a class="manual-shot-link" href="manual-assets/auto-match.png" target="_blank"><img class="manual-shot" src="manual-assets/auto-match.png" alt="背景から自動適応する自動マッチボタン"></a>
+            <a class="manual-shot-link" href="manual-assets/presets.png" target="_blank"><img class="manual-shot" src="manual-assets/presets.png" alt="晴天や夜景などのクイックプリセット"></a>
+          </div>
+          <div>
+            <h3 class="detail-guide-title">2. 自動マッチとクイックプリセット</h3>
+            <p class="detail-guide-text">背景の明暗・色温度・光の傾向から、キャラクターの光と影をまとめて調整します。</p>
+            <ul class="detail-points">
+              <li>最初に「自動マッチ」を押し、全体の基準を作ります。</li>
+              <li>雰囲気を変えたい場合は「晴天」「夕暮れ」「夜景」などを選びます。</li>
+              <li>プリセット後も、各スライダーで細かく調整できます。</li>
+            </ul>
+            <p class="detail-note">自動判定は目安です。影の方向や濃さが合わない場合は手動で調整してください。</p>
+          </div>
+        </article>
+
+        <article class="detail-guide-item">
+          <div class="manual-shot-stack">
+            <a class="manual-shot-link" href="manual-assets/preview-tools.png" target="_blank"><img class="manual-shot" src="manual-assets/preview-tools.png" alt="プレビューのズーム、リセット、オートフィット、キャラクターロック"></a>
+            <a class="manual-shot-link" href="manual-assets/preview-toolbar.png" target="_blank"><img class="manual-shot" src="manual-assets/preview-toolbar.png" alt="Before / After、左右反転、マニュアルの各ボタン"></a>
+          </div>
+          <div>
+            <h3 class="detail-guide-title">3. キャラクター配置とプレビュー操作</h3>
+            <p class="detail-guide-text">キャラクター自体の配置と、編集画面の見え方は別々に操作できます。</p>
+            <ul class="detail-points">
+              <li>「サイズ」「位置X」「位置Y」は完成画像内のキャラクターを変更します。</li>
+              <li>下部の青いスライダーはプレビュー表示だけを拡大・縮小します。</li>
+              <li>四隅のオートフィットボタンは、横を背景中央、縦をキャラ中央に合わせます。</li>
+              <li>鍵ボタンはキャラクターの移動とサイズ変更だけをロックします。</li>
+            </ul>
+          </div>
+        </article>
+
+        <article class="detail-guide-item">
+          <div class="manual-shot-stack">
+            <a class="manual-shot-link" href="manual-assets/cast-shadow.png" target="_blank"><img class="manual-shot" src="manual-assets/cast-shadow.png" alt="落ち影の方向、長さ、遠近感、濃さ、ぼかし、歪み設定"></a>
+          </div>
+          <div>
+            <h3 class="detail-guide-title">4. 落ち影</h3>
+            <p class="detail-guide-text">足元を基準に、地面へ伸びる影の方向と形を作ります。</p>
+            <ul class="detail-points">
+              <li>「影の傾き」は左0°・奥90°・右180°・手前270°です。</li>
+              <li>「影の長さ」で足元から先端までの距離を調整します。</li>
+              <li>「影の遠近感」は奥側を細く、手前側を広く見せる量です。</li>
+              <li>「影のぼかし」は柔らかさ、「影の濃さ」は透明度を調整します。</li>
+              <li>歪みは地面の凹凸や揺らぎを表現するときだけ少量使います。</li>
+            </ul>
+          </div>
+        </article>
+
+        <article class="detail-guide-item">
+          <div class="manual-shot-stack">
+            <a class="manual-shot-link" href="manual-assets/lighting.png" target="_blank"><img class="manual-shot" src="manual-assets/lighting.png" alt="環境光の色、光の強さ、コントラスト、光源方向の設定"></a>
+          </div>
+          <div>
+            <h3 class="detail-guide-title">5. 環境光</h3>
+            <p class="detail-guide-text">背景の色と光をキャラクターへ反映します。</p>
+            <ul class="detail-points">
+              <li>環境暗部色・環境明部色は、背景の影と光に近い色を選びます。</li>
+              <li>「光の強さ」は背景光の影響量、「コントラスト」は明暗差を調整します。</li>
+              <li>「光源の向き」はリムライトなどの方向にも影響します。</li>
+            </ul>
+          </div>
+        </article>
+
+        <article class="detail-guide-item">
+          <div class="manual-shot-stack">
+            <a class="manual-shot-link" href="manual-assets/contact-shadow.png" target="_blank"><img class="manual-shot" src="manual-assets/contact-shadow.png" alt="キャラクターの足元に置く接地影の設定"></a>
+          </div>
+          <div>
+            <h3 class="detail-guide-title">6. 接地影</h3>
+            <p class="detail-guide-text">キャラクターの足元へ短い影を置き、浮遊感を抑えます。</p>
+            <ul class="detail-points">
+              <li>影の濃さとぼかしで、地面との接触感を調整します。</li>
+              <li>影の位置は左右、影のサイズは足元に合う広さへ調整します。</li>
+              <li>濃くしすぎず、足元へ薄く置くと自然です。</li>
+            </ul>
+          </div>
+        </article>
+
+        <article class="detail-guide-item">
+          <div class="manual-shot-stack">
+            <a class="manual-shot-link" href="manual-assets/spotlight.png" target="_blank"><img class="manual-shot" src="manual-assets/spotlight.png" alt="スポットライトの位置、前後、濃さ、サイズ、ぼかし、角度設定"></a>
+          </div>
+          <div>
+            <h3 class="detail-guide-title">7. スポットライト</h3>
+            <p class="detail-guide-text">任意の位置に色付きの光を置き、キャラクターの前後を切り替えられます。</p>
+            <ul class="detail-points">
+              <li>「位置を指定」を押し、プレビュー上をドラッグして配置します。</li>
+              <li>スポットライト設定外を操作すると、その位置で自動的に決定されます。</li>
+              <li>「キャラの後ろ」は背景光、「キャラの前」は前景の光として使えます。</li>
+              <li>ぼかしを大きく、濃さを控えめにすると自然です。</li>
+            </ul>
+          </div>
+        </article>
+
+        <article class="detail-guide-item">
+          <div class="manual-shot-stack">
+            <a class="manual-shot-link" href="manual-assets/background-blur.png" target="_blank"><img class="manual-shot" src="manual-assets/background-blur.png" alt="背景ぼけの量、境界位置、滑らかさ設定"></a>
+          </div>
+          <div>
+            <h3 class="detail-guide-title">8. 背景ぼけ</h3>
+            <p class="detail-guide-text">背景だけをぼかし、キャラクターへピントが合った写真らしい奥行きを作ります。</p>
+            <ul class="detail-points">
+              <li>「ぼかし量」は背景全体のぼけの強さです。</li>
+              <li>「境界位置」で手前と奥の切り替わる高さを決めます。</li>
+              <li>「ボケの滑らかさ」を上げると境界が緩やかになります。</li>
+            </ul>
+          </div>
+        </article>
+
+        <h3 class="detail-guide-group-title">9. 詳細設定</h3>
+
+        <article class="detail-guide-item">
+          <div class="manual-shot-stack">
+            <a class="manual-shot-link" href="manual-assets/advanced-tone.png" target="_blank"><img class="manual-shot" src="manual-assets/advanced-tone.png" alt="詳細設定の色調・トーン補正"></a>
+          </div>
+          <div>
+            <h3 class="detail-guide-title">9-1. 色調・トーン補正</h3>
+            <p class="detail-guide-text">キャラクターと背景の明るさや色味を個別に整えます。</p>
+            <ul class="detail-points">
+              <li>「キャラクター調整」と「背景写真調整」を切り替えて編集します。</li>
+              <li>明るさ・コントラスト・彩度・色温度を背景に近づけます。</li>
+            </ul>
+          </div>
+        </article>
+
+        <article class="detail-guide-item">
+          <div class="manual-shot-stack">
+            <a class="manual-shot-link" href="manual-assets/advanced-rim.png" target="_blank"><img class="manual-shot" src="manual-assets/advanced-rim.png" alt="詳細設定のリムライト"></a>
+          </div>
+          <div>
+            <h3 class="detail-guide-title">9-2. リムライト</h3>
+            <p class="detail-guide-text">光源側の輪郭へ細い光を加え、背景光とのつながりを作ります。</p>
+            <ul class="detail-points">
+              <li>リム光強度で明るさ、エッジの太さで光る範囲を調整します。</li>
+              <li>光のぼかしを上げると輪郭光が柔らかくなります。</li>
+            </ul>
+          </div>
+        </article>
+
+        <article class="detail-guide-item">
+          <div class="manual-shot-stack">
+            <a class="manual-shot-link" href="manual-assets/advanced-wrap.png" target="_blank"><img class="manual-shot" src="manual-assets/advanced-wrap.png" alt="詳細設定のライトラップ"></a>
+          </div>
+          <div>
+            <h3 class="detail-guide-title">9-3. ライトラップ</h3>
+            <p class="detail-guide-text">背景の明るい色をキャラクターの輪郭へ回り込ませます。</p>
+            <ul class="detail-points">
+              <li>回り込み幅で、背景色が入る輪郭の広さを調整します。</li>
+              <li>明度閾値を上げるほど、より明るい背景だけが反映されます。</li>
+            </ul>
+          </div>
+        </article>
+
+        <article class="detail-guide-item">
+          <div class="manual-shot-stack">
+            <a class="manual-shot-link" href="manual-assets/advanced-grain.png" target="_blank"><img class="manual-shot" src="manual-assets/advanced-grain.png" alt="詳細設定のフィルムグレイン"></a>
+          </div>
+          <div>
+            <h3 class="detail-guide-title">9-4. フィルムグレイン</h3>
+            <p class="detail-guide-text">細かな粒子を加え、イラストと背景写真の質感差を小さくします。</p>
+            <ul class="detail-points">
+              <li>全体・キャラ・背景から適用対象を選べます。</li>
+              <li>グレイン強度と粒子の粗さは少量ずつ調整します。</li>
+            </ul>
+          </div>
+        </article>
+
+        <article class="detail-guide-item">
+          <div class="manual-shot-stack">
+            <a class="manual-shot-link" href="manual-assets/advanced-vignette.png" target="_blank"><img class="manual-shot" src="manual-assets/advanced-vignette.png" alt="詳細設定のビネット効果"></a>
+          </div>
+          <div>
+            <h3 class="detail-guide-title">9-5. ビネット効果</h3>
+            <p class="detail-guide-text">画面周辺の明るさを変え、視線を中央へ集めます。</p>
+            <ul class="detail-points">
+              <li>周辺光量は暗くするだけでなく、明るくすることもできます。</li>
+              <li>効果範囲と境界のぼかしで自然な広がりに整えます。</li>
+            </ul>
+          </div>
+        </article>
+      </div>
+    </section>
+
   </main>
 
   <!-- フッター -->

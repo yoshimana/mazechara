@@ -168,7 +168,7 @@
     flex-shrink: 0;
   }
   .zoom-control-wrap input[type="range"] {
-    width: 65px;
+    width: 85px;
     height: 5px;
     accent-color: #3b82f6;
     cursor: pointer;
@@ -195,6 +195,32 @@
   .zoom-reset-btn:hover {
     color: var(--accent);
   }
+  .zoom-fit-btn {
+    color: #3b82f6;
+  }
+  .zoom-fit-btn:hover {
+    color: #1d4ed8;
+    background: #eaf3ff;
+  }
+  .chara-lock-btn {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    background: rgba(255, 255, 255, 0.92);
+    border: 1.5px solid var(--border);
+    border-radius: 50%;
+    color: var(--text-muted);
+    box-shadow: var(--shadow-soft);
+    pointer-events: auto;
+  }
+  .chara-lock-btn:hover { color: #3b82f6; border-color: #93c5fd; }
+  .chara-lock-btn.active { color: #ffffff; background: #3b82f6; border-color: #3b82f6; }
+  .chara-lock-btn .icon-locked { display: none; }
+  .chara-lock-btn.active .icon-unlocked { display: none; }
+  .chara-lock-btn.active .icon-locked { display: block; }
+  .chara-lock-btn svg { width: 14px; height: 14px; }
+  .preview-container.chara-locked canvas { cursor: default; }
+  .mobile-chara-scale-control.locked { opacity: 0.45; pointer-events: none; }
   .zoom-reset-btn svg {
     width: 12px;
     height: 12px;
@@ -209,6 +235,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    gap: 6px;
     pointer-events: none;
     z-index: 15;
   }
@@ -681,6 +708,12 @@
     flex-direction: column;
     gap: 4px;
   }
+  .control-separator {
+    height: 1px;
+    margin: 1px 0;
+    background: var(--border);
+    flex-shrink: 0;
+  }
   .param-label {
     display: flex;
     justify-content: space-between;
@@ -830,6 +863,11 @@
   .sub-accordion-item.open {
     border-color: var(--secondary);
   }
+  #subColorGrading { order: 1; }
+  #subRim { order: 2; }
+  #subWrap { order: 3; }
+  #subGrain { order: 4; }
+  #subVignette { order: 5; }
   .sub-accordion-header {
     display: flex;
     justify-content: space-between;
@@ -1125,6 +1163,34 @@
     border-color: var(--accent);
     color: var(--accent);
   }
+  .cleanup-btn.active {
+    border-color: #3b82f6;
+    background: #eaf3ff;
+    color: #2563eb;
+  }
+  .cleanup-control {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 10px;
+    background: #f4f8ff;
+    border: 1px solid #bfdbfe;
+    border-radius: var(--radius-sm);
+    color: var(--text-sub);
+    font-size: 0.76rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .cleanup-control.active { display: flex; }
+  .cleanup-control input[type="range"] {
+    width: 110px;
+    accent-color: #3b82f6;
+  }
+  .cleanup-value {
+    min-width: 34px;
+    color: #2563eb;
+    text-align: right;
+  }
   .crop-body {
     flex: 1;
     position: relative;
@@ -1221,7 +1287,7 @@
       justify-content: flex-start;
       padding: 52px 10px 10px;
       background: radial-gradient(circle at center, #ffffff 0%, #e2e8f0 100%);
-      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      transition: none;
     }
 
     /* パネル折りたたみ時：縦長写真も画面いっぱいに広く表示 */
@@ -1229,10 +1295,6 @@
       flex: 1 !important;
       max-height: calc(100dvh - 54px) !important;
       height: calc(100dvh - 54px) !important;
-    }
-
-    body.panel-collapsed canvas {
-      max-height: calc(100dvh - 84px) !important;
     }
 
     .preview-topbar {
@@ -1263,7 +1325,7 @@
       gap: 4px;
     }
     .zoom-control-wrap input[type="range"] {
-      width: 50px;
+      width: 70px;
     }
     #viewZoomVal {
       font-size: 0.68rem;
@@ -1326,7 +1388,8 @@
     }
 
     canvas {
-      max-height: calc(40vh - 24px);
+      /* 上52px・下10pxの余白とCanvas枠4pxを除いた固定表示高。 */
+      max-height: calc(40vh - 66px);
     }
 
     .compare-badge {
@@ -1345,7 +1408,10 @@
       border-left: none;
       border-top: 1.5px solid var(--border);
       box-shadow: 0 -6px 20px rgba(0,0,0,0.06);
-      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      transition: flex-basis 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+                  height 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+                  min-height 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+                  box-shadow 0.2s ease;
     }
 
     /* パネル折りたたみ時：下部にバーのみ残す */
@@ -1458,7 +1524,8 @@
       max-height: none;
     }
     canvas {
-      max-height: 100%;
+      /* パネル開閉でプレビュー領域が伸びても、Canvasの表示サイズは変えない。 */
+      max-height: calc(100dvh - clamp(300px, 42dvh, 350px) - 66px);
     }
     .sidebar {
       flex: 0 0 clamp(300px, 42dvh, 350px);
@@ -1489,6 +1556,12 @@
         <button class="aspect-btn" data-aspect="3:2">3:2</button>
       </div>
       <button class="orientation-btn" id="toggleOrientationBtn">縦 / 横</button>
+      <button class="orientation-btn cleanup-btn" id="cleanupBtn" type="button">ゴミ除去</button>
+      <label class="cleanup-control" id="cleanupControl">
+        <span>除去サイズ</span>
+        <input type="range" id="cleanupThreshold" min="0" max="100" value="20" step="1">
+        <span class="cleanup-value" id="cleanupThresholdVal">20%</span>
+      </label>
     </div>
   </div>
   <div class="crop-body" id="cropBody">
@@ -1497,7 +1570,7 @@
     </div>
   </div>
   <div class="crop-footer">
-    <button class="btn-cancel" id="cropCancelBtn">スキップ</button>
+    <button class="btn-cancel" id="cropCancelBtn">キャンセル</button>
     <button class="btn-apply" id="cropApplyBtn">トリミングを適用</button>
   </div>
 </div>
@@ -1556,12 +1629,21 @@
   <div class="preview-bottombar">
     <div class="zoom-control-wrap" title="プレビュー表示ズーム">
       <svg class="zoom-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/><path d="M11 8v6"/><path d="M8 11h6"/></svg>
-      <input type="range" id="viewZoom" min="50" max="250" value="100" aria-label="プレビュー表示ズーム">
+      <input type="range" id="viewZoom" min="50" max="500" value="100" aria-label="プレビュー表示ズーム">
       <span id="viewZoomVal">100%</span>
       <button class="zoom-reset-btn" id="zoomResetBtn" title="ズーム・位置リセット (100%)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
       </button>
+      <button class="zoom-reset-btn zoom-fit-btn" id="zoomFitBtn" title="キャラクターを中心に幅いっぱいで表示">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/><path d="M7 12h10"/></svg>
+        <span class="sr-only">オートフィット</span>
+      </button>
     </div>
+    <button class="zoom-reset-btn chara-lock-btn" id="charaLockBtn" type="button" aria-pressed="false" title="キャラクターの移動とサイズ変更をロック">
+      <svg class="icon-unlocked" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="11" x="5" y="11" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.6-1.8"/></svg>
+      <svg class="icon-locked" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="11" x="5" y="11" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+      <span class="sr-only" id="charaLockLabel">キャラクターをロック</span>
+    </button>
     <span class="view-pan-hint">Space+ドラッグで表示を移動</span>
   </div>
 </main>
@@ -1606,7 +1688,7 @@
   
   <div class="sidebar-content">
     <!-- 画像素材 -->
-    <div class="section-item-wrap">
+    <div class="section-item-wrap" id="uploadSection">
       <div class="section-title">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
         <span>画像素材のアップロード</span>
@@ -1630,7 +1712,7 @@
     </div>
 
     <!-- 背景自動マッチングカード -->
-    <div class="auto-match-card">
+    <div class="auto-match-card" id="autoMatchSection">
       <div class="auto-match-info">
         <div class="auto-match-title">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3L12 3z"/></svg>
@@ -1645,7 +1727,7 @@
     </div>
 
     <!-- シチュエーション・プリセット -->
-    <div class="presets-section">
+    <div class="presets-section" id="presetsSection">
       <div class="section-title">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
         <span>クイックプリセット</span>
@@ -1661,7 +1743,7 @@
     </div>
 
     <!-- キャラクター配置 -->
-    <div class="section-item-wrap">
+    <div class="section-item-wrap" id="placementSection">
       <div class="section-title">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 4.24 4.24"/><path d="m14.83 9.17 4.24-4.24"/><path d="m14.83 14.83 4.24 4.24"/><path d="m9.17 14.83-4.24 4.24"/></svg>
         <span>キャラクター配置</span>
@@ -1683,7 +1765,7 @@
     </div>
 
     <!-- 落ち影 -->
-    <div class="section-item-wrap">
+    <div class="section-item-wrap" id="castShadowSection">
       <div class="section-title">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
         <span>落ち影</span>
@@ -1699,10 +1781,12 @@
             <button class="segment-btn" type="button" id="shadowDirFrontBtn">手前</button>
           </div>
         </div>
+        <div class="control-separator" aria-hidden="true"></div>
         <div class="param-row">
           <div class="param-label"><span>影の長さ</span><span id="shadowLengthVal" class="param-value">83%</span></div>
           <input type="range" id="shadowLength" min="0" max="150" value="83">
         </div>
+        <div class="control-separator" aria-hidden="true"></div>
         <div class="param-row">
           <div class="param-label"><span>影の遠近感</span><span id="shadowPerspectiveVal" class="param-value">50%</span></div>
           <input type="range" id="shadowPerspective" min="0" max="100" value="50">
@@ -1712,9 +1796,10 @@
           <input type="range" id="castShadowOpacity" min="0" max="100" value="50">
         </div>
         <div class="param-row">
-          <div class="param-label"><span>影のぼかし（拡散量）</span><span id="shadowBlurVal" class="param-value">8.0%</span></div>
-          <input type="range" id="shadowBlur" min="0" max="100" value="8" step="0.1">
+          <div class="param-label"><span>影のぼかし（拡散量）</span><span id="shadowBlurVal" class="param-value">26.7%</span></div>
+          <input type="range" id="shadowBlur" min="0" max="100" value="26.7" step="0.1">
         </div>
+        <div class="control-separator" aria-hidden="true"></div>
         <div class="param-row">
           <div class="param-label"><span>影の歪み強度</span><span id="shadowWaveAmpVal" class="param-value">0.0%</span></div>
           <input type="range" id="shadowWaveAmp" min="0" max="100" value="0" step="0.1">
@@ -1727,7 +1812,7 @@
     </div>
 
     <!-- 環境光 -->
-    <div class="section-item-wrap">
+    <div class="section-item-wrap" id="lightingSection">
       <div class="section-title">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
         <span>環境光 & ライティング</span>
@@ -1878,12 +1963,12 @@
     </div>
 
     <!-- ============================================
-         PRO MODE (詳細溶け込み機能 アコーディオン)
+         PRO MODE (詳細設定 アコーディオン)
     ============================================ -->
     <div class="accordion-item" id="accordionPro">
       <div class="accordion-header">
         <div class="accordion-title-wrap">
-          <span class="accordion-title-text">詳細溶け込み</span>
+          <span class="accordion-title-text">詳細設定</span>
         </div>
         <svg class="accordion-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
       </div>
@@ -1949,10 +2034,10 @@
           </div>
         </div>
 
-        <!-- 2. ライトラップ -->
+        <!-- 3. ライトラップ -->
         <div class="sub-accordion-item" id="subWrap">
           <div class="sub-accordion-header">
-            <span>2. ライトラップ (光の回り込み)</span>
+            <span>3. ライトラップ (光の回り込み)</span>
             <label class="switch">
               <input type="checkbox" id="wrapToggle" checked>
               <span class="slider-toggle"></span>
@@ -1970,10 +2055,10 @@
           </div>
         </div>
 
-        <!-- 3. リムライト -->
+        <!-- 2. リムライト -->
         <div class="sub-accordion-item" id="subRim">
           <div class="sub-accordion-header">
-            <span>3. リムライト (輪郭ハイライト)</span>
+            <span>2. リムライト (輪郭ハイライト)</span>
             <label class="switch">
               <input type="checkbox" id="rimToggle" checked>
               <span class="slider-toggle"></span>
@@ -2537,13 +2622,19 @@
       Math.min(150, Math.round(Math.abs(calculatedShadowDepth)))
     );
 
-    // 影の濃さ（明暗比・コントラストが高いほどクッキリ）
-    let calculatedCastOpacity = Math.round(25 + (stdDevLuma / 50) * 35);
-    calculatedCastOpacity = Math.max(20, Math.min(75, calculatedCastOpacity));
+    // 影の濃さは、分割領域の中央50%（第1〜第3四分位）の明暗差から算出する。
+    // 黒い服・車・建物や白飛びなど、局所的な極端値で濃くなりすぎるのを防ぐ。
+    const lowerQuartileLuma = tilePercentile(0.25);
+    const upperQuartileLuma = tilePercentile(0.75);
+    const robustTileContrast = upperQuartileLuma - lowerQuartileLuma;
+    let calculatedCastOpacity = Math.round(24 + robustTileContrast * 0.55);
+    calculatedCastOpacity = Math.max(20, Math.min(60, calculatedCastOpacity));
 
     // 影のぼかし（直射光=シャープ、拡散光=ふんわり）
     let calculatedShadowBlur = Math.round(22 - (stdDevLuma / 50) * 14);
     calculatedShadowBlur = Math.max(4, Math.min(26, calculatedShadowBlur));
+    // 表示上の100%を旧30%相当として再定義する。
+    const calculatedShadowBlurDisplay = Math.round((calculatedShadowBlur / 0.3) * 10) / 10;
 
     // 1. 色温度（Warmth vs Coolness）の推定
     // (R - B) / (R + G + B + 1)
@@ -2597,7 +2688,7 @@
     }
     setParamVal('shadowLength', calculatedShadowLength);
     setParamVal('castShadowOpacity', calculatedCastOpacity);
-    setParamVal('shadowBlur', calculatedShadowBlur);
+    setParamVal('shadowBlur', calculatedShadowBlurDisplay);
 
     // 接地影（足元の影）も自動適応
     setParamVal('contactOpacity', Math.round(calculatedCastOpacity * 0.45));
@@ -2859,8 +2950,15 @@
   const cropTitle = document.getElementById('cropTitle');
   const cropAspectContainer = document.getElementById('cropAspectContainer');
   const toggleOrientationBtn = document.getElementById('toggleOrientationBtn');
+  const cleanupBtn = document.getElementById('cleanupBtn');
+  const cleanupControl = document.getElementById('cleanupControl');
+  const cleanupThreshold = document.getElementById('cleanupThreshold');
+  const cleanupThresholdVal = document.getElementById('cleanupThresholdVal');
 
   let rawLoadedImg = null;
+  let originalCropImg = null;
+  let cleanupAnalysis = null;
+  let cleanupInputTimer = null;
   let cropTargetType = 'bg';
   let currentAspectRatio = 'free';
   let isPortraitOrientation = false;
@@ -2911,8 +3009,160 @@
     };
   }
 
+  // 縮小アルファマスク上で連結成分を解析し、端末メモリを抑えながら孤立要素を判定する。
+  function analyzeCleanupComponents(img) {
+    const maxAnalysisSide = 900;
+    const scale = Math.min(1, maxAnalysisSide / Math.max(img.width, img.height));
+    const width = Math.max(1, Math.round(img.width * scale));
+    const height = Math.max(1, Math.round(img.height * scale));
+    const analysisCanvas = document.createElement('canvas');
+    analysisCanvas.width = width;
+    analysisCanvas.height = height;
+    const analysisCtx = analysisCanvas.getContext('2d', { willReadFrequently: true });
+    analysisCtx.drawImage(img, 0, 0, width, height);
+    const alphaData = analysisCtx.getImageData(0, 0, width, height).data;
+    const labels = new Int32Array(width * height);
+    const queue = new Int32Array(width * height);
+    const components = [];
+    let nextLabel = 0;
+
+    for (let start = 0; start < labels.length; start++) {
+      if (labels[start] || alphaData[start * 4 + 3] <= 8) continue;
+      nextLabel++;
+      let head = 0;
+      let tail = 1;
+      queue[0] = start;
+      labels[start] = nextLabel;
+      let area = 0;
+      let minX = width, minY = height, maxX = 0, maxY = 0;
+
+      while (head < tail) {
+        const index = queue[head++];
+        const x = index % width;
+        const y = Math.floor(index / width);
+        area++;
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+
+        for (let oy = -1; oy <= 1; oy++) {
+          const ny = y + oy;
+          if (ny < 0 || ny >= height) continue;
+          for (let ox = -1; ox <= 1; ox++) {
+            if (ox === 0 && oy === 0) continue;
+            const nx = x + ox;
+            if (nx < 0 || nx >= width) continue;
+            const neighbor = ny * width + nx;
+            if (!labels[neighbor] && alphaData[neighbor * 4 + 3] > 8) {
+              labels[neighbor] = nextLabel;
+              queue[tail++] = neighbor;
+            }
+          }
+        }
+      }
+      components.push({ label: nextLabel, area, minX, minY, maxX, maxY });
+    }
+
+    if (!components.length) return null;
+    const main = components.reduce((largest, item) => item.area > largest.area ? item : largest);
+    // 外接矩形ではなく、メイン成分の実輪郭から各成分までの最短距離を求める。
+    // これにより、キャラの外接矩形内にある離れた文字・記号も正しく孤立要素として扱える。
+    const distanceToMain = new Uint16Array(width * height);
+    distanceToMain.fill(65535);
+    let distanceHead = 0;
+    let distanceTail = 0;
+    for (let i = 0; i < labels.length; i++) {
+      if (labels[i] === main.label) {
+        distanceToMain[i] = 0;
+        queue[distanceTail++] = i;
+      }
+    }
+    while (distanceHead < distanceTail) {
+      const index = queue[distanceHead++];
+      const x = index % width;
+      const y = Math.floor(index / width);
+      const nextDistance = distanceToMain[index] + 1;
+      for (let oy = -1; oy <= 1; oy++) {
+        const ny = y + oy;
+        if (ny < 0 || ny >= height) continue;
+        for (let ox = -1; ox <= 1; ox++) {
+          if (ox === 0 && oy === 0) continue;
+          const nx = x + ox;
+          if (nx < 0 || nx >= width) continue;
+          const neighbor = ny * width + nx;
+          if (distanceToMain[neighbor] === 65535) {
+            distanceToMain[neighbor] = nextDistance;
+            queue[distanceTail++] = neighbor;
+          }
+        }
+      }
+    }
+    const componentByLabel = new Map(components.map((item) => [item.label, item]));
+    components.forEach((item) => { item.distanceToMain = item === main ? 0 : Infinity; });
+    for (let i = 0; i < labels.length; i++) {
+      const item = componentByLabel.get(labels[i]);
+      if (item && distanceToMain[i] < item.distanceToMain) item.distanceToMain = distanceToMain[i];
+    }
+    return { analysisCanvas, width, height, labels, components, main };
+  }
+
+  function createCleanedCharacterImage(thresholdValue) {
+    if (!originalCropImg || !cleanupAnalysis || thresholdValue <= 0) return originalCropImg;
+    const { width, height, labels, components, main } = cleanupAnalysis;
+    // 低〜中域は小さなゴミ向けに穏やかにし、100%では本体の約12%までの孤立スタンプを対象にする。
+    const normalizedThreshold = thresholdValue / 100;
+    const removalLimit = main.area * (0.001 + Math.pow(normalizedThreshold, 2.6) * 0.12);
+    // 通常域の近接パーツ保護は維持し、100%付近だけ保護距離を強く狭めて近くの効果線も除去する。
+    const protectionRatio = 0.015 - Math.pow(normalizedThreshold, 3) * 0.012;
+    const protectionDistance = Math.max(2, Math.round(Math.hypot(main.maxX - main.minX, main.maxY - main.minY) * protectionRatio));
+    const removableLabels = new Set();
+
+    components.forEach((item) => {
+      if (item === main || item.area >= removalLimit) return;
+      if (item.distanceToMain > protectionDistance) removableLabels.add(item.label);
+    });
+
+    if (!removableLabels.size) return originalCropImg;
+    const maskCanvas = document.createElement('canvas');
+    maskCanvas.width = width;
+    maskCanvas.height = height;
+    const maskCtx = maskCanvas.getContext('2d');
+    const mask = maskCtx.createImageData(width, height);
+    for (let i = 0; i < labels.length; i++) {
+      if (labels[i] && !removableLabels.has(labels[i])) {
+        mask.data[i * 4] = 255;
+        mask.data[i * 4 + 1] = 255;
+        mask.data[i * 4 + 2] = 255;
+        mask.data[i * 4 + 3] = 255;
+      }
+    }
+    maskCtx.putImageData(mask, 0, 0);
+
+    const cleanedCanvas = document.createElement('canvas');
+    cleanedCanvas.width = originalCropImg.width;
+    cleanedCanvas.height = originalCropImg.height;
+    const cleanedCtx = cleanedCanvas.getContext('2d');
+    cleanedCtx.drawImage(originalCropImg, 0, 0);
+    cleanedCtx.globalCompositeOperation = 'destination-in';
+    cleanedCtx.imageSmoothingEnabled = false;
+    cleanedCtx.drawImage(maskCanvas, 0, 0, cleanedCanvas.width, cleanedCanvas.height);
+    return cleanedCanvas;
+  }
+
+  function applyCleanupThreshold() {
+    const value = Number(cleanupThreshold.value);
+    cleanupThresholdVal.textContent = `${value}%`;
+    rawLoadedImg = createCleanedCharacterImage(value);
+    const autoBox = getNonTransparentBoundingBox(rawLoadedImg);
+    cropRect = { x: autoBox.x, y: autoBox.y, w: autoBox.w, h: autoBox.h };
+    renderCropCanvas();
+  }
+
   function openCropper(img, type) {
     rawLoadedImg = img;
+    originalCropImg = img;
+    cleanupAnalysis = null;
     cropTargetType = type;
     cropModal.classList.add('active');
     isPortraitOrientation = false;
@@ -2921,10 +3171,17 @@
       cropTitle.textContent = '背景写真のトリミング';
       cropAspectContainer.style.display = 'flex';
       toggleOrientationBtn.style.display = 'block';
+      cleanupBtn.style.display = 'none';
+      cleanupControl.classList.remove('active');
     } else {
       cropTitle.textContent = 'キャラクター画像のトリミング';
       cropAspectContainer.style.display = 'none';
       toggleOrientationBtn.style.display = 'none';
+      cleanupBtn.style.display = 'block';
+      cleanupBtn.classList.remove('active');
+      cleanupControl.classList.remove('active');
+      cleanupThreshold.value = '20';
+      cleanupThresholdVal.textContent = '20%';
       currentAspectRatio = 'free';
     }
 
@@ -2988,6 +3245,33 @@
     isPortraitOrientation = !isPortraitOrientation;
     initCropRect();
     renderCropCanvas();
+  });
+
+  cleanupBtn.addEventListener('click', () => {
+    if (cropTargetType !== 'chara') return;
+    const willEnable = !cleanupBtn.classList.contains('active');
+    cleanupBtn.classList.toggle('active', willEnable);
+    cleanupControl.classList.toggle('active', willEnable);
+    if (!willEnable) {
+      clearTimeout(cleanupInputTimer);
+      cleanupThreshold.value = '0';
+      applyCleanupThreshold();
+      return;
+    }
+    if (!cleanupAnalysis) cleanupAnalysis = analyzeCleanupComponents(originalCropImg);
+    if (Number(cleanupThreshold.value) === 0) cleanupThreshold.value = '20';
+    applyCleanupThreshold();
+  });
+
+  cleanupThreshold.addEventListener('input', () => {
+    cleanupThresholdVal.textContent = `${cleanupThreshold.value}%`;
+    clearTimeout(cleanupInputTimer);
+    // 高解像度PNGでドラッグ中に重いCanvas生成を連続実行しない。
+    cleanupInputTimer = setTimeout(applyCleanupThreshold, 80);
+  });
+  cleanupThreshold.addEventListener('change', () => {
+    clearTimeout(cleanupInputTimer);
+    applyCleanupThreshold();
   });
 
   function getTargetAspect() {
@@ -3181,6 +3465,8 @@
   window.addEventListener('touchcancel', () => { isCropDragging = false; });
 
   document.getElementById('cropApplyBtn').addEventListener('click', () => {
+    clearTimeout(cleanupInputTimer);
+    if (cropTargetType === 'chara' && cleanupBtn.classList.contains('active')) applyCleanupThreshold();
     const cutCanvas = document.createElement('canvas');
     cutCanvas.width = Math.round(cropRect.w);
     cutCanvas.height = Math.round(cropRect.h);
@@ -3207,6 +3493,8 @@
           invalidateChara();
         }
         cropModal.classList.remove('active');
+        originalCropImg = null;
+        cleanupAnalysis = null;
         URL.revokeObjectURL(blobUrl);
         requestRender();
       };
@@ -3215,22 +3503,14 @@
   });
 
   document.getElementById('cropCancelBtn').addEventListener('click', () => {
-    panOffsetX = 0;
-    panOffsetY = 0;
-    updateViewZoom(100);
-    if (cropTargetType === 'bg') {
-      bgImg = rawLoadedImg;
-      canvas.width = bgImg.width;
-      canvas.height = bgImg.height;
-      invalidateBg();
-      applyPreset('standard');
-      showGestureGuideToast();
-    } else {
-      charaImg = rawLoadedImg;
-      invalidateChara();
-    }
+    // 選択した画像を適用せず、現在の編集状態をそのまま維持する。
+    isCropDragging = false;
+    clearTimeout(cleanupInputTimer);
     cropModal.classList.remove('active');
-    requestRender();
+    rawLoadedImg = null;
+    originalCropImg = null;
+    cleanupAnalysis = null;
+    setUploadStatus('');
   });
 
   // 自動マッチボタン
@@ -3443,14 +3723,18 @@
   const pickLightBtn = document.getElementById('pickLightBtn');
   const setSpotPosBtn = document.getElementById('setSpotPosBtn');
 
+  function finishSpotPositionMode() {
+    if (!isSettingSpotPos) return;
+    isSettingSpotPos = false;
+    setSpotPosBtn.textContent = '位置を指定';
+    setSpotPosBtn.classList.remove('active');
+    canvas.classList.remove('spotlight-pos-mode');
+    requestRender();
+  }
+
   function setPipetteMode(mode) {
     pipetteTarget = mode;
-    if (isSettingSpotPos) {
-      isSettingSpotPos = false;
-      setSpotPosBtn.textContent = '位置を指定';
-      setSpotPosBtn.classList.remove('active');
-      canvas.classList.remove('spotlight-pos-mode');
-    }
+    finishSpotPositionMode();
     pickShadowBtn.classList.toggle('active', mode === 'shadow');
     pickLightBtn.classList.toggle('active', mode === 'light');
     canvas.classList.toggle('pipette-mode', mode !== 'none');
@@ -3495,22 +3779,32 @@
 
   // スポットライト位置指定モード
   setSpotPosBtn.addEventListener('click', () => {
-    isSettingSpotPos = !isSettingSpotPos;
     if (isSettingSpotPos) {
-      setSpotPosBtn.textContent = '位置を決定';
-      setSpotPosBtn.classList.add('active');
-      canvas.classList.add('spotlight-pos-mode');
-      pipetteTarget = 'none';
-      pickShadowBtn.classList.remove('active');
-      pickLightBtn.classList.remove('active');
-      canvas.classList.remove('pipette-mode');
-    } else {
-      setSpotPosBtn.textContent = '位置を指定';
-      setSpotPosBtn.classList.remove('active');
-      canvas.classList.remove('spotlight-pos-mode');
+      finishSpotPositionMode();
+      return;
     }
+    isSettingSpotPos = true;
+    setSpotPosBtn.textContent = '位置を決定';
+    setSpotPosBtn.classList.add('active');
+    canvas.classList.add('spotlight-pos-mode');
+    pipetteTarget = 'none';
+    pickShadowBtn.classList.remove('active');
+    pickLightBtn.classList.remove('active');
+    canvas.classList.remove('pipette-mode');
     requestRender();
   });
+
+  function isSpotPositionInteraction(target) {
+    return target instanceof Element && Boolean(target.closest('#accordionSpot, #mainCanvas'));
+  }
+
+  // 位置指定中に別設定へ移った場合は、その直前の位置を確定してから操作を続ける。
+  document.addEventListener('pointerdown', (event) => {
+    if (isSettingSpotPos && !isSpotPositionInteraction(event.target)) finishSpotPositionMode();
+  }, true);
+  document.addEventListener('focusin', (event) => {
+    if (isSettingSpotPos && !isSpotPositionInteraction(event.target)) finishSpotPositionMode();
+  }, true);
 
   // Before / After 比較
   const compareBtn = document.getElementById('compareBtn');
@@ -3541,19 +3835,24 @@
   // プレビュー表示ズーム & 2本指パン移動機能
   const viewZoomInput = document.getElementById('viewZoom');
   const viewZoomVal = document.getElementById('viewZoomVal');
+  const zoomFitBtn = document.getElementById('zoomFitBtn');
   const zoomResetBtn = document.getElementById('zoomResetBtn');
+  const charaLockBtn = document.getElementById('charaLockBtn');
+  const charaLockLabel = document.getElementById('charaLockLabel');
+  const previewContainer = document.getElementById('previewContainer');
   const canvasWrapper = document.getElementById('canvasWrapper');
 
   let currentViewZoom = 100;
   let panOffsetX = 0;
   let panOffsetY = 0;
+  let isCharaLocked = false;
 
   function updateCanvasTransform() {
     canvasWrapper.style.transform = `translate(${panOffsetX}px, ${panOffsetY}px) scale(${currentViewZoom / 100})`;
   }
 
   function updateViewZoom(val) {
-    currentViewZoom = Math.max(50, Math.min(250, parseInt(val, 10)));
+    currentViewZoom = Math.max(50, Math.min(500, parseInt(val, 10)));
     viewZoomInput.value = currentViewZoom;
     viewZoomVal.textContent = currentViewZoom + '%';
     updateCanvasTransform();
@@ -3561,6 +3860,53 @@
 
   viewZoomInput.addEventListener('input', (e) => {
     updateViewZoom(e.target.value);
+  });
+
+  function autoFitPreview() {
+    const previewRect = previewContainer.getBoundingClientRect();
+    const wrapperRect = canvasWrapper.getBoundingClientRect();
+    const currentScale = currentViewZoom / 100;
+    const baseWrapperWidth = wrapperRect.width / currentScale;
+    const previewStyle = getComputedStyle(previewContainer);
+    const horizontalPadding = parseFloat(previewStyle.paddingLeft) + parseFloat(previewStyle.paddingRight);
+    const targetWidth = Math.max(1, previewRect.width - horizontalPadding);
+    const fittedZoom = Math.max(50, Math.min(500, Math.round((targetWidth / baseWrapperWidth) * 100)));
+
+    // 現在の変形前のラッパー中心を求め、横は背景中央・縦はキャラクター中央へパンする。
+    const baseCenterX = (wrapperRect.left + wrapperRect.right) / 2 - panOffsetX;
+    const baseCenterY = (wrapperRect.top + wrapperRect.bottom) / 2 - panOffsetY;
+    let focusX = canvas.width / 2;
+    let focusY = canvas.height / 2;
+    if (charaImg) {
+      const charaScale = parseFloat(charaScaleInput.value) / 100;
+      const charaHeight = canvas.height * 0.75 * charaScale;
+      // 横方向は背景の中央を維持し、縦方向だけキャラクター中央へ合わせる。
+      focusY = canvas.height * (parseFloat(charaYInput.value) / 100) - charaHeight / 2;
+    }
+
+    const displayScaleX = canvas.clientWidth / canvas.width;
+    const displayScaleY = canvas.clientHeight / canvas.height;
+    const focusOffsetX = (focusX - canvas.width / 2) * displayScaleX * (fittedZoom / 100);
+    const focusOffsetY = (focusY - canvas.height / 2) * displayScaleY * (fittedZoom / 100);
+    panOffsetX = previewRect.left + previewRect.width / 2 - baseCenterX - focusOffsetX;
+    panOffsetY = previewRect.top + previewRect.height / 2 - baseCenterY - focusOffsetY;
+    updateViewZoom(fittedZoom);
+  }
+
+  zoomFitBtn.addEventListener('click', autoFitPreview);
+
+  charaLockBtn.addEventListener('click', () => {
+    isCharaLocked = !isCharaLocked;
+    charaLockBtn.classList.toggle('active', isCharaLocked);
+    charaLockBtn.setAttribute('aria-pressed', String(isCharaLocked));
+    previewContainer.classList.toggle('chara-locked', isCharaLocked);
+    document.querySelector('.mobile-chara-scale-control')?.classList.toggle('locked', isCharaLocked);
+    [charaXInput, charaYInput, charaScaleInput, mobileCharaScaleInput].forEach((input) => { input.disabled = isCharaLocked; });
+    const isEnglish = localStorage.getItem('mazechara-language') === 'en';
+    charaLockLabel.textContent = isCharaLocked
+      ? (isEnglish ? 'Unlock character' : 'キャラクターロックを解除')
+      : (isEnglish ? 'Lock character' : 'キャラクターをロック');
+    charaLockBtn.title = isCharaLocked ? 'キャラクターのロックを解除' : 'キャラクターの移動とサイズ変更をロック';
   });
 
   zoomResetBtn.addEventListener('click', () => {
@@ -3648,7 +3994,7 @@
     standard: {
       shadowColor: '#1a2530', lightColor: '#ffeedd', rimColor: '#ffffff',
       multiplyOpacity: 50, overlayOpacity: 40, lightAngle: -45,
-      shadowAngle: 225, shadowLength: 83, shadowPerspective: 50, castShadowOpacity: 50, shadowBlur: 8, shadowWaveAmp: 0,
+      shadowAngle: 225, shadowLength: 83, shadowPerspective: 50, castShadowOpacity: 50, shadowBlur: 26.7, shadowWaveAmp: 0,
       contactOn: false, contactOffsetX: 0, bgBlurOn: false,
       spotOn: false, spotLayer: 'front', spotColor: '#fff5cc', spotOpacity: 30, spotSize: 10, spotBlur: 60, spotAngleX: 0, spotAngleY: 0,
       wrapOn: true, wrapRadius: 30, wrapThreshold: 40,
@@ -3661,7 +4007,7 @@
     sunny: {
       shadowColor: '#2b3a4a', lightColor: '#fff8e7', rimColor: '#ffffff',
       multiplyOpacity: 35, overlayOpacity: 50, lightAngle: -35,
-      shadowAngle: 220, shadowLength: 131, shadowPerspective: 50, castShadowOpacity: 65, shadowBlur: 4, shadowWaveAmp: 4,
+      shadowAngle: 220, shadowLength: 131, shadowPerspective: 50, castShadowOpacity: 65, shadowBlur: 13.3, shadowWaveAmp: 4,
       contactOn: true, contactOpacity: 25, contactBlur: 20, contactOffsetX: 0, contactSize: 20,
       spotOn: false, spotLayer: 'front', spotColor: '#fff9e6', spotOpacity: 35, spotSize: 18, spotBlur: 65, spotAngleX: -15, spotAngleY: 20,
       bgBlurOn: true, bgBlur: 2, dofBoundary: 85, dofFade: 35,
@@ -3675,7 +4021,7 @@
     cloudy: {
       shadowColor: '#282e38', lightColor: '#e2e7f0', rimColor: '#f1f5f9',
       multiplyOpacity: 45, overlayOpacity: 30, lightAngle: -50,
-      shadowAngle: 217, shadowLength: 58, shadowPerspective: 50, castShadowOpacity: 30, shadowBlur: 22, shadowWaveAmp: 0,
+      shadowAngle: 217, shadowLength: 58, shadowPerspective: 50, castShadowOpacity: 30, shadowBlur: 73.3, shadowWaveAmp: 0,
       contactOn: true, contactOpacity: 30, contactBlur: 36, contactOffsetX: 0, contactSize: 25,
       spotOn: false, spotLayer: 'front', spotColor: '#edf2f7', spotOpacity: 25, spotSize: 20, spotBlur: 70, spotAngleX: 0, spotAngleY: 0,
       bgBlurOn: true, bgBlur: 1, dofBoundary: 80, dofFade: 45,
@@ -3689,7 +4035,7 @@
     sunset: {
       shadowColor: '#2c1524', lightColor: '#ff8a50', rimColor: '#ffd166',
       multiplyOpacity: 55, overlayOpacity: 60, lightAngle: -60,
-      shadowAngle: 220, shadowLength: 150, shadowPerspective: 50, castShadowOpacity: 55, shadowBlur: 14, shadowWaveAmp: 0,
+      shadowAngle: 220, shadowLength: 150, shadowPerspective: 50, castShadowOpacity: 55, shadowBlur: 46.7, shadowWaveAmp: 0,
       contactOn: true, contactOpacity: 20, contactBlur: 30, contactOffsetX: 0, contactSize: 25,
       spotOn: false, spotLayer: 'front', spotColor: '#ffb07c', spotOpacity: 45, spotSize: 22, spotBlur: 60, spotAngleX: -25, spotAngleY: -10,
       bgBlurOn: true, bgBlur: 2, dofBoundary: 80, dofFade: 40,
@@ -3703,7 +4049,7 @@
     night: {
       shadowColor: '#0a0d18', lightColor: '#4cc9f0', rimColor: '#7209b7',
       multiplyOpacity: 70, overlayOpacity: 40, lightAngle: 45,
-      shadowAngle: 319, shadowLength: 61, shadowPerspective: 50, castShadowOpacity: 70, shadowBlur: 12, shadowWaveAmp: 0,
+      shadowAngle: 319, shadowLength: 61, shadowPerspective: 50, castShadowOpacity: 70, shadowBlur: 40, shadowWaveAmp: 0,
       contactOn: true, contactOpacity: 35, contactBlur: 40, contactOffsetX: 0, contactSize: 20,
       spotOn: false, spotLayer: 'front', spotColor: '#4cc9f0', spotOpacity: 40, spotSize: 20, spotBlur: 70, spotAngleX: 0, spotAngleY: 0,
       bgBlurOn: true, bgBlur: 2, dofBoundary: 75, dofFade: 30,
@@ -3717,7 +4063,7 @@
     indoor: {
       shadowColor: '#2b231f', lightColor: '#ffe8d6', rimColor: '#fff1e6',
       multiplyOpacity: 40, overlayOpacity: 35, lightAngle: -20,
-      shadowAngle: 224, shadowLength: 50, shadowPerspective: 50, castShadowOpacity: 35, shadowBlur: 18, shadowWaveAmp: 0,
+      shadowAngle: 224, shadowLength: 50, shadowPerspective: 50, castShadowOpacity: 35, shadowBlur: 60, shadowWaveAmp: 0,
       contactOn: true, contactOpacity: 15, contactBlur: 50, contactOffsetX: 0, contactSize: 30,
       spotOn: false, spotLayer: 'front', spotColor: '#ffe8d6', spotOpacity: 30, spotSize: 15, spotBlur: 55, spotAngleX: 10, spotAngleY: -15,
       bgBlurOn: true, bgBlur: 1, dofBoundary: 80, dofFade: 50,
@@ -3842,6 +4188,7 @@
   let initPinchSpotSize = 10;
 
   function updateCharaPos(newXPercent, newYPercent) {
+    if (isCharaLocked) return;
     newXPercent = Math.max(0, Math.min(100, newXPercent));
     newYPercent = Math.max(0, Math.min(100, newYPercent));
     charaXInput.value = newXPercent.toFixed(1);
@@ -3852,6 +4199,7 @@
   }
 
   function updateCharaScale(newScale) {
+    if (isCharaLocked) return;
     newScale = Math.max(10, Math.min(150, newScale));
     charaScaleInput.value = newScale.toFixed(0);
     document.getElementById('charaScaleVal').textContent = charaScaleInput.value + '%';
@@ -3904,7 +4252,7 @@
       return;
     }
 
-    if (e.button !== 0) return;
+    if (e.button !== 0 || (!isSettingSpotPos && isCharaLocked)) return;
     isDragging = true;
     startX = e.clientX;
     startY = e.clientY;
@@ -3917,7 +4265,7 @@
       initSpotY = spotPosY;
       requestRender();
     } else {
-      if (!charaImg) return;
+      if (!charaImg || isCharaLocked) return;
       initCharaX = parseFloat(charaXInput.value);
       initCharaY = parseFloat(charaYInput.value);
     }
@@ -3939,7 +4287,7 @@
     if (isSettingSpotPos) {
       updateSpotPos(initSpotX + deltaXPercent, initSpotY + deltaYPercent);
     } else {
-      if (!charaImg) return;
+      if (!charaImg || isCharaLocked) return;
       updateCharaPos(initCharaX + deltaXPercent, initCharaY + deltaYPercent);
     }
   });
@@ -3977,6 +4325,7 @@
       return;
     }
     if (e.touches.length === 1) {
+      if (!isSettingSpotPos && isCharaLocked) return;
       isDragging = true;
       startX = e.touches[0].clientX;
       startY = e.touches[0].clientY;
@@ -3989,7 +4338,7 @@
         initSpotY = spotPosY;
         requestRender();
       } else {
-        if (!charaImg) return;
+        if (!charaImg || isCharaLocked) return;
         initCharaX = parseFloat(charaXInput.value);
         initCharaY = parseFloat(charaYInput.value);
       }
@@ -4034,7 +4383,7 @@
 
       // 2本指ピンチでのズーム
       const ratio = currentDist / initTouchDist;
-      currentViewZoom = Math.max(50, Math.min(250, Math.round(initZoomLevel * ratio)));
+      currentViewZoom = Math.max(50, Math.min(500, Math.round(initZoomLevel * ratio)));
       viewZoomInput.value = currentViewZoom;
       viewZoomVal.textContent = currentViewZoom + '%';
 
@@ -4208,7 +4557,8 @@
     const shadowPerspective = parseFloat(document.getElementById('shadowPerspective').value) / 100;
     const shadowAngle = parseFloat(document.getElementById('shadowAngle').value);
     const shadowAngleRad = (shadowAngle * Math.PI) / 180;
-    const shadowBlur = parseFloat(document.getElementById('shadowBlur').value);
+    // 表示上の100%を、従来の30%と同じ内部ぼかし量として扱う。
+    const shadowBlur = parseFloat(document.getElementById('shadowBlur').value) * 0.3;
     // 基準解像度（キャラ高720px）に対して1.5倍し、高解像度でも同じ見た目の拡散量を保つ。
     // 極端な高解像度ではメモリ消費を抑えるため、内部ぼかしを240pxに制限する。
     const effectiveShadowBlur = Math.min(
