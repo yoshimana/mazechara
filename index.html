@@ -1003,6 +1003,11 @@
     align-items: center;
     gap: 8px;
   }
+  .color-picker-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
   input[type="color"] {
     -webkit-appearance: none;
     border: 1.5px solid var(--border);
@@ -2011,7 +2016,13 @@
             <input type="color" id="spotColor" value="#fff5cc">
             <span style="font-size:0.8rem; font-weight:700;">ライト色</span>
           </div>
-          <button class="action-btn" id="setSpotPosBtn">位置を指定</button>
+          <div class="color-picker-actions">
+            <button class="action-btn" id="pickSpotBtn">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m14 7 3 3L8.5 18.5H5.5v-3L14 7z"/><path d="M18 4l2 2-1.5 1.5-2-2L18 4z"/></svg>
+              <span>スポイト</span>
+            </button>
+            <button class="action-btn" id="setSpotPosBtn">位置を指定</button>
+          </div>
         </div>
         <div class="param-row">
           <div class="param-label"><span>キャラとの重なり</span></div>
@@ -2178,6 +2189,10 @@
                 <input type="color" id="rimColor" value="#ffffff">
                 <span style="font-size:0.8rem; font-weight:700;">リム光色</span>
               </div>
+              <button class="action-btn" id="pickRimBtn">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m14 7 3 3L8.5 18.5H5.5v-3L14 7z"/><path d="M18 4l2 2-1.5 1.5-2-2L18 4z"/></svg>
+                <span>スポイト</span>
+              </button>
             </div>
             <div class="param-row">
               <div class="param-label"><span>リム光強度</span><span id="rimOpacityVal" class="param-value">40%</span></div>
@@ -3900,6 +3915,8 @@
   // スポイト機能
   const pickShadowBtn = document.getElementById('pickShadowBtn');
   const pickLightBtn = document.getElementById('pickLightBtn');
+  const pickSpotBtn = document.getElementById('pickSpotBtn');
+  const pickRimBtn = document.getElementById('pickRimBtn');
   const setSpotPosBtn = document.getElementById('setSpotPosBtn');
 
   function startSpotPositionMode() {
@@ -3911,6 +3928,8 @@
     pipetteTarget = 'none';
     pickShadowBtn.classList.remove('active');
     pickLightBtn.classList.remove('active');
+    pickSpotBtn.classList.remove('active');
+    pickRimBtn.classList.remove('active');
     canvas.classList.remove('pipette-mode');
     requestRender();
   }
@@ -3929,6 +3948,8 @@
     finishSpotPositionMode();
     pickShadowBtn.classList.toggle('active', mode === 'shadow');
     pickLightBtn.classList.toggle('active', mode === 'light');
+    pickSpotBtn.classList.toggle('active', mode === 'spot');
+    pickRimBtn.classList.toggle('active', mode === 'rim');
     canvas.classList.toggle('pipette-mode', mode !== 'none');
   }
 
@@ -3938,6 +3959,14 @@
 
   pickLightBtn.addEventListener('click', () => {
     setPipetteMode(pipetteTarget === 'light' ? 'none' : 'light');
+  });
+
+  pickSpotBtn.addEventListener('click', () => {
+    setPipetteMode(pipetteTarget === 'spot' ? 'none' : 'spot');
+  });
+
+  pickRimBtn.addEventListener('click', () => {
+    setPipetteMode(pipetteTarget === 'rim' ? 'none' : 'rim');
   });
 
   function sampleColorFromBackground(clientX, clientY) {
@@ -3962,6 +3991,9 @@
       document.getElementById('shadowColor').value = hexColor;
     } else if (pipetteTarget === 'light') {
       document.getElementById('lightColor').value = hexColor;
+    } else if (pipetteTarget === 'spot') {
+      document.getElementById('spotColor').value = hexColor;
+    } else if (pipetteTarget === 'rim') {
       document.getElementById('rimColor').value = hexColor;
     }
 
