@@ -2,12 +2,12 @@
 <html lang="ja">
 <head>
 <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-5LV900JPPB"></script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-4DKT6N0ZE8"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-  gtag('config', 'G-5LV900JPPB');
+  gtag('config', 'G-4DKT6N0ZE8');
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -238,6 +238,10 @@
     gap: 6px;
     pointer-events: none;
     z-index: 15;
+  }
+
+  .preview-quick-match-btn {
+    display: none;
   }
 
   .view-pan-hint {
@@ -1327,6 +1331,19 @@
     .zoom-control-wrap input[type="range"] {
       width: 70px;
     }
+    .zoom-reset-btn {
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      border-radius: 50%;
+      flex: 0 0 40px;
+      touch-action: manipulation;
+    }
+    .zoom-reset-btn svg,
+    .chara-lock-btn svg {
+      width: 17px;
+      height: 17px;
+    }
     #viewZoomVal {
       font-size: 0.68rem;
       min-width: 28px;
@@ -1334,6 +1351,50 @@
 
     .view-pan-hint {
       display: none;
+    }
+
+    .preview-quick-match-btn {
+      position: absolute;
+      left: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 64px;
+      height: 50px;
+      padding: 0 12px;
+      border: 1.5px solid rgba(255, 255, 255, 0.58);
+      border-radius: var(--radius-full);
+      background: linear-gradient(135deg, rgba(255, 133, 161, 0.86) 0%, rgba(255, 107, 139, 0.86) 100%);
+      color: #ffffff;
+      box-shadow: 0 3px 12px rgba(255, 107, 139, 0.28);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      font-size: 0.78rem;
+      font-weight: 800;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transform: translateX(-18px);
+      transition:
+        opacity 0.3s ease,
+        transform 0.42s cubic-bezier(0.22, 1, 0.36, 1),
+        visibility 0s linear 0.42s;
+      touch-action: manipulation;
+    }
+
+    body.panel-collapsed .preview-bottombar {
+      justify-content: flex-end;
+    }
+
+    body.panel-collapsed .preview-quick-match-btn {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+      transform: translateX(0);
+      transition:
+        opacity 0.3s ease 0.34s,
+        transform 0.42s cubic-bezier(0.22, 1, 0.36, 1) 0.34s,
+        visibility 0s linear 0.34s;
     }
 
     .mobile-chara-scale-control {
@@ -1352,16 +1413,26 @@
       background: rgba(255, 255, 255, 0.92);
       box-shadow: var(--shadow-soft);
       opacity: 0;
+      visibility: hidden;
       pointer-events: none;
       transform: translate(60px, -50%);
-      transition: opacity 0.2s ease, transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+      transition:
+        opacity 0.3s ease,
+        transform 0.42s cubic-bezier(0.22, 1, 0.36, 1),
+        visibility 0s linear 0.42s;
+      will-change: opacity, transform;
       touch-action: none;
     }
 
     body.panel-collapsed .mobile-chara-scale-control {
       opacity: 1;
+      visibility: visible;
       pointer-events: auto;
       transform: translateY(-50%);
+      transition:
+        opacity 0.3s ease 0.34s,
+        transform 0.42s cubic-bezier(0.22, 1, 0.36, 1) 0.34s,
+        visibility 0s linear 0.34s;
     }
 
     .mobile-chara-scale-label {
@@ -1547,6 +1618,12 @@
     }
   }
 
+  @media (max-width: 360px) {
+    body.panel-collapsed .preview-quick-match-btn {
+      bottom: 48px;
+    }
+  }
+
   @media (max-width: 480px) {
     .preview-container {
       flex: 1 1 auto;
@@ -1657,6 +1734,7 @@
 
   <!-- プレビュー下部 ズームコントロールバー -->
   <div class="preview-bottombar">
+    <button class="preview-quick-match-btn" id="previewQuickMatchBtn" type="button">マッチ</button>
     <div class="zoom-control-wrap" title="プレビュー表示ズーム">
       <svg class="zoom-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/><path d="M11 8v6"/><path d="M8 11h6"/></svg>
       <input type="range" id="viewZoom" min="50" max="500" value="100" aria-label="プレビュー表示ズーム">
@@ -2339,6 +2417,12 @@
       item.classList.toggle('open', toggle.checked);
       if (toggleId === 'contactToggle') {
         invalidateContactShadow();
+      } else if (toggleId === 'spotToggle') {
+        if (toggle.checked) {
+          startSpotPositionMode();
+        } else {
+          finishSpotPositionMode();
+        }
       } else if (toggleId === 'bgBlurToggle') {
         invalidateBg();
         updateBgBlurCache();
@@ -3544,10 +3628,13 @@
   });
 
   // 自動マッチボタン
-  document.getElementById('autoMatchBtn').addEventListener('click', () => {
+  function runAutoMatch() {
     if (!bgImg) return;
     autoAnalyzeAndMatchLighting(bgImg);
-  });
+  }
+
+  document.getElementById('autoMatchBtn').addEventListener('click', runAutoMatch);
+  document.getElementById('previewQuickMatchBtn').addEventListener('click', runAutoMatch);
 
   function loadImageForEditing(file, type) {
     if (!SUPPORTED_IMAGE_TYPES.has(file.type)) {
@@ -3753,6 +3840,19 @@
   const pickLightBtn = document.getElementById('pickLightBtn');
   const setSpotPosBtn = document.getElementById('setSpotPosBtn');
 
+  function startSpotPositionMode() {
+    if (isSettingSpotPos) return;
+    isSettingSpotPos = true;
+    setSpotPosBtn.textContent = '位置を決定';
+    setSpotPosBtn.classList.add('active');
+    canvas.classList.add('spotlight-pos-mode');
+    pipetteTarget = 'none';
+    pickShadowBtn.classList.remove('active');
+    pickLightBtn.classList.remove('active');
+    canvas.classList.remove('pipette-mode');
+    requestRender();
+  }
+
   function finishSpotPositionMode() {
     if (!isSettingSpotPos) return;
     isSettingSpotPos = false;
@@ -3813,15 +3913,7 @@
       finishSpotPositionMode();
       return;
     }
-    isSettingSpotPos = true;
-    setSpotPosBtn.textContent = '位置を決定';
-    setSpotPosBtn.classList.add('active');
-    canvas.classList.add('spotlight-pos-mode');
-    pipetteTarget = 'none';
-    pickShadowBtn.classList.remove('active');
-    pickLightBtn.classList.remove('active');
-    canvas.classList.remove('pipette-mode');
-    requestRender();
+    startSpotPositionMode();
   });
 
   function isSpotPositionInteraction(target) {
