@@ -3965,6 +3965,8 @@
     isComparingBefore = active;
     compareBtn.classList.toggle('active', active);
     compareBadge.classList.toggle('active', active);
+    // 比較状態ごとに背景色調補正の有無が変わるため、キャッシュを作り直す。
+    invalidateBg();
     updateBgBlurCache();
     requestRender();
   }
@@ -4685,20 +4687,10 @@
     const charaLeft = posX - charaW / 2;
     const charaTop = posY - charaH;
 
-    // Before比較モード時はエフェクトをスキップして素の配置のみ描画
-    if (isComparingBefore) {
-      ctx.save();
-      ctx.translate(posX, posY);
-      if (isCharaFlipped) ctx.scale(-1, 1);
-      ctx.drawImage(charaImg, -charaW / 2, -charaH, charaW, charaH);
-      ctx.restore();
-      return;
-    }
-
     const shadowColor = document.getElementById('shadowColor').value;
     const lightColor = document.getElementById('lightColor').value;
 
-    if (spotLayer === 'back') {
+    if (!isComparingBefore && spotLayer === 'back') {
       drawSpotlight(true, false);
     }
 
@@ -4843,6 +4835,16 @@
       ctx.globalAlpha = contactOpacity;
       ctx.drawImage(cachedContactShadowCanvas, posX + contactOffsetX - cachedContactCenterX, posY - cachedContactCenterY);
       ctx.restore();
+    }
+
+    // Before比較では落ち影・接地影を残し、それ以外のキャラ効果を外す。
+    if (isComparingBefore) {
+      ctx.save();
+      ctx.translate(posX, posY);
+      if (isCharaFlipped) ctx.scale(-1, 1);
+      ctx.drawImage(charaImg, -charaW / 2, -charaH, charaW, charaH);
+      ctx.restore();
+      return;
     }
 
     // 4. キャラクター本体バッファ（色調補正・環境光・リムライト等）
