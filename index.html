@@ -2864,6 +2864,39 @@
     return cContext;
   }
 
+  let canvasBlurFilterSupport = null;
+  function supportsCanvasBlurFilter() {
+    if (canvasBlurFilterSupport !== null) return canvasBlurFilterSupport;
+
+    try {
+      const source = document.createElement('canvas');
+      source.width = 1;
+      source.height = 1;
+      const sourceCtx = source.getContext('2d');
+      sourceCtx.fillStyle = '#000';
+      sourceCtx.fillRect(0, 0, 1, 1);
+
+      const test = document.createElement('canvas');
+      test.width = 9;
+      test.height = 9;
+      const testCtx = test.getContext('2d');
+      if (!('filter' in testCtx)) {
+        canvasBlurFilterSupport = false;
+        return canvasBlurFilterSupport;
+      }
+
+      // Safariの一部ではfilterプロパティが存在してもblur描画が反映されないため、実画素で判定する。
+      testCtx.filter = 'blur(2px)';
+      testCtx.drawImage(source, 4, 4);
+      testCtx.filter = 'none';
+      canvasBlurFilterSupport = testCtx.getImageData(3, 4, 1, 1).data[3] > 0;
+    } catch (error) {
+      canvasBlurFilterSupport = false;
+    }
+
+    return canvasBlurFilterSupport;
+  }
+
   function createFastBlurredCanvas(srcImg, width, height, blurAmount, targetCanvas = null, reusableTempCanvas = null) {
     const c = targetCanvas || document.createElement('canvas');
     const cContext = prepareCanvas(c, width, height);
@@ -2874,7 +2907,7 @@
     }
 
     // ネイティブ GPU 加速ガウシアンブラー（縮小モアレ・まだらノイズが100%ゼロ）
-    if ('filter' in cContext) {
+    if (supportsCanvasBlurFilter()) {
       cContext.filter = `blur(${Math.max(1, blurAmount)}px)`;
       cContext.drawImage(srcImg, 0, 0, width, height);
       cContext.filter = 'none';
