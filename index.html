@@ -2304,6 +2304,15 @@
   let cachedContactCenterX = 0;
   let cachedContactCenterY = 0;
 
+  // ライトラップは操作中に毎フレーム更新されるため、用途別バッファを再利用する。
+  const wrapBgCanvas = document.createElement('canvas');
+  const wrapBlurredBgCanvas = document.createElement('canvas');
+  const wrapMaskCanvas = document.createElement('canvas');
+  const wrapInnerBlurCanvas = document.createElement('canvas');
+  const wrapEdgeMaskCanvas = document.createElement('canvas');
+  const wrapFinalCanvas = document.createElement('canvas');
+  const blurTempCanvas = document.createElement('canvas');
+
   // フィルムグレインのメモ化キャッシュ
   const noisePatternCache = new Map();
 
@@ -2841,11 +2850,23 @@
     requestRender();
   }
 
-  function createFastBlurredCanvas(srcImg, width, height, blurAmount) {
-    const c = document.createElement('canvas');
-    c.width = width;
-    c.height = height;
+  function prepareCanvas(c, width, height) {
+    if (c.width !== width || c.height !== height) {
+      c.width = width;
+      c.height = height;
+    }
     const cContext = c.getContext('2d');
+    cContext.setTransform(1, 0, 0, 1, 0, 0);
+    cContext.globalAlpha = 1;
+    cContext.globalCompositeOperation = 'source-over';
+    cContext.filter = 'none';
+    cContext.clearRect(0, 0, width, height);
+    return cContext;
+  }
+
+  function createFastBlurredCanvas(srcImg, width, height, blurAmount, targetCanvas = null, reusableTempCanvas = null) {
+    const c = targetCanvas || document.createElement('canvas');
+    const cContext = prepareCanvas(c, width, height);
 
     if (blurAmount <= 0) {
       cContext.drawImage(srcImg, 0, 0, width, height);
@@ -2865,10 +2886,8 @@
     const sw = Math.max(8, Math.round(width * scale));
     const sh = Math.max(8, Math.round(height * scale));
 
-    const temp = document.createElement('canvas');
-    temp.width = sw;
-    temp.height = sh;
-    const tempCtx = temp.getContext('2d');
+    const temp = reusableTempCanvas || document.createElement('canvas');
+    const tempCtx = prepareCanvas(temp, sw, sh);
     tempCtx.imageSmoothingEnabled = true;
     tempCtx.imageSmoothingQuality = 'high';
     tempCtx.drawImage(srcImg, 0, 0, sw, sh);
@@ -4997,10 +5016,7 @@
       const wrapSampleW = Math.max(1, Math.round(wrapW * wrapSampleScale));
       const wrapSampleH = Math.max(1, Math.round(wrapH * wrapSampleScale));
 
-      const wrapBgCanvas = document.createElement('canvas');
-      wrapBgCanvas.width = wrapSampleW;
-      wrapBgCanvas.height = wrapSampleH;
-      const wBgCtx = wrapBgCanvas.getContext('2d');
+      const wBgCtx = prepareCanvas(wrapBgCanvas, wrapSampleW, wrapSampleH);
       wBgCtx.imageSmoothingEnabled = true;
       wBgCtx.imageSmoothingQuality = 'high';
 
@@ -5034,14 +5050,14 @@
         wrapBgCanvas,
         wrapSampleW,
         wrapSampleH,
-        wrapRadius * wrapSampleScale * 2.5
+        wrapRadius * wrapSampleScale * 2.5,
+        wrapBlurredBgCanvas,
+        blurTempCanvas
       );
 
       // 1. キャラクタの正確なアルファマスクをパディング領域内に描画
-      const charaMaskCanvas = document.createElement('canvas');
-      charaMaskCanvas.width = wrapW;
-      charaMaskCanvas.height = wrapH;
-      const cmCtx = charaMaskCanvas.getContext('2d');
+      const charaMaskCanvas = wrapMaskCanvas;
+      const cmCtx = prepareCanvas(charaMaskCanvas, wrapW, wrapH);
 
       cmCtx.save();
       if (isCharaFlipped) {
@@ -5054,14 +5070,19 @@
       cmCtx.restore();
 
       // 2. スリットや細い隙間の誤判定を防ぐ外周エッジマスクの生成
-      const edgeMaskCanvas = document.createElement('canvas');
-      edgeMaskCanvas.width = wrapW;
-      edgeMaskCanvas.height = wrapH;
-      const emCtx = edgeMaskCanvas.getContext('2d');
+      const edgeMaskCanvas = wrapEdgeMaskCanvas;
+      const emCtx = prepareCanvas(edgeMaskCanvas, wrapW, wrapH);
       emCtx.drawImage(charaMaskCanvas, 0, 0);
 
       // 内側へ向かってシルキーにフェードするマスクを計算
-      const innerBlurred = createFastBlurredCanvas(charaMaskCanvas, wrapW, wrapH, wrapRadius * 0.9);
+      const innerBlurred = createFastBlurredCanvas(
+        charaMaskCanvas,
+        wrapW,
+        wrapH,
+        wrapRadius * 0.9,
+        wrapInnerBlurCanvas,
+        blurTempCanvas
+      );
       emCtx.globalCompositeOperation = 'destination-out';
       emCtx.drawImage(innerBlurred, 0, 0);
 
@@ -5070,10 +5091,8 @@
       emCtx.drawImage(charaMaskCanvas, 0, 0);
 
       // 4. 拡散した背景光を滑らかなエッジマスクで切り抜き
-      const finalWrap = document.createElement('canvas');
-      finalWrap.width = wrapW;
-      finalWrap.height = wrapH;
-      const fwCtx = finalWrap.getContext('2d');
+      const finalWrap = wrapFinalCanvas;
+      const fwCtx = prepareCanvas(finalWrap, wrapW, wrapH);
       fwCtx.imageSmoothingEnabled = true;
       fwCtx.imageSmoothingQuality = 'high';
       fwCtx.drawImage(blurredBg, 0, 0, wrapSampleW, wrapSampleH, 0, 0, wrapW, wrapH);
