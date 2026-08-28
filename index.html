@@ -4992,23 +4992,29 @@
       const wrapPad = Math.ceil(wrapRadius * 2.2);
       const wrapW = Math.round(cW + wrapPad * 2);
       const wrapH = Math.round(cH + wrapPad * 2);
+      // 背景色の抽出・ぼかしだけ半解像度で処理し、輪郭マスクは原寸を維持する。
+      const wrapSampleScale = 0.5;
+      const wrapSampleW = Math.max(1, Math.round(wrapW * wrapSampleScale));
+      const wrapSampleH = Math.max(1, Math.round(wrapH * wrapSampleScale));
 
       const wrapBgCanvas = document.createElement('canvas');
-      wrapBgCanvas.width = wrapW;
-      wrapBgCanvas.height = wrapH;
+      wrapBgCanvas.width = wrapSampleW;
+      wrapBgCanvas.height = wrapSampleH;
       const wBgCtx = wrapBgCanvas.getContext('2d');
+      wBgCtx.imageSmoothingEnabled = true;
+      wBgCtx.imageSmoothingQuality = 'high';
 
       const procBg = getProcessedBgCanvas();
       // キャラクタ周囲の背景をパディング付きでサンプリング
       wBgCtx.drawImage(
         procBg || bgImg,
         charaLeft - wrapPad, charaTop - wrapPad, wrapW, wrapH,
-        0, 0, wrapW, wrapH
+        0, 0, wrapSampleW, wrapSampleH
       );
 
       // スムーズなハイライト抽出（まだら・二値化ノイズを出さない滑らかなトーンカーブ）
       if (wrapThreshold > 0) {
-        const wData = wBgCtx.getImageData(0, 0, wrapW, wrapH);
+        const wData = wBgCtx.getImageData(0, 0, wrapSampleW, wrapSampleH);
         const d = wData.data;
         const gamma = 1 + wrapThreshold * 2.0;
         const boost = 1 + wrapThreshold * 0.4;
@@ -5024,7 +5030,12 @@
       }
 
       // 周囲光をたっぷりと均一に拡散（背景の石畳やタイルの目地・模様の透けを完全に溶かす）
-      const blurredBg = createFastBlurredCanvas(wrapBgCanvas, wrapW, wrapH, wrapRadius * 2.5);
+      const blurredBg = createFastBlurredCanvas(
+        wrapBgCanvas,
+        wrapSampleW,
+        wrapSampleH,
+        wrapRadius * wrapSampleScale * 2.5
+      );
 
       // 1. キャラクタの正確なアルファマスクをパディング領域内に描画
       const charaMaskCanvas = document.createElement('canvas');
@@ -5063,7 +5074,9 @@
       finalWrap.width = wrapW;
       finalWrap.height = wrapH;
       const fwCtx = finalWrap.getContext('2d');
-      fwCtx.drawImage(blurredBg, 0, 0);
+      fwCtx.imageSmoothingEnabled = true;
+      fwCtx.imageSmoothingQuality = 'high';
+      fwCtx.drawImage(blurredBg, 0, 0, wrapSampleW, wrapSampleH, 0, 0, wrapW, wrapH);
       fwCtx.globalCompositeOperation = 'destination-in';
       fwCtx.drawImage(edgeMaskCanvas, 0, 0);
 
