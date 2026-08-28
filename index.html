@@ -4768,7 +4768,9 @@
       const shadowCanvasW = cachedCastShadowCanvas.width;
       const shadowCanvasH = cachedCastShadowCanvas.height;
       const shadowBaseY = -charaH - cachedCastPad;
-      const shadowSliceHeight = Math.max(1, Math.ceil(shadowCanvasH / 72));
+      // 小さい画面では分割数を抑え、影の遠近変形の見た目を保ちながら描画回数を減らす。
+      const shadowSliceCount = window.innerWidth <= 900 ? 48 : 72;
+      const shadowSliceHeight = Math.max(1, Math.ceil(shadowCanvasH / shadowSliceCount));
       for (let sourceY = 0; sourceY < shadowCanvasH; sourceY += shadowSliceHeight) {
         const sourceHeight = Math.min(shadowSliceHeight, shadowCanvasH - sourceY);
         const characterY = Math.max(0, Math.min(1,
