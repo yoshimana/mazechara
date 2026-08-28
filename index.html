@@ -1690,22 +1690,22 @@
       </div>
       <div class="control-group">
         <div class="param-row">
-          <div class="param-label"><span>影の傾き</span><span id="shadowAngleVal" class="param-value">30°</span></div>
-          <input type="range" id="shadowAngle" min="-80" max="80" value="30">
+          <div class="param-label"><span>影の傾き</span><span id="shadowAngleVal" class="param-value">225°</span></div>
+          <input type="range" id="shadowAngle" min="0" max="359" value="225">
           <div class="segment-control" style="margin-top: 6px;">
-            <button class="segment-btn" type="button" id="shadowAngleLeftBtn">◀ 左倒し</button>
-            <button class="segment-btn" type="button" id="shadowAngleCenterBtn">中央</button>
-            <button class="segment-btn" type="button" id="shadowAngleRightBtn">右倒し ▶</button>
+            <button class="segment-btn" type="button" id="shadowDirLeftBtn">左</button>
+            <button class="segment-btn" type="button" id="shadowDirBackBtn">奥</button>
+            <button class="segment-btn" type="button" id="shadowDirRightBtn">右</button>
+            <button class="segment-btn" type="button" id="shadowDirFrontBtn">手前</button>
           </div>
         </div>
         <div class="param-row">
-          <div class="param-label"><span>前後方向・長さ</span><span id="shadowLengthVal" class="param-value">60%</span></div>
-          <input type="range" id="shadowLength" min="-150" max="150" value="60">
-          <div class="segment-control" style="margin-top: 6px;">
-            <button class="segment-btn" type="button" id="shadowLenBackBtn">▲ 奥へ</button>
-            <button class="segment-btn" type="button" id="shadowLenZeroBtn">真下</button>
-            <button class="segment-btn" type="button" id="shadowLenFrontBtn">手前へ ▼</button>
-          </div>
+          <div class="param-label"><span>影の長さ</span><span id="shadowLengthVal" class="param-value">83%</span></div>
+          <input type="range" id="shadowLength" min="0" max="150" value="83">
+        </div>
+        <div class="param-row">
+          <div class="param-label"><span>影の遠近感</span><span id="shadowPerspectiveVal" class="param-value">50%</span></div>
+          <input type="range" id="shadowPerspective" min="0" max="100" value="50">
         </div>
         <div class="param-row">
           <div class="param-label"><span>影の濃さ</span><span id="castShadowOpacityVal" class="param-value">50%</span></div>
@@ -1756,11 +1756,11 @@
         </div>
 
         <div class="param-row">
-          <div class="param-label"><span>環境光（乗算）</span><span id="multiplyOpacityVal" class="param-value">50%</span></div>
+          <div class="param-label"><span>光の強さ</span><span id="multiplyOpacityVal" class="param-value">50%</span></div>
           <input type="range" id="multiplyOpacity" min="0" max="100" value="50">
         </div>
         <div class="param-row">
-          <div class="param-label"><span>光感・鮮やかさ（オーバーレイ）</span><span id="overlayOpacityVal" class="param-value">40%</span></div>
+          <div class="param-label"><span>コントラスト</span><span id="overlayOpacityVal" class="param-value">40%</span></div>
           <input type="range" id="overlayOpacity" min="0" max="100" value="40">
         </div>
         <div class="param-row">
@@ -2406,14 +2406,10 @@
     lightB = Math.round(lightB / sliceCount);
 
     // ----------------------------------------------------
-    // 光源方向・影の向きのマルチレイヤー解析
-    // (全体明度差 + 地面・構造物明度差 + 暖光/直射光色相差)
+    // 光源方向・影の向きの保守的な推定
+    // 広く均一な明部（白い壁など）は光源とみなさず、明暗差が大きく、
+    // 明部が局所的で、暗部との分離とキャラ位置からの方向が整合する場合だけ採用する。
     // ----------------------------------------------------
-    let leftLumaSum = 0, rightLumaSum = 0;
-    let leftWarmthSum = 0, rightWarmthSum = 0;
-    let groundLeftLuma = 0, groundRightLuma = 0;
-    let totalLeftPix = 0, totalRightPix = 0;
-    let groundLeftPix = 0, groundRightPix = 0;
     let topLumaSum = 0, bottomLumaSum = 0;
 
     for (let y = 0; y < sampleSize; y++) {
@@ -2421,59 +2417,109 @@
         const idx = (y * sampleSize + x) * 4;
         const r = data[idx], g = data[idx + 1], b = data[idx + 2];
         const luma = 0.299 * r + 0.587 * g + 0.114 * b;
-        const warmth = (r - b); // 直射光面は暖色(R高)、日陰面は青空拡散光(B高)
 
         if (y < sampleSize * 0.4) topLumaSum += luma;
         if (y > sampleSize * 0.6) bottomLumaSum += luma;
-
-        if (x < sampleSize / 2) {
-          leftLumaSum += luma;
-          leftWarmthSum += warmth;
-          totalLeftPix++;
-          if (y > sampleSize * 0.3) {
-            groundLeftLuma += luma;
-            groundLeftPix++;
-          }
-        } else {
-          rightLumaSum += luma;
-          rightWarmthSum += warmth;
-          totalRightPix++;
-          if (y > sampleSize * 0.3) {
-            groundRightLuma += luma;
-            groundRightPix++;
-          }
-        }
       }
     }
 
-    const avgLeftLuma = totalLeftPix > 0 ? (leftLumaSum / totalLeftPix) : 128;
-    const avgRightLuma = totalRightPix > 0 ? (rightLumaSum / totalRightPix) : 128;
-    const avgGroundLeft = groundLeftPix > 0 ? (groundLeftLuma / groundLeftPix) : avgLeftLuma;
-    const avgGroundRight = groundRightPix > 0 ? (groundRightLuma / groundRightPix) : avgRightLuma;
-    const avgLeftWarmth = totalLeftPix > 0 ? (leftWarmthSum / totalLeftPix) : 0;
-    const avgRightWarmth = totalRightPix > 0 ? (rightWarmthSum / totalRightPix) : 0;
-
-    // 1. 全体輝度の左右比 (-1.0: 左が明るい 〜 +1.0: 右が明るい)
-    const lumaDiffRatio = (avgRightLuma - avgLeftLuma) / Math.max(15, (avgRightLuma + avgLeftLuma) / 2);
-    // 2. 地面・構造物の明暗左右比 (空の影響を除外)
-    const groundDiffRatio = (avgGroundRight - avgGroundLeft) / Math.max(15, (avgGroundRight + avgGroundLeft) / 2);
-    // 3. 暖色（直射光側）の左右偏り
-    const warmthDiffRatio = (avgRightWarmth - avgLeftWarmth) / 35;
-
-    // 総合的な光源の左右偏り (-1.0: 光は左から -> 影は右へ, +1.0: 光は右から -> 影は左へ)
-    const lightDirectionBias = (lumaDiffRatio * 0.40) + (groundDiffRatio * 0.40) + (warmthDiffRatio * 0.20);
-    const clampedBias = Math.max(-1, Math.min(1, lightDirectionBias * 2.8));
-
-    // 影の角度（光が左からなら右(+35°〜+55°)、光が右からなら左(-35°〜-55°)）
-    let calculatedShadowAngle = Math.round(-clampedBias * 45);
-    // 差が小さい場合は自然で見栄えの良いデフォルト角度(+25°)
-    if (Math.abs(calculatedShadowAngle) < 12) {
-      calculatedShadowAngle = 25;
+    const tileCount = 12;
+    const tileSize = sampleSize / tileCount;
+    const tiles = [];
+    for (let ty = 0; ty < tileCount; ty++) {
+      for (let tx = 0; tx < tileCount; tx++) {
+        let tileLuma = 0;
+        for (let py = ty * tileSize; py < (ty + 1) * tileSize; py++) {
+          for (let px = tx * tileSize; px < (tx + 1) * tileSize; px++) {
+            const idx = (py * sampleSize + px) * 4;
+            tileLuma += 0.299 * data[idx] + 0.587 * data[idx + 1] + 0.114 * data[idx + 2];
+          }
+        }
+        tiles.push({
+          x: (tx + 0.5) / tileCount,
+          y: (ty + 0.5) / tileCount,
+          luma: tileLuma / (tileSize * tileSize)
+        });
+      }
     }
 
-    // 光源の角度（環境光・ハイライト方向）
-    let calculatedLightAngle = Math.round(clampedBias * 45 - 45);
-    calculatedLightAngle = Math.max(-80, Math.min(45, calculatedLightAngle));
+    const sortedTileLuma = tiles.map(tile => tile.luma).sort((a, b) => a - b);
+    const tilePercentile = ratio => sortedTileLuma[Math.min(sortedTileLuma.length - 1, Math.floor(sortedTileLuma.length * ratio))];
+    const lowLuma = tilePercentile(0.10);
+    const medianLuma = tilePercentile(0.50);
+    const highLuma = tilePercentile(0.90);
+    const highlightThreshold = Math.max(175, highLuma, avgLuma + stdDevLuma * 0.75);
+    const shadowThreshold = Math.min(lowLuma, avgLuma - stdDevLuma * 0.55);
+    const brightTiles = tiles.filter(tile => tile.luma >= highlightThreshold);
+    const darkTiles = tiles.filter(tile => tile.luma <= shadowThreshold);
+
+    function weightedCentroid(sourceTiles, weightForTile) {
+      let sumX = 0, sumY = 0, sumWeight = 0;
+      sourceTiles.forEach(tile => {
+        const weight = Math.max(0.001, weightForTile(tile));
+        sumX += tile.x * weight;
+        sumY += tile.y * weight;
+        sumWeight += weight;
+      });
+      return sumWeight > 0 ? { x: sumX / sumWeight, y: sumY / sumWeight, weight: sumWeight } : null;
+    }
+
+    const brightCenter = weightedCentroid(brightTiles, tile => tile.luma - medianLuma);
+    const darkCenter = weightedCentroid(darkTiles, tile => medianLuma - tile.luma);
+    let shouldApplyDirection = false;
+    let calculatedLightAngle = null;
+    let calculatedShadowAngle = null;
+
+    if (brightCenter && darkCenter && brightTiles.length <= tiles.length * 0.12) {
+      let brightRadiusSq = 0;
+      let brightMinX = 1, brightMaxX = 0, brightMinY = 1, brightMaxY = 0;
+      brightTiles.forEach(tile => {
+        const dx = tile.x - brightCenter.x;
+        const dy = tile.y - brightCenter.y;
+        brightRadiusSq += dx * dx + dy * dy;
+        brightMinX = Math.min(brightMinX, tile.x);
+        brightMaxX = Math.max(brightMaxX, tile.x);
+        brightMinY = Math.min(brightMinY, tile.y);
+        brightMaxY = Math.max(brightMaxY, tile.y);
+      });
+      const brightRadius = Math.sqrt(brightRadiusSq / brightTiles.length);
+      const brightSpanX = brightMaxX - brightMinX;
+      const brightSpanY = brightMaxY - brightMinY;
+      const charX = parseFloat(document.getElementById('charaX').value) / 100;
+      const charY = parseFloat(document.getElementById('charaY').value) / 100;
+      const sourceX = brightCenter.x - charX;
+      const sourceY = brightCenter.y - charY;
+      const sourceDistance = Math.hypot(sourceX, sourceY);
+      const separationX = brightCenter.x - darkCenter.x;
+      const separationY = brightCenter.y - darkCenter.y;
+      const lightDarkSeparation = Math.hypot(separationX, separationY);
+      const alignment = sourceDistance > 0.001 && lightDarkSeparation > 0.001
+        ? (sourceX * separationX + sourceY * separationY) / (sourceDistance * lightDarkSeparation)
+        : -1;
+      const tonalRange = highLuma - lowLuma;
+      const compactnessScore = Math.max(0, Math.min(1, (0.30 - brightRadius) / 0.18));
+      const contrastScore = Math.max(0, Math.min(1, (tonalRange - 45) / 55));
+      const separationScore = Math.max(0, Math.min(1, (lightDarkSeparation - 0.20) / 0.45));
+      const alignmentScore = Math.max(0, Math.min(1, (alignment - 0.20) / 0.65));
+      const directionConfidence = compactnessScore * 0.30 + contrastScore * 0.25 + separationScore * 0.20 + alignmentScore * 0.25;
+
+      shouldApplyDirection = sourceDistance >= 0.16
+        && brightTiles.length >= 1
+        && brightRadius <= 0.30
+        && brightSpanX <= 0.50
+        && brightSpanY <= 0.50
+        && tonalRange >= 50
+        && alignment >= 0.20
+        && directionConfidence >= 0.62;
+
+      if (shouldApplyDirection) {
+        const sourceScreenAngle = Math.atan2(sourceY, sourceX) * 180 / Math.PI;
+        calculatedLightAngle = Math.round(((sourceScreenAngle - 180 + 540) % 360) - 180);
+        const shadowX = -sourceX;
+        const shadowY = -sourceY;
+        calculatedShadowAngle = Math.round((Math.atan2(-shadowY, -shadowX) * 180 / Math.PI + 360) % 360);
+      }
+    }
 
     // 影の前後方向・長さ（逆光 vs 順光の判定）
     const avgTop = topLumaSum / (sampleSize * sampleSize * 0.4);
@@ -2481,8 +2527,14 @@
     // 奥(上部)が明るく手前(下部)が暗い(逆光) -> 手前へ伸びる影(プラス: +55%〜+85%)
     // 手前(下部)が明るく奥(上部)が暗い(順光) -> 奥へ伸びる影(マイナス: -30%〜-60%)
     const backlightRatio = (avgTop - avgBottom) / Math.max(25, (avgTop + avgBottom) / 2);
-    let calculatedShadowLength = Math.round(55 + backlightRatio * 40);
-    calculatedShadowLength = Math.max(-50, Math.min(95, calculatedShadowLength));
+    let calculatedShadowDepth = Math.round(55 + backlightRatio * 40);
+    calculatedShadowDepth = Math.max(-50, Math.min(95, calculatedShadowDepth));
+
+    // 方向の確信度が低い場合も、長さ・濃さ・ぼかしは背景の明暗に合わせる。
+    const calculatedShadowLength = Math.max(
+      0,
+      Math.min(150, Math.round(Math.abs(calculatedShadowDepth)))
+    );
 
     // 影の濃さ（明暗比・コントラストが高いほどクッキリ）
     let calculatedCastOpacity = Math.round(25 + (stdDevLuma / 50) * 35);
@@ -2538,11 +2590,13 @@
     document.getElementById('rimColor').value = rgbToHex(Math.min(255, lightR + 25), Math.min(255, lightG + 25), Math.min(255, lightB + 25));
 
     // 影の自動適応
-    setParamVal('shadowAngle', calculatedShadowAngle);
+    if (shouldApplyDirection) {
+      setParamVal('shadowAngle', calculatedShadowAngle);
+      setParamVal('lightAngle', calculatedLightAngle);
+    }
     setParamVal('shadowLength', calculatedShadowLength);
     setParamVal('castShadowOpacity', calculatedCastOpacity);
     setParamVal('shadowBlur', calculatedShadowBlur);
-    setParamVal('lightAngle', calculatedLightAngle);
 
     // 接地影（足元の影）も自動適応
     setParamVal('contactOpacity', Math.round(calculatedCastOpacity * 0.45));
@@ -3286,6 +3340,7 @@
     { id: 'spotAngleY', unit: '°' },
     { id: 'shadowAngle', unit: '°' },
     { id: 'shadowLength', unit: '%' },
+    { id: 'shadowPerspective', unit: '%' },
     { id: 'castShadowOpacity', unit: '%' },
     { id: 'shadowBlur', unit: '%', transform: v => parseFloat(v).toFixed(1) },
     { id: 'shadowWaveAmp', unit: '%', transform: v => parseFloat(v).toFixed(1) },
@@ -3366,7 +3421,7 @@
     requestRender();
   });
 
-  // 影の傾きクイック方向切り替え
+  // 影の方向クイック切り替え（左=0°から時計回り）
   function setShadowAngle(angle) {
     const el = document.getElementById('shadowAngle');
     const valEl = document.getElementById('shadowAngleVal');
@@ -3377,24 +3432,10 @@
     }
   }
 
-  document.getElementById('shadowAngleLeftBtn').addEventListener('click', () => setShadowAngle(-35));
-  document.getElementById('shadowAngleCenterBtn').addEventListener('click', () => setShadowAngle(0));
-  document.getElementById('shadowAngleRightBtn').addEventListener('click', () => setShadowAngle(35));
-
-  // 影の前後方向クイック切り替え
-  function setShadowLength(len) {
-    const el = document.getElementById('shadowLength');
-    const valEl = document.getElementById('shadowLengthVal');
-    if (el && valEl) {
-      el.value = len;
-      valEl.textContent = len + '%';
-      requestRender();
-    }
-  }
-
-  document.getElementById('shadowLenBackBtn').addEventListener('click', () => setShadowLength(-50));
-  document.getElementById('shadowLenZeroBtn').addEventListener('click', () => setShadowLength(0));
-  document.getElementById('shadowLenFrontBtn').addEventListener('click', () => setShadowLength(60));
+  document.getElementById('shadowDirLeftBtn').addEventListener('click', () => setShadowAngle(0));
+  document.getElementById('shadowDirBackBtn').addEventListener('click', () => setShadowAngle(90));
+  document.getElementById('shadowDirFrontBtn').addEventListener('click', () => setShadowAngle(270));
+  document.getElementById('shadowDirRightBtn').addEventListener('click', () => setShadowAngle(180));
 
   // スポイト機能
   const pickShadowBtn = document.getElementById('pickShadowBtn');
@@ -3606,7 +3647,7 @@
     standard: {
       shadowColor: '#1a2530', lightColor: '#ffeedd', rimColor: '#ffffff',
       multiplyOpacity: 50, overlayOpacity: 40, lightAngle: -45,
-      shadowAngle: 30, shadowLength: 60, castShadowOpacity: 50, shadowBlur: 8, shadowWaveAmp: 0,
+      shadowAngle: 225, shadowLength: 83, shadowPerspective: 50, castShadowOpacity: 50, shadowBlur: 8, shadowWaveAmp: 0,
       contactOn: false, contactOffsetX: 0, bgBlurOn: false,
       spotOn: false, spotLayer: 'front', spotColor: '#fff5cc', spotOpacity: 30, spotSize: 10, spotBlur: 60, spotAngleX: 0, spotAngleY: 0,
       wrapOn: true, wrapRadius: 30, wrapThreshold: 40,
@@ -3619,7 +3660,7 @@
     sunny: {
       shadowColor: '#2b3a4a', lightColor: '#fff8e7', rimColor: '#ffffff',
       multiplyOpacity: 35, overlayOpacity: 50, lightAngle: -35,
-      shadowAngle: 45, shadowLength: 85, castShadowOpacity: 65, shadowBlur: 4, shadowWaveAmp: 4,
+      shadowAngle: 220, shadowLength: 131, shadowPerspective: 50, castShadowOpacity: 65, shadowBlur: 4, shadowWaveAmp: 4,
       contactOn: true, contactOpacity: 25, contactBlur: 20, contactOffsetX: 0, contactSize: 20,
       spotOn: false, spotLayer: 'front', spotColor: '#fff9e6', spotOpacity: 35, spotSize: 18, spotBlur: 65, spotAngleX: -15, spotAngleY: 20,
       bgBlurOn: true, bgBlur: 2, dofBoundary: 85, dofFade: 35,
@@ -3633,7 +3674,7 @@
     cloudy: {
       shadowColor: '#282e38', lightColor: '#e2e7f0', rimColor: '#f1f5f9',
       multiplyOpacity: 45, overlayOpacity: 30, lightAngle: -50,
-      shadowAngle: 25, shadowLength: 35, castShadowOpacity: 30, shadowBlur: 22, shadowWaveAmp: 0,
+      shadowAngle: 217, shadowLength: 58, shadowPerspective: 50, castShadowOpacity: 30, shadowBlur: 22, shadowWaveAmp: 0,
       contactOn: true, contactOpacity: 30, contactBlur: 36, contactOffsetX: 0, contactSize: 25,
       spotOn: false, spotLayer: 'front', spotColor: '#edf2f7', spotOpacity: 25, spotSize: 20, spotBlur: 70, spotAngleX: 0, spotAngleY: 0,
       bgBlurOn: true, bgBlur: 1, dofBoundary: 80, dofFade: 45,
@@ -3647,7 +3688,7 @@
     sunset: {
       shadowColor: '#2c1524', lightColor: '#ff8a50', rimColor: '#ffd166',
       multiplyOpacity: 55, overlayOpacity: 60, lightAngle: -60,
-      shadowAngle: 55, shadowLength: 120, castShadowOpacity: 55, shadowBlur: 14, shadowWaveAmp: 0,
+      shadowAngle: 220, shadowLength: 150, shadowPerspective: 50, castShadowOpacity: 55, shadowBlur: 14, shadowWaveAmp: 0,
       contactOn: true, contactOpacity: 20, contactBlur: 30, contactOffsetX: 0, contactSize: 25,
       spotOn: false, spotLayer: 'front', spotColor: '#ffb07c', spotOpacity: 45, spotSize: 22, spotBlur: 60, spotAngleX: -25, spotAngleY: -10,
       bgBlurOn: true, bgBlur: 2, dofBoundary: 80, dofFade: 40,
@@ -3661,7 +3702,7 @@
     night: {
       shadowColor: '#0a0d18', lightColor: '#4cc9f0', rimColor: '#7209b7',
       multiplyOpacity: 70, overlayOpacity: 40, lightAngle: 45,
-      shadowAngle: -25, shadowLength: 40, castShadowOpacity: 70, shadowBlur: 12, shadowWaveAmp: 0,
+      shadowAngle: 319, shadowLength: 61, shadowPerspective: 50, castShadowOpacity: 70, shadowBlur: 12, shadowWaveAmp: 0,
       contactOn: true, contactOpacity: 35, contactBlur: 40, contactOffsetX: 0, contactSize: 20,
       spotOn: false, spotLayer: 'front', spotColor: '#4cc9f0', spotOpacity: 40, spotSize: 20, spotBlur: 70, spotAngleX: 0, spotAngleY: 0,
       bgBlurOn: true, bgBlur: 2, dofBoundary: 75, dofFade: 30,
@@ -3675,7 +3716,7 @@
     indoor: {
       shadowColor: '#2b231f', lightColor: '#ffe8d6', rimColor: '#fff1e6',
       multiplyOpacity: 40, overlayOpacity: 35, lightAngle: -20,
-      shadowAngle: 20, shadowLength: 35, castShadowOpacity: 35, shadowBlur: 18, shadowWaveAmp: 0,
+      shadowAngle: 224, shadowLength: 50, shadowPerspective: 50, castShadowOpacity: 35, shadowBlur: 18, shadowWaveAmp: 0,
       contactOn: true, contactOpacity: 15, contactBlur: 50, contactOffsetX: 0, contactSize: 30,
       spotOn: false, spotLayer: 'front', spotColor: '#ffe8d6', spotOpacity: 30, spotSize: 15, spotBlur: 55, spotAngleX: 10, spotAngleY: -15,
       bgBlurOn: true, bgBlur: 1, dofBoundary: 80, dofFade: 50,
@@ -4162,8 +4203,10 @@
 
     // 2. 落ち影 (Cast Shadow) キャッシュ付き
     const castOpacity = parseFloat(document.getElementById('castShadowOpacity').value) / 100;
-    const shadowLengthRaw = parseFloat(document.getElementById('shadowLength').value) / 100;
-    const shadowAngleRad = (parseFloat(document.getElementById('shadowAngle').value) * Math.PI) / 180;
+    const shadowLengthScale = parseFloat(document.getElementById('shadowLength').value) / 100;
+    const shadowPerspective = parseFloat(document.getElementById('shadowPerspective').value) / 100;
+    const shadowAngle = parseFloat(document.getElementById('shadowAngle').value);
+    const shadowAngleRad = (shadowAngle * Math.PI) / 180;
     const shadowBlur = parseFloat(document.getElementById('shadowBlur').value);
     // 基準解像度（キャラ高720px）に対して1.5倍し、高解像度でも同じ見た目の拡散量を保つ。
     // 極端な高解像度ではメモリ消費を抑えるため、内部ぼかしを240pxに制限する。
@@ -4176,7 +4219,7 @@
     const shadowWaveAmp = Math.min(charaH * 0.15 * shadowWaveStrength, 160);
     const shadowWaveAngle = parseFloat(document.getElementById('shadowWaveAngle').value);
 
-    if (castOpacity > 0 && Math.abs(shadowLengthRaw) > 0.01) {
+    if (castOpacity > 0 && shadowLengthScale > 0.01) {
       if (isCastShadowDirty || cachedCastW !== Math.round(charaW) || cachedCastH !== Math.round(charaH)) {
         cachedCastPad = Math.ceil(effectiveShadowBlur * 1.5 + shadowWaveAmp * 1.5);
         cachedCastW = Math.round(charaW);
@@ -4215,12 +4258,40 @@
       ctx.globalAlpha = castOpacity;
 
       ctx.translate(posX, posY);
-      const skewX = Math.tan(shadowAngleRad);
-      const scaleY = -shadowLengthRaw;
-      const skewFactor = -skewX;
+      // 足元の横幅は回転させず、キャラの縦軸を影の方向へ傾斜投影する。
+      // 左=0°、奥=90°、右=180°。180°を越えた手前側では縦方向を反転する。
+      const shadowSkewX = shadowLengthScale * Math.cos(shadowAngleRad);
+      const shadowDepthSign = shadowAngle > 180 ? -1 : 1;
+      const shadowDepthScale = shadowDepthSign * Math.max(
+        Math.abs(shadowLengthScale * Math.sin(shadowAngleRad)),
+        shadowLengthScale * 0.04
+      );
+      ctx.transform(1, 0, shadowSkewX, shadowDepthScale, 0, 0);
 
-      ctx.transform(1, 0, skewFactor, scaleY, 0, 0);
-      ctx.drawImage(cachedCastShadowCanvas, -charaW / 2 - cachedCastPad, -charaH - cachedCastPad);
+      // 奥へ伸びる影は先端を細く、手前へ伸びる影は先端を広くする。
+      // sin値で連続的に補間するため、斜め方向でも遠近感が急変しない。
+      // 50%で従来の遠近量（35%）、100%で最大70%の先端幅変化。
+      const shadowPerspectiveStrength = shadowPerspective * 0.7;
+      const shadowTipWidthScale = 1 - Math.sin(shadowAngleRad) * shadowPerspectiveStrength;
+      const shadowCanvasW = cachedCastShadowCanvas.width;
+      const shadowCanvasH = cachedCastShadowCanvas.height;
+      const shadowBaseY = -charaH - cachedCastPad;
+      const shadowSliceHeight = Math.max(1, Math.ceil(shadowCanvasH / 72));
+      for (let sourceY = 0; sourceY < shadowCanvasH; sourceY += shadowSliceHeight) {
+        const sourceHeight = Math.min(shadowSliceHeight, shadowCanvasH - sourceY);
+        const characterY = Math.max(0, Math.min(1,
+          (sourceY + sourceHeight * 0.5 - cachedCastPad) / Math.max(1, charaH)
+        ));
+        const tipProgress = 1 - characterY;
+        const sliceWidthScale = 1 + (shadowTipWidthScale - 1) * tipProgress;
+        const destinationWidth = shadowCanvasW * sliceWidthScale;
+        ctx.drawImage(
+          cachedCastShadowCanvas,
+          0, sourceY, shadowCanvasW, sourceHeight,
+          -destinationWidth / 2, shadowBaseY + sourceY,
+          destinationWidth, sourceHeight + 0.75
+        );
+      }
       ctx.restore();
     }
 
