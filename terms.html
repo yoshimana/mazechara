@@ -102,6 +102,30 @@
       gap: 12px;
     }
 
+    .language-toggle-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 36px;
+      padding: 7px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      background: #ffffff;
+      color: var(--text-muted);
+      font: inherit;
+      font-size: 0.78rem;
+      font-weight: 700;
+      line-height: 1;
+      cursor: pointer;
+      transition: color 0.2s, border-color 0.2s, background-color 0.2s;
+    }
+
+    .language-toggle-btn:hover {
+      color: var(--primary);
+      border-color: rgba(199, 53, 87, 0.35);
+      background: rgba(255, 107, 139, 0.08);
+    }
+
     .nav-link {
       display: inline-flex;
       align-items: center;
@@ -335,7 +359,7 @@
         <span class="logo-text">まぜキャラ</span>
       </a>
       <nav class="header-nav">
-        <button type="button" data-language-toggle aria-label="Switch language" style="border:1px solid #e2e8f0; background:#ffffff; cursor:pointer; font:inherit;">English</button>
+        <button class="language-toggle-btn" type="button" data-language-toggle aria-label="Switch language">English</button>
         <a href="manual.html" class="nav-link">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
           <span>使い方マニュアル</span>
@@ -566,7 +590,7 @@
       <a href="terms.html">利用規約・注意事項</a>
     </div>
     <div class="footer-credit">
-      制作者・お問い合わせ: <a href="https://x.com/yoshimana" target="_blank" rel="noopener noreferrer">ɐuɐɯı̣ɥsoʎ (@yoshimana) ↗</a>
+      制作者・お問い合わせ: <a href="https://x.com/yoshimana" target="_blank" rel="noopener noreferrer">ɐuɐɯı̣ɥsoʎ (@yoshimana)</a>
     </div>
   </footer>
 

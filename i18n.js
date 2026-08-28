@@ -3,7 +3,7 @@
   const originals = new WeakMap();
   const text = {
     '画像のトリミング': 'Crop image', 'フリー': 'Free', '縦 / 横': 'Portrait / Landscape', 'ゴミ除去': 'Remove debris', '除去サイズ': 'Removal size', 'キャンセル': 'Cancel', 'トリミングを適用': 'Apply crop',
-    '左右反転': 'Flip horizontal', 'マニュアル': 'Manual', '設定パネル': 'Settings', 'オートフィット': 'Auto fit', 'キャラクターをロック': 'Lock character', 'キャラクターロックを解除': 'Unlock character', 'BEFORE (未加工プレビュー)': 'BEFORE (original preview)',
+    '左右反転': 'Flip horizontal', 'マニュアル': 'Manual', '設定パネル': 'Settings', 'マッチ': 'Match', 'オートフィット': 'Auto fit', 'キャラクターをロック': 'Lock character', 'キャラクターロックを解除': 'Unlock character', 'BEFORE (未加工プレビュー)': 'BEFORE (original preview)',
     '2本指スワイプで画面移動': 'Use two fingers to move the view', '1本指:キャラ移動 / 2本指:画面パン・拡大': 'One finger: move character / Two fingers: pan and zoom',
     'サイズ': 'Size', 'Space+ドラッグで表示を移動': 'Space + drag to move the view', 'パネルを下げる': 'Hide panel', 'パネルを上げる': 'Show panel', 'パネルを隠す': 'Hide panel', 'パネルを開く': 'Show panel', '設定パネル': 'Settings',
     '画像素材のアップロード': 'Upload images', '背景写真': 'Background photo', 'キャラクター (透過)': 'Character (transparent)',

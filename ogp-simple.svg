@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
-  <title id="title">まぜキャラ — イラスト馴染ませツール</title>
+  <title id="title">まぜキャラ — キャラ溶け込みツール</title>
   <desc id="desc">まぜキャラのシンプルなOGP用画像</desc>
   <defs>
     <style>@import url('https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&amp;display=swap');</style>
@@ -11,7 +11,7 @@
       <stop stop-color="#ff8eaa"/>
       <stop offset="1" stop-color="#82c9ef"/>
     </linearGradient>
-    <linearGradient id="title" x1="0" y1="0" x2="1" y2="0">
+    <linearGradient id="titleGrad" x1="0" y1="0" x2="1" y2="0">
       <stop offset="60%" stop-color="#2d3436"/>
       <stop offset="100%" stop-color="#ff6b8b"/>
     </linearGradient>
@@ -24,7 +24,7 @@
   <circle cx="1195" cy="630" r="280" fill="#dff1ff" opacity=".72"/>
   <circle cx="1095" cy="90" r="78" fill="none" stroke="#ffd6e0" stroke-width="2" opacity=".8"/>
   <circle cx="1025" cy="150" r="18" fill="#a8dff7" opacity=".45"/>
-  <g transform="translate(430 151)" filter="url(#shadow)">
+  <g transform="translate(430 92)" filter="url(#shadow)">
     <circle cx="170" cy="154" r="139" fill="#fff" opacity=".92"/>
     <g transform="translate(70 54) scale(3.125)">
       <defs>
@@ -42,8 +42,8 @@
       <path d="M29.5 49 Q32 52 34.5 49" fill="none" stroke="#ff6b8b" stroke-width="1.8" stroke-linecap="round"/>
     </g>
   </g>
-  <text x="600" y="462" text-anchor="middle" fill="url(#title)" font-family="'Mochiy Pop One', sans-serif" font-size="55" letter-spacing="3">まぜキャラ</text>
-  <rect x="425" y="494" width="350" height="5" rx="2.5" fill="url(#line)"/>
-  <text x="600" y="538" text-anchor="middle" fill="#627180" font-family="Arial, sans-serif" font-size="22" font-weight="700" letter-spacing="3">二次元 ✖︎ 三次元</text>
-  <text x="600" y="579" text-anchor="middle" fill="#627180" font-family="Arial, sans-serif" font-size="27" font-weight="600" letter-spacing="2">イラスト馴染ませツール</text>
+  <text x="600" y="403" text-anchor="middle" fill="url(#titleGrad)" font-family="'Mochiy Pop One', sans-serif" font-size="55" letter-spacing="3">まぜキャラ</text>
+  <rect x="425" y="435" width="350" height="5" rx="2.5" fill="url(#line)"/>
+  <text x="600" y="479" text-anchor="middle" fill="#627180" font-family="Arial, sans-serif" font-size="22" font-weight="700" letter-spacing="3">二次元 ✖︎ 三次元</text>
+  <text x="600" y="520" text-anchor="middle" fill="#627180" font-family="Arial, sans-serif" font-size="27" font-weight="600" letter-spacing="2">キャラ溶け込みツール</text>
 </svg>
