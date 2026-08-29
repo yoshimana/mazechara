@@ -5038,34 +5038,149 @@
   }
 
   function isTextInputTarget(target) {
-    return target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target.isContentEditable;
+    if (!target) return false;
+    if (target.isContentEditable) return true;
+    if (target instanceof HTMLInputElement) {
+      const textTypes = new Set(['text', 'search', 'email', 'url', 'tel', 'password', 'number']);
+      return textTypes.has(target.type);
+    }
+    return target instanceof HTMLTextAreaElement;
+  }
+
+  function adjustParamByStep(id, delta, wrap = false) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const current = parseFloat(el.value);
+    const minVal = parseFloat(el.min);
+    const maxVal = parseFloat(el.max);
+    let next = current + delta;
+    if (wrap && maxVal > minVal) {
+      const range = maxVal - minVal;
+      while (next < minVal) next += range;
+      while (next >= maxVal) next -= range;
+    } else {
+      next = Math.max(minVal, Math.min(maxVal, next));
+    }
+    const step = parseFloat(el.step) || 1;
+    if (step < 1) {
+      const decimals = (String(step).split('.')[1] || '').length;
+      next = parseFloat(next.toFixed(decimals));
+    } else {
+      next = Math.round(next);
+    }
+    if (next !== current) {
+      el.value = next;
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    }
   }
 
   window.addEventListener('keydown', (e) => {
-    const isScaleInput = e.target === charaScaleInput || e.target === mobileCharaScaleInput;
-    const canUseGlobalScaleKeys = !isTextInputTarget(e.target);
-    if ((e.key === 'ArrowUp' || e.key === 'ArrowDown') && (isScaleInput || canUseGlobalScaleKeys)) {
-      if (!charaImg || isCharaLocked || cropModal.classList.contains('active')) return;
-      e.preventDefault();
-      const direction = e.key === 'ArrowUp' ? 1 : -1;
-      const step = e.shiftKey ? 5 : 1;
-      updateCharaScale(parseFloat(charaScaleInput.value) + direction * step);
-      return;
-    }
-
+    // モーダル表示中のEnter
     if (e.key === 'Enter' && cropModal.classList.contains('active')) {
       e.preventDefault();
       if (!e.repeat) document.getElementById('cropApplyBtn').click();
       return;
     }
 
-    if (e.code === 'Space' && !isTextInputTarget(e.target)) {
+    // テキスト入力中はショートカットを無効化
+    if (isTextInputTarget(e.target)) return;
+
+    // ブラウザ標準の Cmd/Ctrl/Alt ショートカットを邪魔しない
+    if (e.ctrlKey || e.altKey || e.metaKey) return;
+
+    // 1. Shift + Enter: 自動マッチ
+    if (e.key === 'Enter' && e.shiftKey) {
+      e.preventDefault();
+      if (!e.repeat) runAutoMatch();
+      return;
+    }
+
+    // 2. Shift + 左右キー: 影の傾き
+    if (e.shiftKey && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+      e.preventDefault();
+      const delta = e.key === 'ArrowRight' ? 2 : -2;
+      adjustParamByStep('shadowAngle', delta, true);
+      return;
+    }
+
+    // 3. Shift + 上下キー: 影の長さ
+    if (e.shiftKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+      e.preventDefault();
+      const delta = e.key === 'ArrowUp' ? 2 : -2;
+      adjustParamByStep('shadowLength', delta, false);
+      return;
+    }
+
+    // 4. 上下キー（Shiftなし）: キャラのサイズ変更
+    const isScaleInput = e.target === charaScaleInput || e.target === mobileCharaScaleInput;
+    if (!e.shiftKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+      if (!charaImg || isCharaLocked || cropModal.classList.contains('active')) return;
+      e.preventDefault();
+      const direction = e.key === 'ArrowUp' ? 1 : -1;
+      updateCharaScale(parseFloat(charaScaleInput.value) + direction * 1);
+      return;
+    }
+
+    // 5. WASD: キャラの配置移動
+    if (!cropModal.classList.contains('active') && charaImg && !isCharaLocked) {
+      if (e.code === 'KeyW' || e.key === 'w' || e.key === 'W') {
+        e.preventDefault();
+        adjustParamByStep('charaY', -1, false);
+        return;
+      }
+      if (e.code === 'KeyS' || e.key === 's' || e.key === 'S') {
+        e.preventDefault();
+        adjustParamByStep('charaY', 1, false);
+        return;
+      }
+      if (e.code === 'KeyA' || e.key === 'a' || e.key === 'A') {
+        e.preventDefault();
+        adjustParamByStep('charaX', -1, false);
+        return;
+      }
+      if (e.code === 'KeyD' || e.key === 'd' || e.key === 'D') {
+        e.preventDefault();
+        adjustParamByStep('charaX', 1, false);
+        return;
+      }
+    }
+
+    // 6. JK: 影の濃さ（J: 減らす、K: 増やす）
+    if (!cropModal.classList.contains('active')) {
+      if (e.code === 'KeyK' || e.key === 'k' || e.key === 'K') {
+        e.preventDefault();
+        adjustParamByStep('castShadowOpacity', 2, false);
+        return;
+      }
+      if (e.code === 'KeyJ' || e.key === 'j' || e.key === 'J') {
+        e.preventDefault();
+        adjustParamByStep('castShadowOpacity', -2, false);
+        return;
+      }
+    }
+
+    // 7. HL: 影のぼかし（H: 減らす、L: 増やす）
+    if (!cropModal.classList.contains('active')) {
+      if (e.code === 'KeyL' || e.key === 'l' || e.key === 'L') {
+        e.preventDefault();
+        adjustParamByStep('shadowBlur', 1.0, false);
+        return;
+      }
+      if (e.code === 'KeyH' || e.key === 'h' || e.key === 'H') {
+        e.preventDefault();
+        adjustParamByStep('shadowBlur', -1.0, false);
+        return;
+      }
+    }
+
+    // Space: 画面パン
+    if (e.code === 'Space') {
       isSpacePressed = true;
     }
   });
 
   window.addEventListener('keyup', (e) => {
-    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') finishCharaScaleInteraction();
+    if (!e.shiftKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) finishCharaScaleInteraction();
     if (e.code === 'Space') isSpacePressed = false;
   });
 
