@@ -5061,9 +5061,8 @@
         const perspectiveCtx = prepareCanvas(cachedPerspectiveShadowCanvas, perspectiveW, shadowCanvasH);
         const perspectiveCenterX = perspectiveW / 2;
 
-        // 横帯は専用Canvasで前後1pxずつ重ね、copy合成で置換する。
-        // 完成影を最後に一度だけ乗算するため、Safariでも濃い線や白い隙間が生じない。
-        perspectiveCtx.globalCompositeOperation = 'copy';
+        // 各帯の描画範囲を整数行へクリップし、参照元だけ前後1px広げる。
+        // 帯同士を重ねず補間用画素だけ確保するため、Safariでも濃い線や白い隙間が生じない。
         for (let sourceY = 0; sourceY < shadowCanvasH; sourceY += shadowSliceHeight) {
           const sourceHeight = Math.min(shadowSliceHeight, shadowCanvasH - sourceY);
           const characterY = Math.max(0, Math.min(1,
@@ -5076,14 +5075,18 @@
           const overlapEnd = Math.min(shadowCanvasH, sourceY + sourceHeight + 1);
           const overlapHeight = overlapEnd - overlapStart;
 
+          perspectiveCtx.save();
+          perspectiveCtx.beginPath();
+          perspectiveCtx.rect(0, sourceY, perspectiveW, sourceHeight);
+          perspectiveCtx.clip();
           perspectiveCtx.drawImage(
             cachedCastShadowCanvas,
             0, overlapStart, shadowCanvasW, overlapHeight,
             perspectiveCenterX - destinationWidth / 2, overlapStart,
             destinationWidth, overlapHeight
           );
+          perspectiveCtx.restore();
         }
-        perspectiveCtx.globalCompositeOperation = 'source-over';
         cachedPerspectiveShadowKey = perspectiveKey;
       }
 
