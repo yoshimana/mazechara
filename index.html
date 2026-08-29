@@ -257,8 +257,60 @@
     box-shadow: var(--shadow-soft);
   }
 
+  /* パネル折りたたみ時：画面端に表示されるキャラサイズ調整スライダー */
   .mobile-chara-scale-control {
-    display: none;
+    position: absolute;
+    top: 50%;
+    right: 18px;
+    z-index: 16;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    width: 40px;
+    padding: 9px 4px;
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: var(--shadow-soft);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translate(60px, -50%);
+    transition:
+      opacity 0.3s ease,
+      transform 0.42s cubic-bezier(0.22, 1, 0.36, 1),
+      visibility 0s linear 0.42s;
+    will-change: opacity, transform;
+    touch-action: none;
+  }
+
+  body.panel-collapsed .mobile-chara-scale-control {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(-50%);
+    transition:
+      opacity 0.3s ease 0.34s,
+      transform 0.42s cubic-bezier(0.22, 1, 0.36, 1) 0.34s,
+      visibility 0s linear 0.34s;
+  }
+
+  .mobile-chara-scale-label {
+    color: var(--text-sub);
+    font-size: 0.62rem;
+    font-weight: 700;
+    line-height: 1;
+    writing-mode: vertical-rl;
+  }
+
+  #mobileCharaScale {
+    width: 116px;
+    height: 28px;
+    margin: 44px -44px;
+    accent-color: var(--accent);
+    cursor: ns-resize;
+    transform: rotate(-90deg);
   }
 
   /* 2本指操作ガイド通知フローティングカード */
@@ -1480,58 +1532,7 @@
     }
 
     .mobile-chara-scale-control {
-      position: absolute;
-      top: 50%;
       right: 10px;
-      z-index: 16;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 6px;
-      width: 40px;
-      padding: 9px 4px;
-      border: 1.5px solid var(--border);
-      border-radius: 20px;
-      background: rgba(255, 255, 255, 0.92);
-      box-shadow: var(--shadow-soft);
-      opacity: 0;
-      visibility: hidden;
-      pointer-events: none;
-      transform: translate(60px, -50%);
-      transition:
-        opacity 0.3s ease,
-        transform 0.42s cubic-bezier(0.22, 1, 0.36, 1),
-        visibility 0s linear 0.42s;
-      will-change: opacity, transform;
-      touch-action: none;
-    }
-
-    body.panel-collapsed .mobile-chara-scale-control {
-      opacity: 1;
-      visibility: visible;
-      pointer-events: auto;
-      transform: translateY(-50%);
-      transition:
-        opacity 0.3s ease 0.34s,
-        transform 0.42s cubic-bezier(0.22, 1, 0.36, 1) 0.34s,
-        visibility 0s linear 0.34s;
-    }
-
-    .mobile-chara-scale-label {
-      color: var(--text-sub);
-      font-size: 0.62rem;
-      font-weight: 700;
-      line-height: 1;
-      writing-mode: vertical-rl;
-    }
-
-    #mobileCharaScale {
-      width: 116px;
-      height: 28px;
-      margin: 44px -44px;
-      accent-color: var(--accent);
-      cursor: ns-resize;
-      transform: rotate(-90deg);
     }
 
     .canvas-wrapper {
