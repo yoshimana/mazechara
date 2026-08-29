@@ -5464,7 +5464,16 @@
     }
   }
 
-  // 高品質JPEGの保存・共有（非対応環境では通常ダウンロード）
+  function shouldUseNativeShareForExport() {
+    if (navigator.userAgentData?.mobile === true) return true;
+
+    const userAgent = navigator.userAgent || '';
+    const isMobileUserAgent = /Android|iPhone|iPad|iPod|Mobile/i.test(userAgent);
+    const isIPadDesktopMode = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+    return isMobileUserAgent || isIPadDesktopMode;
+  }
+
+  // スマートフォン・タブレットは保存／共有、PCは常にファイルへダウンロードする。
   document.getElementById('exportBtn').addEventListener('click', () => {
     if (!bgImg && !charaImg) return;
     canvas.toBlob(async (blob) => {
@@ -5477,7 +5486,7 @@
         text: 'まぜキャラで作りました\n#まぜキャラ #イラスト溶け込み\nhttps://4407.jp/app/mazechara/'
       };
 
-      if (navigator.share && navigator.canShare?.({ files: [file] })) {
+      if (shouldUseNativeShareForExport() && navigator.share && navigator.canShare?.({ files: [file] })) {
         try {
           await navigator.share(shareData);
           return;
