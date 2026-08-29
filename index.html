@@ -4255,6 +4255,7 @@
   // 設定パネルの折りたたみ / 展開（PC: 右スライド収納 / スマホ: 下スライド格納）
   const togglePanelBtn = document.getElementById('togglePanelBtn');
   const togglePanelText = document.getElementById('togglePanelText');
+  const togglePanelIcon = togglePanelBtn.querySelector('svg');
   const pcOpenPanelBtn = document.getElementById('pcOpenPanelBtn');
   const mainSidebar = document.getElementById('mainSidebar');
   const sidebarContent = mainSidebar.querySelector('.sidebar-content');
@@ -4274,9 +4275,11 @@
     if (isMobile) {
       togglePanelText.textContent = isEnglish ? (isCollapsed ? 'Show panel' : 'Hide panel') : (isCollapsed ? 'パネルを上げる' : 'パネルを下げる');
       togglePanelBtn.title = isEnglish ? (isCollapsed ? 'Show settings panel' : 'Hide settings panel for a larger preview') : (isCollapsed ? '設定パネルを展開' : '設定パネルを折りたたんでプレビューを広く表示');
+      togglePanelIcon.style.transform = isCollapsed ? 'rotate(180deg)' : 'rotate(0deg)';
     } else {
       togglePanelText.textContent = isEnglish ? (isCollapsed ? 'Show panel' : 'Hide panel') : (isCollapsed ? 'パネルを開く' : 'パネルを隠す');
       togglePanelBtn.title = isEnglish ? (isCollapsed ? 'Show settings panel' : 'Hide settings panel for a larger preview') : (isCollapsed ? '設定パネルを表示' : '設定パネルを右に隠してプレビューを最大化');
+      togglePanelIcon.style.transform = 'rotate(0deg)';
     }
   }
 
