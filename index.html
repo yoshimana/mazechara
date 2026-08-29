@@ -2317,6 +2317,9 @@
   let cachedCastPad = 0;
   let cachedCastW = 0;
   let cachedCastH = 0;
+  const cachedPerspectiveShadowCanvas = document.createElement('canvas');
+  let cachedPerspectiveShadowKey = '';
+  let castShadowVersion = 0;
 
   let cachedContactShadowCanvas = document.createElement('canvas');
   let isContactShadowDirty = true;
@@ -5018,6 +5021,8 @@
           ? createFastBlurredCanvas(processedShadow, processedShadow.width, processedShadow.height, effectiveShadowBlur, null, null, true, true, 1280)
           : processedShadow;
 
+        castShadowVersion++;
+        cachedPerspectiveShadowKey = '';
         isCastShadowDirty = false;
       }
 
@@ -5048,22 +5053,47 @@
       // 小さい画面では分割数を抑え、影の遠近変形の見た目を保ちながら描画回数を減らす。
       const shadowSliceCount = window.innerWidth <= 900 ? 48 : 72;
       const shadowSliceHeight = Math.max(1, Math.ceil(shadowCanvasH / shadowSliceCount));
-      for (let sourceY = 0; sourceY < shadowCanvasH; sourceY += shadowSliceHeight) {
-        const sourceHeight = Math.min(shadowSliceHeight, shadowCanvasH - sourceY);
-        const characterY = Math.max(0, Math.min(1,
-          (sourceY + sourceHeight * 0.5 - cachedCastPad) / Math.max(1, cachedCastH)
-        ));
-        const tipProgress = 1 - characterY;
-        const sliceWidthScale = 1 + (shadowTipWidthScale - 1) * tipProgress;
-        const destinationWidth = shadowCanvasW * sliceWidthScale * cachedShadowScale;
-        ctx.drawImage(
-          cachedCastShadowCanvas,
-          0, sourceY, shadowCanvasW, sourceHeight,
-          -destinationWidth / 2, shadowBaseY + sourceY * cachedShadowScale,
-          // Safariでは帯の重なりが乗算されて濃い横線になるため、隙間なく連続配置する。
-          destinationWidth, sourceHeight * cachedShadowScale
-        );
+      const perspectiveKey = [castShadowVersion, shadowTipWidthScale.toFixed(6), shadowSliceCount].join('|');
+
+      if (perspectiveKey !== cachedPerspectiveShadowKey) {
+        const maxWidthScale = Math.max(1, shadowTipWidthScale);
+        const perspectiveW = Math.max(1, Math.ceil(shadowCanvasW * maxWidthScale) + 4);
+        const perspectiveCtx = prepareCanvas(cachedPerspectiveShadowCanvas, perspectiveW, shadowCanvasH);
+        const perspectiveCenterX = perspectiveW / 2;
+
+        // 横帯は専用Canvasで前後1pxずつ重ね、copy合成で置換する。
+        // 完成影を最後に一度だけ乗算するため、Safariでも濃い線や白い隙間が生じない。
+        perspectiveCtx.globalCompositeOperation = 'copy';
+        for (let sourceY = 0; sourceY < shadowCanvasH; sourceY += shadowSliceHeight) {
+          const sourceHeight = Math.min(shadowSliceHeight, shadowCanvasH - sourceY);
+          const characterY = Math.max(0, Math.min(1,
+            (sourceY + sourceHeight * 0.5 - cachedCastPad) / Math.max(1, cachedCastH)
+          ));
+          const tipProgress = 1 - characterY;
+          const sliceWidthScale = 1 + (shadowTipWidthScale - 1) * tipProgress;
+          const destinationWidth = shadowCanvasW * sliceWidthScale;
+          const overlapStart = Math.max(0, sourceY - 1);
+          const overlapEnd = Math.min(shadowCanvasH, sourceY + sourceHeight + 1);
+          const overlapHeight = overlapEnd - overlapStart;
+
+          perspectiveCtx.drawImage(
+            cachedCastShadowCanvas,
+            0, overlapStart, shadowCanvasW, overlapHeight,
+            perspectiveCenterX - destinationWidth / 2, overlapStart,
+            destinationWidth, overlapHeight
+          );
+        }
+        perspectiveCtx.globalCompositeOperation = 'source-over';
+        cachedPerspectiveShadowKey = perspectiveKey;
       }
+
+      ctx.drawImage(
+        cachedPerspectiveShadowCanvas,
+        -cachedPerspectiveShadowCanvas.width * cachedShadowScale / 2,
+        shadowBaseY,
+        cachedPerspectiveShadowCanvas.width * cachedShadowScale,
+        cachedPerspectiveShadowCanvas.height * cachedShadowScale
+      );
       ctx.restore();
     }
 
