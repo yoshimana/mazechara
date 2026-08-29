@@ -12,7 +12,7 @@
     '100％では強く除去されるため、必要な髪飾りやエフェクトまで消えていないか確認してください。': 'At 100%, removal is aggressive. Check that required accessories and effects have not been removed.',
     '「ゴミ除去」をもう一度押すと、除去前の状態へ戻せます。': 'Press Remove debris again to restore the original image.',
     '最大4,800万画素（50MB）対応。高解像度画像は端末内（ブラウザローカル）で快適な編集解像度に自動最適化されます。': 'Supports images up to 48 MP (50 MB). High-resolution images are optimized locally for smooth editing.',
-    '背景から自動適応': 'Auto-match to background', '影の向き/濃さ・色温度・明暗を自動同期': 'Automatically matches shadow, color temperature, and brightness', '自動マッチ': 'Auto Match',
+    '背景から自動適応': 'Auto-match to background', '影の向き/濃さ・色温度・明暗を自動判定': 'Automatically detects shadow, color temperature, and brightness', '自動マッチ': 'Auto Match',
     'クイックプリセット': 'Quick presets', '標準': 'Standard', '晴天': 'Sunny', 'くもり': 'Cloudy', '夕暮れ': 'Sunset', '夜景': 'Night', '室内': 'Indoor',
     'キャラクター配置': 'Character placement', '位置 X': 'Position X', '位置 Y': 'Position Y', '環境光 & ライティング': 'Ambient light & lighting',
     '環境暗部色': 'Ambient shadow color', 'スポイト': 'Pick color', '環境明部色': 'Ambient highlight color', '光の強さ': 'Light intensity',
