@@ -4628,6 +4628,7 @@
   let isDragging = false;
   let isCharaDragging = false;
   let isCharaScaling = false;
+  let isCharaScalePointerActive = false;
   let charaScaleIdleTimer = null;
   let isViewPanning = false;
   let isSpacePressed = false;
@@ -4645,14 +4646,41 @@
     if (!isCharaScaling) return;
     isCharaScaling = false;
     clearTimeout(charaScaleIdleTimer);
+    charaScaleIdleTimer = null;
     requestRender();
   }
 
   function beginCharaScaleInteraction() {
     isCharaScaling = true;
     clearTimeout(charaScaleIdleTimer);
-    charaScaleIdleTimer = setTimeout(finishCharaScaleInteraction, 120);
+    charaScaleIdleTimer = null;
+    // ポインターを押している間は、途中で指を止めても高精細処理を再開しない。
+    // ホイール・キーボード・プログラム操作には終了イベントを取りこぼした時の予備タイマーを使う。
+    if (!isCharaScalePointerActive) {
+      charaScaleIdleTimer = setTimeout(finishCharaScaleInteraction, 700);
+    }
   }
+
+  function startCharaScalePointerInteraction() {
+    isCharaScalePointerActive = true;
+    beginCharaScaleInteraction();
+  }
+
+  function finishCharaScalePointerInteraction() {
+    if (!isCharaScalePointerActive) return;
+    isCharaScalePointerActive = false;
+    finishCharaScaleInteraction();
+  }
+
+  [charaScaleInput, mobileCharaScaleInput].forEach((input) => {
+    input.addEventListener('pointerdown', startCharaScalePointerInteraction);
+    input.addEventListener('pointerup', finishCharaScalePointerInteraction);
+    input.addEventListener('pointercancel', finishCharaScalePointerInteraction);
+    input.addEventListener('change', finishCharaScalePointerInteraction);
+  });
+
+  window.addEventListener('pointerup', finishCharaScalePointerInteraction);
+  window.addEventListener('pointercancel', finishCharaScalePointerInteraction);
 
   function updateCharaPos(newXPercent, newYPercent) {
     if (isCharaLocked) return;
@@ -4693,16 +4721,38 @@
   }
 
   window.addEventListener('keydown', (e) => {
+    const isScaleInput = e.target === charaScaleInput || e.target === mobileCharaScaleInput;
+    const canUseGlobalScaleKeys = !isTextInputTarget(e.target);
+    if ((e.key === 'ArrowUp' || e.key === 'ArrowDown') && (isScaleInput || canUseGlobalScaleKeys)) {
+      if (!charaImg || isCharaLocked || cropModal.classList.contains('active')) return;
+      e.preventDefault();
+      const direction = e.key === 'ArrowUp' ? 1 : -1;
+      const step = e.shiftKey ? 5 : 1;
+      updateCharaScale(parseFloat(charaScaleInput.value) + direction * step);
+      return;
+    }
+
+    if (e.key === 'Enter' && cropModal.classList.contains('active')) {
+      e.preventDefault();
+      if (!e.repeat) document.getElementById('cropApplyBtn').click();
+      return;
+    }
+
     if (e.code === 'Space' && !isTextInputTarget(e.target)) {
       isSpacePressed = true;
     }
   });
 
   window.addEventListener('keyup', (e) => {
+    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') finishCharaScaleInteraction();
     if (e.code === 'Space') isSpacePressed = false;
   });
 
-  window.addEventListener('blur', () => { isSpacePressed = false; });
+  window.addEventListener('blur', () => {
+    isSpacePressed = false;
+    isCharaScalePointerActive = false;
+    finishCharaScaleInteraction();
+  });
 
   canvas.addEventListener('mousedown', (e) => {
     if (pipetteTarget !== 'none') {
