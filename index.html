@@ -3372,8 +3372,18 @@
       : (isEnglish ? 'Remove debris' : 'ゴミ除去');
   }
 
+  function updateCropTitle() {
+    const isEnglish = localStorage.getItem('mazechara-language') === 'en';
+    if (cropTargetType === 'bg') {
+      cropTitle.textContent = isEnglish ? 'Crop background photo' : '背景写真のトリミング';
+    } else {
+      cropTitle.textContent = isEnglish ? 'Crop character image' : 'キャラクター画像のトリミング';
+    }
+  }
+
   window.addEventListener('mazechara-language-change', () => {
     updateCleanupBtnLabel(cleanupBtn.classList.contains('active'));
+    updateCropTitle();
   });
 
   let rawLoadedImg = null;
@@ -3591,14 +3601,13 @@
     cropHeader.classList.remove('cleanup-active');
     isPortraitOrientation = false;
 
+    updateCropTitle();
     if (type === 'bg') {
-      cropTitle.textContent = '背景写真のトリミング';
       cropAspectContainer.style.display = 'flex';
       toggleOrientationBtn.style.display = 'block';
       cleanupBtn.style.display = 'none';
       cleanupControl.classList.remove('active');
     } else {
-      cropTitle.textContent = 'キャラクター画像のトリミング';
       cropAspectContainer.style.display = 'none';
       toggleOrientationBtn.style.display = 'none';
       cleanupBtn.style.display = 'block';
