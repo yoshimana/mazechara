@@ -4317,7 +4317,7 @@
     }
   };
 
-  function applyPreset(key) {
+  function applyPreset(key, { preserveShadowAngle = true } = {}) {
     const p = presets[key];
     if (!p) return;
 
@@ -4326,6 +4326,7 @@
     });
 
     Object.keys(p).forEach(k => {
+      if (preserveShadowAngle && k === 'shadowAngle') return;
       const el = document.getElementById(k);
       if (el) {
         el.value = p[k];
@@ -4396,7 +4397,7 @@
 
   // リセット（ライティング・色調等の設定のみ初期化し、キャラクターのサイズと位置は維持）
   document.getElementById('resetBtn').addEventListener('click', () => {
-    applyPreset('standard');
+    applyPreset('standard', { preserveShadowAngle: false });
     invalidateAll();
     updateBgBlurCache();
     requestRender();
