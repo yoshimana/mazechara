@@ -3026,7 +3026,71 @@
     blurCtx.putImageData(imageData, 0, 0);
   }
 
-  function createFastBlurredCanvas(srcImg, width, height, blurAmount, targetCanvas = null, reusableTempCanvas = null, smoothFallback = false, alphaAware = false, fallbackMaxDimension = 2048) {
+  function applyThreePassAlphaBlur(canvasToBlur, radius, solidColor) {
+    const blurRadius = Math.max(1, Math.round(radius));
+    const blurCtx = canvasToBlur.getContext('2d');
+    const width = canvasToBlur.width;
+    const height = canvasToBlur.height;
+    const imageData = blurCtx.getImageData(0, 0, width, height);
+    const outputPixels = imageData.data;
+    const pixelCount = width * height;
+    const alphaValues = new Uint16Array(pixelCount);
+    const scratch = new Uint16Array(pixelCount);
+    const windowSize = blurRadius * 2 + 1;
+    const hex = solidColor.replace('#', '');
+    const expandedHex = hex.length === 3 ? hex.split('').map(char => char + char).join('') : hex;
+    const colorNumber = parseInt(expandedHex, 16);
+    const red = (colorNumber >> 16) & 255;
+    const green = (colorNumber >> 8) & 255;
+    const blue = colorNumber & 255;
+
+    for (let pixel = 0; pixel < pixelCount; pixel++) {
+      alphaValues[pixel] = outputPixels[pixel * 4 + 3] * 256;
+    }
+
+    for (let pass = 0; pass < 3; pass++) {
+      for (let y = 0; y < height; y++) {
+        const row = y * width;
+        let alphaSum = 0;
+        for (let offset = -blurRadius; offset <= blurRadius; offset++) {
+          alphaSum += alphaValues[row + Math.max(0, Math.min(width - 1, offset))];
+        }
+        for (let x = 0; x < width; x++) {
+          scratch[row + x] = alphaSum / windowSize;
+          alphaSum += alphaValues[row + Math.min(width - 1, x + blurRadius + 1)]
+            - alphaValues[row + Math.max(0, x - blurRadius)];
+        }
+      }
+
+      for (let x = 0; x < width; x++) {
+        let alphaSum = 0;
+        for (let offset = -blurRadius; offset <= blurRadius; offset++) {
+          alphaSum += scratch[Math.max(0, Math.min(height - 1, offset)) * width + x];
+        }
+        for (let y = 0; y < height; y++) {
+          alphaValues[y * width + x] = alphaSum / windowSize;
+          alphaSum += scratch[Math.min(height - 1, y + blurRadius + 1) * width + x]
+            - scratch[Math.max(0, y - blurRadius) * width + x];
+        }
+      }
+    }
+
+    for (let pixel = 0; pixel < pixelCount; pixel++) {
+      const outputIndex = pixel * 4;
+      outputPixels[outputIndex] = red;
+      outputPixels[outputIndex + 1] = green;
+      outputPixels[outputIndex + 2] = blue;
+      outputPixels[outputIndex + 3] = alphaValues[pixel] / 256;
+    }
+    blurCtx.putImageData(imageData, 0, 0);
+  }
+
+  function getSafariBlurWorkingLimit(desktopLimit, mobileLimit) {
+    const isMobileSafariClass = window.innerWidth <= 900 || navigator.maxTouchPoints > 0;
+    return isMobileSafariClass ? mobileLimit : desktopLimit;
+  }
+
+  function createFastBlurredCanvas(srcImg, width, height, blurAmount, targetCanvas = null, reusableTempCanvas = null, smoothFallback = false, alphaAware = false, fallbackMaxDimension = 2048, solidColor = null) {
     const c = targetCanvas || document.createElement('canvas');
     const cContext = prepareCanvas(c, width, height);
 
@@ -3057,7 +3121,12 @@
     tempCtx.drawImage(srcImg, 0, 0, sw, sh);
 
     if (smoothFallback) {
-      applyThreePassBoxBlur(temp, Math.max(1, blurAmount * scale * 0.85), alphaAware);
+      const fallbackRadius = Math.max(1, blurAmount * scale * 0.85);
+      if (solidColor) {
+        applyThreePassAlphaBlur(temp, fallbackRadius, solidColor);
+      } else {
+        applyThreePassBoxBlur(temp, fallbackRadius, alphaAware);
+      }
     }
 
     cContext.imageSmoothingEnabled = true;
@@ -3245,10 +3314,18 @@
   function updateBgBlurCache() {
     if (!bgImg) return;
     const bgBlurPercent = parseFloat(document.getElementById('bgBlur').value) / 10; // 0.0%〜5.0%
+    const isBgBlurOn = document.getElementById('bgBlurToggle').checked;
+    if (!isBgBlurOn || bgBlurPercent <= 0) {
+      bgBlurredCanvas.width = 1;
+      bgBlurredCanvas.height = 1;
+      isBgBlurDirty = false;
+      return;
+    }
     const maxDim = Math.max(canvas.width, canvas.height);
     const blurPx = Math.max(0, (maxDim * (bgBlurPercent / 100)));
     const procBg = getProcessedBgCanvas();
-    bgBlurredCanvas = createFastBlurredCanvas(procBg || bgImg, canvas.width, canvas.height, blurPx, null, null, true);
+    const fallbackLimit = getSafariBlurWorkingLimit(1280, 768);
+    bgBlurredCanvas = createFastBlurredCanvas(procBg || bgImg, canvas.width, canvas.height, blurPx, null, null, true, false, fallbackLimit);
     isBgBlurDirty = false;
   }
 
@@ -5018,7 +5095,7 @@
           : sCanvas;
 
         cachedCastShadowCanvas = effectiveShadowBlur > 0
-          ? createFastBlurredCanvas(processedShadow, processedShadow.width, processedShadow.height, effectiveShadowBlur, null, null, true, true, 1280)
+          ? createFastBlurredCanvas(processedShadow, processedShadow.width, processedShadow.height, effectiveShadowBlur, null, null, true, true, getSafariBlurWorkingLimit(1024, 768), shadowColor)
           : processedShadow;
 
         castShadowVersion++;
@@ -5135,7 +5212,7 @@
         csCtx.fill();
 
         cachedContactShadowCanvas = contactBlur > 0
-          ? createFastBlurredCanvas(cShadowCanvas, cShadowCanvas.width, cShadowCanvas.height, contactBlur, null, null, true, true, 1280)
+          ? createFastBlurredCanvas(cShadowCanvas, cShadowCanvas.width, cShadowCanvas.height, contactBlur, null, null, true, true, getSafariBlurWorkingLimit(768, 512), shadowColor)
           : cShadowCanvas;
 
         isContactShadowDirty = false;
@@ -5296,7 +5373,7 @@
         rCtx.fillRect(0, 0, cW, cH);
 
         const blurredRim = rimBlur > 0
-          ? createFastBlurredCanvas(rCanvas, cW, cH, rimBlur, null, null, true, true, 1280)
+          ? createFastBlurredCanvas(rCanvas, cW, cH, rimBlur, null, null, true, true, getSafariBlurWorkingLimit(1024, 768), rimColor)
           : rCanvas;
 
         cCtx.save();
@@ -5418,7 +5495,7 @@
           blurTempCanvas,
           true,
           true,
-          1024
+          getSafariBlurWorkingLimit(768, 640)
         );
 
       // 1. キャラクタの正確なアルファマスクをパディング領域内に描画
@@ -5450,7 +5527,8 @@
           blurTempCanvas,
           true,
           true,
-          1024
+          getSafariBlurWorkingLimit(768, 640),
+          '#ffffff'
         );
         emCtx.globalCompositeOperation = 'destination-out';
         emCtx.drawImage(innerBlurred, 0, 0);
