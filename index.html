@@ -1282,12 +1282,16 @@
     position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%) scale(0.92);
+    transform: translate(-50%, -50%) scale(0.94);
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 10px;
-    padding: 11px 22px;
-    background: rgba(18, 22, 31, 0.82);
+    min-width: 220px;
+    max-width: calc(100% - 40px);
+    box-sizing: border-box;
+    padding: 11px 24px;
+    background: rgba(18, 22, 31, 0.85);
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
     border: 1px solid rgba(255, 255, 255, 0.16);
@@ -1307,6 +1311,14 @@
     visibility: visible;
     transform: translate(-50%, -50%) scale(1);
   }
+  .preset-apply-icon-slot {
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
   .preset-apply-spinner {
     width: 16px;
     height: 16px;
@@ -1314,7 +1326,6 @@
     border-top-color: #ffffff;
     border-radius: 50%;
     animation: presetSpin 0.65s linear infinite;
-    flex-shrink: 0;
   }
   .preset-apply-icon {
     width: 18px;
@@ -1323,7 +1334,6 @@
     align-items: center;
     justify-content: center;
     color: #4cd964;
-    flex-shrink: 0;
   }
   .preset-apply-icon svg {
     width: 18px;
@@ -1334,6 +1344,7 @@
     font-weight: 700;
     letter-spacing: 0.03em;
     white-space: nowrap;
+    text-align: center;
   }
   @keyframes presetSpin {
     to { transform: rotate(360deg); }
@@ -1534,6 +1545,11 @@
       top: 12px;
       padding: 5px 12px;
       font-size: 0.72rem;
+    }
+
+    .preset-apply-overlay {
+      min-width: 190px;
+      padding: 9px 18px;
     }
 
     /* 操作サイドバー（下部スクロールエリア / ボトムシート） */
@@ -1799,9 +1815,11 @@
 
   <!-- 適用中オーバーレイ -->
   <div class="preset-apply-overlay" id="presetApplyOverlay" aria-live="polite">
-    <div class="preset-apply-spinner" id="presetApplySpinner"></div>
-    <div class="preset-apply-icon" id="presetApplyCheck">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+    <div class="preset-apply-icon-slot">
+      <div class="preset-apply-spinner" id="presetApplySpinner"></div>
+      <div class="preset-apply-icon" id="presetApplyCheck">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+      </div>
     </div>
     <span class="preset-apply-text" id="presetApplyText"></span>
   </div>
@@ -4133,11 +4151,11 @@
       showPreviewOverlay('背景写真を読み込んでください', 'Please load a background photo first', false, 1400);
       return;
     }
-    showPreviewOverlay('自動マッチを適用中...', 'Applying Auto Match...', true, 0);
+    showPreviewOverlay('自動マッチを適用中', 'Applying Auto Match', true, 0);
     requestAnimationFrame(() => {
       setTimeout(() => {
         autoAnalyzeAndMatchLighting(bgImg);
-        showPreviewOverlay('自動マッチを適用しました', 'Auto Match applied', false, 750);
+        showPreviewOverlay('自動マッチ適用完了', 'Applied Auto Match', false, 750);
       }, 40);
     });
   }
@@ -4870,23 +4888,23 @@
   }
 
   const presetLabels = {
-    standard: { ja: '「標準」プリセット', en: '"Standard" preset' },
-    sunny: { ja: '「晴天」プリセット', en: '"Sunny" preset' },
-    cloudy: { ja: '「くもり」プリセット', en: '"Cloudy" preset' },
-    sunset: { ja: '「夕暮れ」プリセット', en: '"Sunset" preset' },
-    night: { ja: '「夜景」プリセット', en: '"Night" preset' },
-    indoor: { ja: '「室内」プリセット', en: '"Indoor" preset' }
+    standard: { ja: '標準プリセット', en: 'Standard Preset' },
+    sunny: { ja: '晴天プリセット', en: 'Sunny Preset' },
+    cloudy: { ja: 'くもりプリセット', en: 'Cloudy Preset' },
+    sunset: { ja: '夕暮れプリセット', en: 'Sunset Preset' },
+    night: { ja: '夜景プリセット', en: 'Night Preset' },
+    indoor: { ja: '室内プリセット', en: 'Indoor Preset' }
   };
 
   document.querySelectorAll('.preset-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const key = btn.getAttribute('data-preset');
       const label = presetLabels[key] || { ja: 'プリセット', en: 'Preset' };
-      showPreviewOverlay(`${label.ja}を適用中...`, `Applying ${label.en}...`, true, 0);
+      showPreviewOverlay(`${label.ja}適用中`, `Applying ${label.en}`, true, 0);
       requestAnimationFrame(() => {
         setTimeout(() => {
           applyPreset(key);
-          showPreviewOverlay(`${label.ja}を適用しました`, `${label.en} applied`, false, 650);
+          showPreviewOverlay(`${label.ja}適用完了`, `Applied ${label.en}`, false, 650);
         }, 30);
       });
     });
@@ -4894,14 +4912,14 @@
 
   // リセット（ライティング・色調等の設定のみ初期化し、キャラクターのサイズと位置は維持）
   document.getElementById('resetBtn').addEventListener('click', () => {
-    showPreviewOverlay('設定をリセット中...', 'Resetting settings...', true, 0);
+    showPreviewOverlay('設定をリセット中', 'Resetting settings', true, 0);
     requestAnimationFrame(() => {
       setTimeout(() => {
         applyPreset('standard', { preserveShadowAngle: false });
         invalidateAll();
         updateBgBlurCache();
         requestRender();
-        showPreviewOverlay('設定をリセットしました', 'Settings reset', false, 650);
+        showPreviewOverlay('設定リセット完了', 'Settings reset', false, 650);
       }, 30);
     });
   });
