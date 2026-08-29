@@ -2306,6 +2306,8 @@
   let isBgBlurDirty = true;
 
   const dofCanvas = document.createElement('canvas');
+  const cachedBgDisplayCanvas = document.createElement('canvas');
+  let cachedBgDisplayKey = '';
 
   let cachedCharaBaseCanvas = document.createElement('canvas');
   let isCharaBaseDirty = true;
@@ -4701,51 +4703,72 @@
 
     // 1. 背景の描画（色調補正 + DoF被写界深度グラデーション）
     if (bgImg) {
-      const procBg = getProcessedBgCanvas();
-      ctx.drawImage(procBg || bgImg, 0, 0, canvas.width, canvas.height);
-
       const isBgBlurOn = !isComparingBefore && document.getElementById('bgBlurToggle').checked;
       const bgBlur = parseFloat(document.getElementById('bgBlur').value);
       const dofBoundary = parseFloat(document.getElementById('dofBoundary').value) / 100;
       const dofFade = parseFloat(document.getElementById('dofFade').value) / 100;
 
-      if (isBgBlurOn && bgBlur > 0) {
-        if (isBgBlurDirty) {
-          updateBgBlurCache();
+      const bgDisplayKey = [
+        bgImageVersion,
+        canvas.width,
+        canvas.height,
+        isComparingBefore ? 1 : 0,
+        document.getElementById('gradingToggle').checked ? 1 : 0,
+        document.getElementById('bgBright').value,
+        document.getElementById('bgContrast').value,
+        document.getElementById('bgSaturation').value,
+        document.getElementById('bgTemp').value,
+        isBgBlurOn ? 1 : 0,
+        bgBlur,
+        dofBoundary,
+        dofFade,
+        isGrainOn && grainTarget === 'bg' ? 1 : 0,
+        isGrainOn && grainTarget === 'bg' ? grainOpacity : 0,
+        isGrainOn && grainTarget === 'bg' ? grainScale : 0
+      ].join('|');
+
+      if (bgDisplayKey !== cachedBgDisplayKey) {
+        const displayCtx = prepareCanvas(cachedBgDisplayCanvas, canvas.width, canvas.height);
+        const procBg = getProcessedBgCanvas();
+        displayCtx.drawImage(procBg || bgImg, 0, 0, canvas.width, canvas.height);
+
+        if (isBgBlurOn && bgBlur > 0) {
+          if (isBgBlurDirty) updateBgBlurCache();
+          const dofCtx = prepareCanvas(dofCanvas, canvas.width, canvas.height);
+          dofCtx.drawImage(bgBlurredCanvas, 0, 0, canvas.width, canvas.height);
+          dofCtx.globalCompositeOperation = 'destination-in';
+
+          const boundaryY = canvas.height * dofBoundary;
+          const fadeHeight = canvas.height * dofFade;
+          const startY = Math.max(0, boundaryY - fadeHeight);
+          const grad = dofCtx.createLinearGradient(0, startY, 0, boundaryY);
+          grad.addColorStop(0, 'rgba(0,0,0,1)');
+          grad.addColorStop(1, 'rgba(0,0,0,0)');
+          dofCtx.fillStyle = grad;
+          dofCtx.fillRect(0, 0, canvas.width, canvas.height);
+          displayCtx.drawImage(dofCanvas, 0, 0);
         }
-        if (dofCanvas.width !== canvas.width || dofCanvas.height !== canvas.height) {
-          dofCanvas.width = canvas.width;
-          dofCanvas.height = canvas.height;
+
+        // 背景のみへのフィルムグレインも完成背景へ含めて再利用する。
+        if (isGrainOn && grainTarget === 'bg' && grainOpacity > 0) {
+          const bgNoise = getNoisePattern(canvas.width, canvas.height, grainScale);
+          displayCtx.save();
+          displayCtx.globalCompositeOperation = 'overlay';
+          displayCtx.globalAlpha = grainOpacity;
+          displayCtx.drawImage(bgNoise, 0, 0, canvas.width, canvas.height);
+          displayCtx.restore();
         }
-        const dofCtx = dofCanvas.getContext('2d');
-        dofCtx.clearRect(0, 0, dofCanvas.width, dofCanvas.height);
-        dofCtx.globalCompositeOperation = 'source-over';
-        dofCtx.drawImage(bgBlurredCanvas, 0, 0, canvas.width, canvas.height);
-        dofCtx.globalCompositeOperation = 'destination-in';
 
-        const boundaryY = canvas.height * dofBoundary;
-        const fadeHeight = canvas.height * dofFade;
-        const startY = Math.max(0, boundaryY - fadeHeight);
+        // 完成背景へ合成済みの中間Canvasは、大画像の常駐メモリを抑えるため解放する。
+        if (dofCanvas.width > 1 || dofCanvas.height > 1) {
+          dofCanvas.width = 1;
+          dofCanvas.height = 1;
+        }
 
-        const grad = dofCtx.createLinearGradient(0, startY, 0, boundaryY);
-        grad.addColorStop(0, 'rgba(0,0,0,1)');
-        grad.addColorStop(1, 'rgba(0,0,0,0)');
-
-        dofCtx.fillStyle = grad;
-        dofCtx.fillRect(0, 0, canvas.width, canvas.height);
-
-        ctx.drawImage(dofCanvas, 0, 0);
+        cachedBgDisplayKey = bgDisplayKey;
       }
 
-      // 背景のみへのフィルムグレイン適用
-      if (isGrainOn && grainTarget === 'bg' && grainOpacity > 0) {
-        const bgNoise = getNoisePattern(canvas.width, canvas.height, grainScale);
-        ctx.save();
-        ctx.globalCompositeOperation = 'overlay';
-        ctx.globalAlpha = grainOpacity;
-        ctx.drawImage(bgNoise, 0, 0, canvas.width, canvas.height);
-        ctx.restore();
-      }
+      ctx.drawImage(cachedBgDisplayCanvas, 0, 0);
     } else {
       ctx.fillStyle = '#f8f9fc';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
