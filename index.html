@@ -1611,6 +1611,27 @@
     .crop-header h2 {
       font-size: 0.9rem;
     }
+    .crop-header.cleanup-active h2,
+    .crop-header:has(#cleanupControl.active) h2 {
+      display: none;
+    }
+    .crop-header.cleanup-active,
+    .crop-header:has(#cleanupControl.active) {
+      justify-content: flex-end;
+    }
+    .crop-header.cleanup-active .crop-toolbar,
+    .crop-header:has(#cleanupControl.active) .crop-toolbar {
+      width: 100%;
+      justify-content: flex-end;
+    }
+    .cleanup-control {
+      padding: 4px 8px;
+      gap: 6px;
+      font-size: 0.72rem;
+    }
+    .cleanup-control input[type="range"] {
+      width: 85px;
+    }
     .crop-body {
       padding: 10px;
     }
@@ -1668,12 +1689,12 @@
         <button class="aspect-btn" data-aspect="3:2">3:2</button>
       </div>
       <button class="orientation-btn" id="toggleOrientationBtn">縦 / 横</button>
-      <button class="orientation-btn cleanup-btn" id="cleanupBtn" type="button">ゴミ除去</button>
       <label class="cleanup-control" id="cleanupControl">
         <span>除去サイズ</span>
         <input type="range" id="cleanupThreshold" min="0" max="100" value="20" step="1">
         <span class="cleanup-value" id="cleanupThresholdVal">20%</span>
       </label>
+      <button class="orientation-btn cleanup-btn" id="cleanupBtn" type="button">ゴミ除去</button>
     </div>
   </div>
   <div class="crop-body" id="cropBody">
@@ -3333,6 +3354,7 @@
   // トリミング（クロップ）エンジン
   // ----------------------------------------------------
   const cropModal = document.getElementById('cropModal');
+  const cropHeader = cropModal.querySelector('.crop-header');
   const cropCanvas = document.getElementById('cropCanvas');
   const cropCtx = cropCanvas.getContext('2d');
   const cropTitle = document.getElementById('cropTitle');
@@ -3555,6 +3577,7 @@
     cleanupAnalysis = null;
     cropTargetType = type;
     cropModal.classList.add('active');
+    cropHeader.classList.remove('cleanup-active');
     isPortraitOrientation = false;
 
     if (type === 'bg') {
@@ -3642,6 +3665,7 @@
     const willEnable = !cleanupBtn.classList.contains('active');
     cleanupBtn.classList.toggle('active', willEnable);
     cleanupControl.classList.toggle('active', willEnable);
+    cropHeader.classList.toggle('cleanup-active', willEnable);
     if (!willEnable) {
       clearTimeout(cleanupInputTimer);
       cleanupThreshold.value = '0';
