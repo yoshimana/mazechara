@@ -141,7 +141,7 @@
     '左': 'Left', '奥': 'Back', '手前': 'Front', '右': 'Right', '影の長さ': 'Shadow length', '影の遠近感': 'Shadow perspective',
     '影の濃さ': 'Shadow opacity', '影のぼかし': 'Shadow blur', '影の歪み強度': 'Shadow distortion', '影の歪み角度': 'Distortion angle',
     '接地影 (足元の影)': 'Contact shadow (at feet)', '影の位置': 'Shadow position', '影のサイズ': 'Shadow size', 'スポットライト': 'Spotlight', 'ライト色': 'Light color', '位置を指定': 'Set position', '位置を決定': 'Confirm position', 'キャラとの重なり': 'Layer relative to character', 'キャラの後ろ': 'Behind character', 'キャラの前': 'In front of character',
-    '濃さ': 'Opacity', 'ぼかし': 'Blur', '角度 X': 'Angle X', '角度 Y': 'Angle Y', '背景ボケ (被写界深度)': 'Background blur (depth of field)',
+    '濃さ': 'Opacity', 'ぼかし': 'Blur', '角度 X': 'Angle X', '角度 Y': 'Angle Y', '背景ボケ': 'Background blur', '背景ボケ (被写界深度)': 'Background blur (depth of field)',
     'ぼかし量': 'Blur amount', '境界位置': 'Boundary position', 'ボケの滑らかさ': 'Blur smoothness', '詳細設定': 'Advanced settings',
     '1. 色調・トーン補正': '1. Color & tone', 'キャラクター調整': 'Character', '背景写真調整': 'Background', '明るさ (露出)': 'Brightness (exposure)', 'コントラスト': 'Contrast', '彩度': 'Saturation',
     '色温度 (冷 ← → 温)': 'Color temperature (cool ← → warm)', '背景の明るさ': 'Background brightness', '背景のコントラスト': 'Background contrast', '背景の彩度': 'Background saturation', '背景の色温度 (冷 ← → 温)': 'Background temperature (cool ← → warm)',
