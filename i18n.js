@@ -313,10 +313,28 @@
     translateDocument(language);
     window.dispatchEvent(new CustomEvent('mazechara-language-change', { detail: { language } }));
   }
+  function detectPreferredLanguage() {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved === 'en' || saved === 'ja') return saved;
+
+    const langs = (navigator.languages && navigator.languages.length)
+      ? navigator.languages
+      : [navigator.language || navigator.userLanguage || ''];
+
+    const hasJapanese = langs.some((lang) => {
+      if (!lang) return false;
+      const lower = String(lang).toLowerCase();
+      return lower === 'ja' || lower.startsWith('ja-');
+    });
+
+    return hasJapanese ? 'ja' : 'en';
+  }
+
   function init() {
     document.body.dataset.titleJa = document.title;
+    const language = detectPreferredLanguage();
+    localStorage.setItem(STORAGE_KEY, language);
     document.querySelectorAll('[data-language-toggle]').forEach((button) => button.addEventListener('click', () => setLanguage(localStorage.getItem(STORAGE_KEY) === 'en' ? 'ja' : 'en')));
-    const language = localStorage.getItem(STORAGE_KEY) === 'en' ? 'en' : 'ja';
     translateDocument(language);
     window.dispatchEvent(new CustomEvent('mazechara-language-change', { detail: { language } }));
   }
