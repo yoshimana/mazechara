@@ -2923,7 +2923,77 @@
     return canvasBlurFilterSupport;
   }
 
-  function createFastBlurredCanvas(srcImg, width, height, blurAmount, targetCanvas = null, reusableTempCanvas = null) {
+  function applyThreePassBoxBlur(canvasToBlur, radius) {
+    const blurRadius = Math.max(1, Math.round(radius));
+    const blurCtx = canvasToBlur.getContext('2d');
+    const width = canvasToBlur.width;
+    const height = canvasToBlur.height;
+    const imageData = blurCtx.getImageData(0, 0, width, height);
+    const pixels = imageData.data;
+    const scratch = new Uint8ClampedArray(pixels.length);
+    const windowSize = blurRadius * 2 + 1;
+
+    for (let pass = 0; pass < 3; pass++) {
+      for (let y = 0; y < height; y++) {
+        const row = y * width;
+        let r = 0, g = 0, b = 0, a = 0;
+        for (let offset = -blurRadius; offset <= blurRadius; offset++) {
+          const sourceIndex = (row + Math.max(0, Math.min(width - 1, offset))) * 4;
+          r += pixels[sourceIndex];
+          g += pixels[sourceIndex + 1];
+          b += pixels[sourceIndex + 2];
+          a += pixels[sourceIndex + 3];
+        }
+        for (let x = 0; x < width; x++) {
+          const targetIndex = (row + x) * 4;
+          scratch[targetIndex] = r / windowSize;
+          scratch[targetIndex + 1] = g / windowSize;
+          scratch[targetIndex + 2] = b / windowSize;
+          scratch[targetIndex + 3] = a / windowSize;
+
+          const removeX = Math.max(0, x - blurRadius);
+          const addX = Math.min(width - 1, x + blurRadius + 1);
+          const removeIndex = (row + removeX) * 4;
+          const addIndex = (row + addX) * 4;
+          r += pixels[addIndex] - pixels[removeIndex];
+          g += pixels[addIndex + 1] - pixels[removeIndex + 1];
+          b += pixels[addIndex + 2] - pixels[removeIndex + 2];
+          a += pixels[addIndex + 3] - pixels[removeIndex + 3];
+        }
+      }
+
+      for (let x = 0; x < width; x++) {
+        let r = 0, g = 0, b = 0, a = 0;
+        for (let offset = -blurRadius; offset <= blurRadius; offset++) {
+          const sourceIndex = (Math.max(0, Math.min(height - 1, offset)) * width + x) * 4;
+          r += scratch[sourceIndex];
+          g += scratch[sourceIndex + 1];
+          b += scratch[sourceIndex + 2];
+          a += scratch[sourceIndex + 3];
+        }
+        for (let y = 0; y < height; y++) {
+          const targetIndex = (y * width + x) * 4;
+          pixels[targetIndex] = r / windowSize;
+          pixels[targetIndex + 1] = g / windowSize;
+          pixels[targetIndex + 2] = b / windowSize;
+          pixels[targetIndex + 3] = a / windowSize;
+
+          const removeY = Math.max(0, y - blurRadius);
+          const addY = Math.min(height - 1, y + blurRadius + 1);
+          const removeIndex = (removeY * width + x) * 4;
+          const addIndex = (addY * width + x) * 4;
+          r += scratch[addIndex] - scratch[removeIndex];
+          g += scratch[addIndex + 1] - scratch[removeIndex + 1];
+          b += scratch[addIndex + 2] - scratch[removeIndex + 2];
+          a += scratch[addIndex + 3] - scratch[removeIndex + 3];
+        }
+      }
+    }
+
+    blurCtx.putImageData(imageData, 0, 0);
+  }
+
+  function createFastBlurredCanvas(srcImg, width, height, blurAmount, targetCanvas = null, reusableTempCanvas = null, smoothFallback = false) {
     const c = targetCanvas || document.createElement('canvas');
     const cContext = prepareCanvas(c, width, height);
 
@@ -2941,7 +3011,9 @@
     }
 
     // フォールバック
-    const scale = Math.max(0.1, 1 / (1 + blurAmount * 0.15));
+    const naturalScale = Math.max(0.1, 1 / (1 + blurAmount * 0.15));
+    const maxWorkingDimension = smoothFallback ? 2048 : Math.max(width, height);
+    const scale = Math.min(naturalScale, maxWorkingDimension / Math.max(width, height));
     const sw = Math.max(8, Math.round(width * scale));
     const sh = Math.max(8, Math.round(height * scale));
 
@@ -2950,6 +3022,10 @@
     tempCtx.imageSmoothingEnabled = true;
     tempCtx.imageSmoothingQuality = 'high';
     tempCtx.drawImage(srcImg, 0, 0, sw, sh);
+
+    if (smoothFallback) {
+      applyThreePassBoxBlur(temp, Math.max(1, blurAmount * scale * 0.85));
+    }
 
     cContext.imageSmoothingEnabled = true;
     cContext.imageSmoothingQuality = 'high';
@@ -3139,7 +3215,7 @@
     const maxDim = Math.max(canvas.width, canvas.height);
     const blurPx = Math.max(0, (maxDim * (bgBlurPercent / 100)));
     const procBg = getProcessedBgCanvas();
-    bgBlurredCanvas = createFastBlurredCanvas(procBg || bgImg, canvas.width, canvas.height, blurPx);
+    bgBlurredCanvas = createFastBlurredCanvas(procBg || bgImg, canvas.width, canvas.height, blurPx, null, null, true);
     isBgBlurDirty = false;
   }
 
