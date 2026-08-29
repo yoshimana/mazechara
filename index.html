@@ -4409,6 +4409,7 @@
 
   // ドラッグ・ホイール・ピンチ操作
   let isDragging = false;
+  let isCharaDragging = false;
   let isViewPanning = false;
   let isSpacePressed = false;
   let startX = 0;
@@ -4499,7 +4500,11 @@
       initSpotY = spotPosY;
       requestRender();
     } else {
-      if (!charaImg || isCharaLocked) return;
+      if (!charaImg || isCharaLocked) {
+        isDragging = false;
+        return;
+      }
+      isCharaDragging = true;
       initCharaX = parseFloat(charaXInput.value);
       initCharaY = parseFloat(charaYInput.value);
     }
@@ -4527,8 +4532,11 @@
   });
 
   window.addEventListener('mouseup', () => {
+    const shouldRefreshWrap = isCharaDragging;
     isDragging = false;
+    isCharaDragging = false;
     isViewPanning = false;
+    if (shouldRefreshWrap) requestRender();
   });
 
   canvas.addEventListener('wheel', (e) => {
@@ -4572,12 +4580,18 @@
         initSpotY = spotPosY;
         requestRender();
       } else {
-        if (!charaImg || isCharaLocked) return;
+        if (!charaImg || isCharaLocked) {
+          isDragging = false;
+          return;
+        }
+        isCharaDragging = true;
         initCharaX = parseFloat(charaXInput.value);
         initCharaY = parseFloat(charaYInput.value);
       }
     } else if (e.touches.length === 2) {
+      const shouldRefreshWrap = isCharaDragging;
       isDragging = false;
+      isCharaDragging = false;
       const t1 = e.touches[0];
       const t2 = e.touches[1];
       initTouchDist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
@@ -4586,6 +4600,7 @@
       initPanX = panOffsetX;
       initPanY = panOffsetY;
       initZoomLevel = currentViewZoom;
+      if (shouldRefreshWrap) requestRender();
     }
   }, { passive: false });
 
@@ -4626,8 +4641,11 @@
   }, { passive: false });
 
   canvas.addEventListener('touchend', () => {
+    const shouldRefreshWrap = isCharaDragging;
     isDragging = false;
+    isCharaDragging = false;
     initTouchDist = 0;
+    if (shouldRefreshWrap) requestRender();
   });
 
   function drawSpotlight(drawLight, drawGuide) {
@@ -5151,7 +5169,12 @@
         document.getElementById('bgTemp').value
       ].join('|');
 
-      if (wrapCacheKey !== cachedWrapKey) {
+      const canReuseWrapDuringDrag = isCharaDragging
+        && cachedWrapKey !== ''
+        && wrapFinalCanvas.width === wrapW
+        && wrapFinalCanvas.height === wrapH;
+
+      if (!canReuseWrapDuringDrag && wrapCacheKey !== cachedWrapKey) {
 
         const wBgCtx = prepareCanvas(wrapBgCanvas, wrapSampleW, wrapSampleH);
         wBgCtx.imageSmoothingEnabled = true;
@@ -5243,7 +5266,11 @@
       // 5. キャラクターにスクリーン合成
       ctx.save();
       ctx.globalCompositeOperation = 'screen';
-      ctx.drawImage(wrapFinalCanvas, cachedWrapDrawX, cachedWrapDrawY);
+      ctx.drawImage(
+        wrapFinalCanvas,
+        canReuseWrapDuringDrag ? charaLeft - wrapPad : cachedWrapDrawX,
+        canReuseWrapDuringDrag ? charaTop - wrapPad : cachedWrapDrawY
+      );
       ctx.restore();
     }
 
