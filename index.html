@@ -2295,6 +2295,8 @@
 
   let bgImg = null;
   let charaImg = null;
+  let bgImageVersion = 0;
+  let charaImageVersion = 0;
 
   // 高性能キャッシュバッファ
   let cachedBgCanvas = document.createElement('canvas');
@@ -2327,6 +2329,9 @@
   const wrapEdgeMaskCanvas = document.createElement('canvas');
   const wrapFinalCanvas = document.createElement('canvas');
   const blurTempCanvas = document.createElement('canvas');
+  let cachedWrapKey = '';
+  let cachedWrapDrawX = 0;
+  let cachedWrapDrawY = 0;
 
   // フィルムグレインのメモ化キャッシュ
   const noisePatternCache = new Map();
@@ -3681,6 +3686,7 @@
         updateViewZoom(100);
         if (cropTargetType === 'bg') {
           bgImg = croppedImg;
+          bgImageVersion++;
           canvas.width = bgImg.width;
           canvas.height = bgImg.height;
           invalidateBg();
@@ -3688,6 +3694,7 @@
           showGestureGuideToast();
         } else {
           charaImg = croppedImg;
+          charaImageVersion++;
           invalidateChara();
         }
         cropModal.classList.remove('active');
@@ -5102,93 +5109,118 @@
       const wrapSampleW = Math.max(1, Math.round(wrapW * wrapSampleScale));
       const wrapSampleH = Math.max(1, Math.round(wrapH * wrapSampleScale));
 
-      const wBgCtx = prepareCanvas(wrapBgCanvas, wrapSampleW, wrapSampleH);
-      wBgCtx.imageSmoothingEnabled = true;
-      wBgCtx.imageSmoothingQuality = 'high';
+      const wrapCacheKey = [
+        bgImageVersion,
+        charaImageVersion,
+        canvas.width,
+        canvas.height,
+        charaLeft.toFixed(2),
+        charaTop.toFixed(2),
+        cW,
+        cH,
+        isCharaFlipped ? 1 : 0,
+        wrapRadiusStrength,
+        wrapThreshold,
+        document.getElementById('gradingToggle').checked ? 1 : 0,
+        document.getElementById('bgBright').value,
+        document.getElementById('bgContrast').value,
+        document.getElementById('bgSaturation').value,
+        document.getElementById('bgTemp').value
+      ].join('|');
 
-      const procBg = getProcessedBgCanvas();
-      // キャラクタ周囲の背景をパディング付きでサンプリング
-      wBgCtx.drawImage(
-        procBg || bgImg,
-        charaLeft - wrapPad, charaTop - wrapPad, wrapW, wrapH,
-        0, 0, wrapSampleW, wrapSampleH
-      );
+      if (wrapCacheKey !== cachedWrapKey) {
+
+        const wBgCtx = prepareCanvas(wrapBgCanvas, wrapSampleW, wrapSampleH);
+        wBgCtx.imageSmoothingEnabled = true;
+        wBgCtx.imageSmoothingQuality = 'high';
+
+        const procBg = getProcessedBgCanvas();
+        // キャラクタ周囲の背景をパディング付きでサンプリング
+        wBgCtx.drawImage(
+          procBg || bgImg,
+          charaLeft - wrapPad, charaTop - wrapPad, wrapW, wrapH,
+          0, 0, wrapSampleW, wrapSampleH
+        );
 
       // スムーズなハイライト抽出（まだら・二値化ノイズを出さない滑らかなトーンカーブ）
-      if (wrapThreshold > 0) {
-        const wData = wBgCtx.getImageData(0, 0, wrapSampleW, wrapSampleH);
-        const d = wData.data;
-        const gamma = 1 + wrapThreshold * 2.0;
-        const boost = 1 + wrapThreshold * 0.4;
-        for (let i = 0; i < d.length; i += 4) {
-          const luma = (0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]) / 255;
-          const factor = Math.pow(luma, gamma) * boost;
-          d[i] = Math.min(255, d[i] * factor);
-          d[i + 1] = Math.min(255, d[i + 1] * factor);
-          d[i + 2] = Math.min(255, d[i + 2] * factor);
-          d[i + 3] = Math.min(255, d[i + 3] * Math.min(1, factor * 1.2));
+        if (wrapThreshold > 0) {
+          const wData = wBgCtx.getImageData(0, 0, wrapSampleW, wrapSampleH);
+          const d = wData.data;
+          const gamma = 1 + wrapThreshold * 2.0;
+          const boost = 1 + wrapThreshold * 0.4;
+          for (let i = 0; i < d.length; i += 4) {
+            const luma = (0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]) / 255;
+            const factor = Math.pow(luma, gamma) * boost;
+            d[i] = Math.min(255, d[i] * factor);
+            d[i + 1] = Math.min(255, d[i + 1] * factor);
+            d[i + 2] = Math.min(255, d[i + 2] * factor);
+            d[i + 3] = Math.min(255, d[i + 3] * Math.min(1, factor * 1.2));
+          }
+          wBgCtx.putImageData(wData, 0, 0);
         }
-        wBgCtx.putImageData(wData, 0, 0);
-      }
 
       // 周囲光をたっぷりと均一に拡散（背景の石畳やタイルの目地・模様の透けを完全に溶かす）
-      const blurredBg = createFastBlurredCanvas(
-        wrapBgCanvas,
-        wrapSampleW,
-        wrapSampleH,
-        wrapRadius * wrapSampleScale * 2.5,
-        wrapBlurredBgCanvas,
-        blurTempCanvas
-      );
+        const blurredBg = createFastBlurredCanvas(
+          wrapBgCanvas,
+          wrapSampleW,
+          wrapSampleH,
+          wrapRadius * wrapSampleScale * 2.5,
+          wrapBlurredBgCanvas,
+          blurTempCanvas
+        );
 
       // 1. キャラクタの正確なアルファマスクをパディング領域内に描画
-      const charaMaskCanvas = wrapMaskCanvas;
-      const cmCtx = prepareCanvas(charaMaskCanvas, wrapW, wrapH);
+        const charaMaskCanvas = wrapMaskCanvas;
+        const cmCtx = prepareCanvas(charaMaskCanvas, wrapW, wrapH);
 
-      cmCtx.save();
-      if (isCharaFlipped) {
-        cmCtx.translate(wrapPad + cW, wrapPad);
-        cmCtx.scale(-1, 1);
-      } else {
-        cmCtx.translate(wrapPad, wrapPad);
-      }
-      cmCtx.drawImage(charaImg, 0, 0, cW, cH);
-      cmCtx.restore();
+        cmCtx.save();
+        if (isCharaFlipped) {
+          cmCtx.translate(wrapPad + cW, wrapPad);
+          cmCtx.scale(-1, 1);
+        } else {
+          cmCtx.translate(wrapPad, wrapPad);
+        }
+        cmCtx.drawImage(charaImg, 0, 0, cW, cH);
+        cmCtx.restore();
 
       // 2. スリットや細い隙間の誤判定を防ぐ外周エッジマスクの生成
-      const edgeMaskCanvas = wrapEdgeMaskCanvas;
-      const emCtx = prepareCanvas(edgeMaskCanvas, wrapW, wrapH);
-      emCtx.drawImage(charaMaskCanvas, 0, 0);
+        const edgeMaskCanvas = wrapEdgeMaskCanvas;
+        const emCtx = prepareCanvas(edgeMaskCanvas, wrapW, wrapH);
+        emCtx.drawImage(charaMaskCanvas, 0, 0);
 
       // 内側へ向かってシルキーにフェードするマスクを計算
-      const innerBlurred = createFastBlurredCanvas(
-        charaMaskCanvas,
-        wrapW,
-        wrapH,
-        wrapRadius * 0.9,
-        wrapInnerBlurCanvas,
-        blurTempCanvas
-      );
-      emCtx.globalCompositeOperation = 'destination-out';
-      emCtx.drawImage(innerBlurred, 0, 0);
+        const innerBlurred = createFastBlurredCanvas(
+          charaMaskCanvas,
+          wrapW,
+          wrapH,
+          wrapRadius * 0.9,
+          wrapInnerBlurCanvas,
+          blurTempCanvas
+        );
+        emCtx.globalCompositeOperation = 'destination-out';
+        emCtx.drawImage(innerBlurred, 0, 0);
 
       // 3. 元のキャラクタ領域内に厳密に限定（外側のはみ出しやスリット外のゴミを確実にカット）
-      emCtx.globalCompositeOperation = 'destination-in';
-      emCtx.drawImage(charaMaskCanvas, 0, 0);
+        emCtx.globalCompositeOperation = 'destination-in';
+        emCtx.drawImage(charaMaskCanvas, 0, 0);
 
       // 4. 拡散した背景光を滑らかなエッジマスクで切り抜き
-      const finalWrap = wrapFinalCanvas;
-      const fwCtx = prepareCanvas(finalWrap, wrapW, wrapH);
-      fwCtx.imageSmoothingEnabled = true;
-      fwCtx.imageSmoothingQuality = 'high';
-      fwCtx.drawImage(blurredBg, 0, 0, wrapSampleW, wrapSampleH, 0, 0, wrapW, wrapH);
-      fwCtx.globalCompositeOperation = 'destination-in';
-      fwCtx.drawImage(edgeMaskCanvas, 0, 0);
+        const fwCtx = prepareCanvas(wrapFinalCanvas, wrapW, wrapH);
+        fwCtx.imageSmoothingEnabled = true;
+        fwCtx.imageSmoothingQuality = 'high';
+        fwCtx.drawImage(blurredBg, 0, 0, wrapSampleW, wrapSampleH, 0, 0, wrapW, wrapH);
+        fwCtx.globalCompositeOperation = 'destination-in';
+        fwCtx.drawImage(edgeMaskCanvas, 0, 0);
+
+        cachedWrapKey = wrapCacheKey;
+        cachedWrapDrawX = charaLeft - wrapPad;
+        cachedWrapDrawY = charaTop - wrapPad;
+      }
 
       // 5. キャラクターにスクリーン合成
       ctx.save();
       ctx.globalCompositeOperation = 'screen';
-      ctx.drawImage(finalWrap, charaLeft - wrapPad, charaTop - wrapPad);
+      ctx.drawImage(wrapFinalCanvas, cachedWrapDrawX, cachedWrapDrawY);
       ctx.restore();
     }
 
