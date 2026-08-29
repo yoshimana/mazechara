@@ -2929,17 +2929,20 @@
     const width = canvasToBlur.width;
     const height = canvasToBlur.height;
     const imageData = blurCtx.getImageData(0, 0, width, height);
-    const pixels = imageData.data;
-    const scratch = new Uint8ClampedArray(pixels.length);
+    const outputPixels = imageData.data;
+    // 透過ぼかしは1/256精度の中間バッファを使い、Safariで生じる縞状の丸め誤差を防ぐ。
+    const pixels = alphaAware ? new Uint16Array(outputPixels.length) : outputPixels;
+    const scratch = alphaAware ? new Uint16Array(outputPixels.length) : new Uint8ClampedArray(outputPixels.length);
     const windowSize = blurRadius * 2 + 1;
 
     // 透過画像はRGBをアルファで事前乗算し、透明画素の黒が輪郭へ混ざるのを防ぐ。
     if (alphaAware) {
       for (let i = 0; i < pixels.length; i += 4) {
-        const alpha = pixels[i + 3] / 255;
-        pixels[i] *= alpha;
-        pixels[i + 1] *= alpha;
-        pixels[i + 2] *= alpha;
+        const alpha = outputPixels[i + 3];
+        pixels[i] = Math.round((outputPixels[i] * alpha * 256) / 255);
+        pixels[i + 1] = Math.round((outputPixels[i + 1] * alpha * 256) / 255);
+        pixels[i + 2] = Math.round((outputPixels[i + 2] * alpha * 256) / 255);
+        pixels[i + 3] = alpha * 256;
       }
     }
 
@@ -3002,17 +3005,18 @@
 
     if (alphaAware) {
       for (let i = 0; i < pixels.length; i += 4) {
-        const alpha = pixels[i + 3];
-        if (alpha > 0) {
-          const unpremultiply = 255 / alpha;
-          pixels[i] = Math.min(255, pixels[i] * unpremultiply);
-          pixels[i + 1] = Math.min(255, pixels[i + 1] * unpremultiply);
-          pixels[i + 2] = Math.min(255, pixels[i + 2] * unpremultiply);
+        const scaledAlpha = pixels[i + 3];
+        if (scaledAlpha > 0) {
+          const unpremultiply = 255 / scaledAlpha;
+          outputPixels[i] = Math.min(255, pixels[i] * unpremultiply);
+          outputPixels[i + 1] = Math.min(255, pixels[i + 1] * unpremultiply);
+          outputPixels[i + 2] = Math.min(255, pixels[i + 2] * unpremultiply);
         } else {
-          pixels[i] = 0;
-          pixels[i + 1] = 0;
-          pixels[i + 2] = 0;
+          outputPixels[i] = 0;
+          outputPixels[i + 1] = 0;
+          outputPixels[i + 2] = 0;
         }
+        outputPixels[i + 3] = scaledAlpha / 256;
       }
     }
 
@@ -5056,7 +5060,8 @@
           cachedCastShadowCanvas,
           0, sourceY, shadowCanvasW, sourceHeight,
           -destinationWidth / 2, shadowBaseY + sourceY * cachedShadowScale,
-          destinationWidth, (sourceHeight + 0.75) * cachedShadowScale
+          // Safariでは帯の重なりが乗算されて濃い横線になるため、隙間なく連続配置する。
+          destinationWidth, sourceHeight * cachedShadowScale
         );
       }
       ctx.restore();
