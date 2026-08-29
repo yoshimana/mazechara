@@ -2322,6 +2322,7 @@
   let isContactShadowDirty = true;
   let cachedContactCenterX = 0;
   let cachedContactCenterY = 0;
+  let cachedContactCharaW = 0;
 
   // ライトラップは操作中に毎フレーム更新されるため、用途別バッファを再利用する。
   const wrapBgCanvas = document.createElement('canvas');
@@ -2334,6 +2335,9 @@
   let cachedWrapKey = '';
   let cachedWrapDrawX = 0;
   let cachedWrapDrawY = 0;
+  let cachedWrapCharaW = 0;
+  let cachedWrapCharaH = 0;
+  let cachedWrapPad = 0;
 
   // フィルムグレインのメモ化キャッシュ
   const noisePatternCache = new Map();
@@ -3875,7 +3879,10 @@
       const displayVal = p.transform ? p.transform(el.value) : el.value;
       valEl.textContent = displayVal + p.unit;
 
-      if (p.id === 'charaScale') syncMobileCharaScale();
+      if (p.id === 'charaScale') {
+        syncMobileCharaScale();
+        beginCharaScaleInteraction();
+      }
 
       if (p.id.startsWith('bg') || p.id === 'bgBlur') {
         invalidateBg();
@@ -4410,6 +4417,8 @@
   // ドラッグ・ホイール・ピンチ操作
   let isDragging = false;
   let isCharaDragging = false;
+  let isCharaScaling = false;
+  let charaScaleIdleTimer = null;
   let isViewPanning = false;
   let isSpacePressed = false;
   let startX = 0;
@@ -4421,6 +4430,19 @@
   let initialPinchDistance = null;
   let initPinchScale = 60;
   let initPinchSpotSize = 10;
+
+  function finishCharaScaleInteraction() {
+    if (!isCharaScaling) return;
+    isCharaScaling = false;
+    clearTimeout(charaScaleIdleTimer);
+    requestRender();
+  }
+
+  function beginCharaScaleInteraction() {
+    isCharaScaling = true;
+    clearTimeout(charaScaleIdleTimer);
+    charaScaleIdleTimer = setTimeout(finishCharaScaleInteraction, 120);
+  }
 
   function updateCharaPos(newXPercent, newYPercent) {
     if (isCharaLocked) return;
@@ -4435,6 +4457,7 @@
 
   function updateCharaScale(newScale) {
     if (isCharaLocked) return;
+    beginCharaScaleInteraction();
     newScale = Math.max(10, Math.min(150, newScale));
     charaScaleInput.value = newScale.toFixed(0);
     document.getElementById('charaScaleVal').textContent = charaScaleInput.value + '%';
@@ -4834,7 +4857,8 @@
     const shadowWaveAngle = parseFloat(document.getElementById('shadowWaveAngle').value);
 
     if (castOpacity > 0 && shadowLengthScale > 0.01) {
-      if (isCastShadowDirty || cachedCastW !== Math.round(charaW) || cachedCastH !== Math.round(charaH)) {
+      const canReuseCastDuringScale = isCharaScaling && cachedCastShadowCanvas.width > 0 && cachedCastH > 0;
+      if (!canReuseCastDuringScale && (isCastShadowDirty || cachedCastW !== Math.round(charaW) || cachedCastH !== Math.round(charaH))) {
         cachedCastPad = Math.ceil(effectiveShadowBlur * 1.5 + shadowWaveAmp * 1.5);
         cachedCastW = Math.round(charaW);
         cachedCastH = Math.round(charaH);
@@ -4889,23 +4913,24 @@
       const shadowTipWidthScale = 1 - Math.sin(shadowAngleRad) * shadowPerspectiveStrength;
       const shadowCanvasW = cachedCastShadowCanvas.width;
       const shadowCanvasH = cachedCastShadowCanvas.height;
-      const shadowBaseY = -charaH - cachedCastPad;
+      const cachedShadowScale = canReuseCastDuringScale ? charaH / cachedCastH : 1;
+      const shadowBaseY = -charaH - cachedCastPad * cachedShadowScale;
       // 小さい画面では分割数を抑え、影の遠近変形の見た目を保ちながら描画回数を減らす。
       const shadowSliceCount = window.innerWidth <= 900 ? 48 : 72;
       const shadowSliceHeight = Math.max(1, Math.ceil(shadowCanvasH / shadowSliceCount));
       for (let sourceY = 0; sourceY < shadowCanvasH; sourceY += shadowSliceHeight) {
         const sourceHeight = Math.min(shadowSliceHeight, shadowCanvasH - sourceY);
         const characterY = Math.max(0, Math.min(1,
-          (sourceY + sourceHeight * 0.5 - cachedCastPad) / Math.max(1, charaH)
+          (sourceY + sourceHeight * 0.5 - cachedCastPad) / Math.max(1, cachedCastH)
         ));
         const tipProgress = 1 - characterY;
         const sliceWidthScale = 1 + (shadowTipWidthScale - 1) * tipProgress;
-        const destinationWidth = shadowCanvasW * sliceWidthScale;
+        const destinationWidth = shadowCanvasW * sliceWidthScale * cachedShadowScale;
         ctx.drawImage(
           cachedCastShadowCanvas,
           0, sourceY, shadowCanvasW, sourceHeight,
-          -destinationWidth / 2, shadowBaseY + sourceY,
-          destinationWidth, sourceHeight + 0.75
+          -destinationWidth / 2, shadowBaseY + sourceY * cachedShadowScale,
+          destinationWidth, (sourceHeight + 0.75) * cachedShadowScale
         );
       }
       ctx.restore();
@@ -4925,7 +4950,8 @@
       const radiusY = Math.max(2, (charaW * 0.08) * contactSizeScale);
       const blurPad = Math.ceil(contactBlur * 1.5);
 
-      if (isContactShadowDirty || cachedContactShadowCanvas.width === 0) {
+      const canReuseContactDuringScale = isCharaScaling && cachedContactShadowCanvas.width > 0 && cachedContactCharaW > 0;
+      if (!canReuseContactDuringScale && (isContactShadowDirty || cachedContactShadowCanvas.width === 0)) {
         const cShadowCanvas = document.createElement('canvas');
         cShadowCanvas.width = Math.round(radiusX * 2 + blurPad * 2);
         cShadowCanvas.height = Math.round(radiusY * 2 + blurPad * 2);
@@ -4933,6 +4959,7 @@
 
         cachedContactCenterX = cShadowCanvas.width / 2;
         cachedContactCenterY = cShadowCanvas.height / 2;
+        cachedContactCharaW = charaW;
 
         const grad = csCtx.createRadialGradient(cachedContactCenterX, cachedContactCenterY, 0, cachedContactCenterX, cachedContactCenterY, radiusX);
         grad.addColorStop(0, shadowColor);
@@ -4953,7 +4980,14 @@
       ctx.save();
       ctx.globalCompositeOperation = 'multiply';
       ctx.globalAlpha = contactOpacity;
-      ctx.drawImage(cachedContactShadowCanvas, posX + contactOffsetX - cachedContactCenterX, posY - cachedContactCenterY);
+      const cachedContactScale = canReuseContactDuringScale ? charaW / cachedContactCharaW : 1;
+      ctx.drawImage(
+        cachedContactShadowCanvas,
+        posX + contactOffsetX - cachedContactCenterX * cachedContactScale,
+        posY - cachedContactCenterY * cachedContactScale,
+        cachedContactShadowCanvas.width * cachedContactScale,
+        cachedContactShadowCanvas.height * cachedContactScale
+      );
       ctx.restore();
     }
 
@@ -4972,7 +5006,8 @@
     const cW = Math.round(charaW);
     const cH = Math.round(charaH);
 
-    if (isCharaBaseDirty || cachedCharaBaseCanvas.width !== cW || cachedCharaBaseCanvas.height !== cH) {
+    const canReuseCharaDuringScale = isCharaScaling && cachedCharaBaseCanvas.width > 0 && cachedCharaBaseCanvas.height > 0;
+    if (!canReuseCharaDuringScale && (isCharaBaseDirty || cachedCharaBaseCanvas.width !== cW || cachedCharaBaseCanvas.height !== cH)) {
       cachedCharaBaseCanvas.width = cW;
       cachedCharaBaseCanvas.height = cH;
       const cCtx = cachedCharaBaseCanvas.getContext('2d');
@@ -5131,7 +5166,7 @@
     }
 
     // キャラ本体を描画
-    ctx.drawImage(cachedCharaBaseCanvas, charaLeft, charaTop);
+    ctx.drawImage(cachedCharaBaseCanvas, charaLeft, charaTop, cW, cH);
 
     // 4-3. Pro Mode: 高品位・シルキーライトラップ (Light Wrap / 周囲光の滑らかな回り込み)
     const isWrapOn = document.getElementById('wrapToggle').checked;
@@ -5173,8 +5208,12 @@
         && cachedWrapKey !== ''
         && wrapFinalCanvas.width === wrapW
         && wrapFinalCanvas.height === wrapH;
+      const canReuseWrapDuringScale = isCharaScaling
+        && cachedWrapKey !== ''
+        && cachedWrapCharaW > 0
+        && cachedWrapCharaH > 0;
 
-      if (!canReuseWrapDuringDrag && wrapCacheKey !== cachedWrapKey) {
+      if (!canReuseWrapDuringDrag && !canReuseWrapDuringScale && wrapCacheKey !== cachedWrapKey) {
 
         const wBgCtx = prepareCanvas(wrapBgCanvas, wrapSampleW, wrapSampleH);
         wBgCtx.imageSmoothingEnabled = true;
@@ -5261,16 +5300,31 @@
         cachedWrapKey = wrapCacheKey;
         cachedWrapDrawX = charaLeft - wrapPad;
         cachedWrapDrawY = charaTop - wrapPad;
+        cachedWrapCharaW = cW;
+        cachedWrapCharaH = cH;
+        cachedWrapPad = wrapPad;
       }
 
       // 5. キャラクターにスクリーン合成
       ctx.save();
       ctx.globalCompositeOperation = 'screen';
-      ctx.drawImage(
-        wrapFinalCanvas,
-        canReuseWrapDuringDrag ? charaLeft - wrapPad : cachedWrapDrawX,
-        canReuseWrapDuringDrag ? charaTop - wrapPad : cachedWrapDrawY
-      );
+      if (canReuseWrapDuringScale) {
+        const wrapScaleX = cW / cachedWrapCharaW;
+        const wrapScaleY = cH / cachedWrapCharaH;
+        ctx.drawImage(
+          wrapFinalCanvas,
+          charaLeft - cachedWrapPad * wrapScaleX,
+          charaTop - cachedWrapPad * wrapScaleY,
+          wrapFinalCanvas.width * wrapScaleX,
+          wrapFinalCanvas.height * wrapScaleY
+        );
+      } else {
+        ctx.drawImage(
+          wrapFinalCanvas,
+          canReuseWrapDuringDrag ? charaLeft - wrapPad : cachedWrapDrawX,
+          canReuseWrapDuringDrag ? charaTop - wrapPad : cachedWrapDrawY
+        );
+      }
       ctx.restore();
     }
 
