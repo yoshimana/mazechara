@@ -1734,7 +1734,7 @@
 
   <div class="mobile-chara-scale-control" aria-label="キャラクターのサイズ">
     <span class="mobile-chara-scale-label">サイズ</span>
-    <input type="range" id="mobileCharaScale" min="10" max="150" value="60" aria-label="キャラクターのサイズ。上へ動かすと大きく、下へ動かすと小さくなります">
+    <input type="range" id="mobileCharaScale" min="0" max="100" value="60" step="0.1" aria-label="キャラクターのサイズ。上へ動かすと大きく、下へ動かすと小さくなります" aria-valuetext="60%">
   </div>
 
   <!-- プレビュー下部 ズームコントロールバー -->
@@ -3893,9 +3893,28 @@
   const mobileCharaScaleInput = document.getElementById('mobileCharaScale');
   const spotSizeInput = document.getElementById('spotSize');
 
-  function syncMobileCharaScale() {
-    mobileCharaScaleInput.value = charaScaleInput.value;
+  // 右側の短い縦スライダーでは、小さいサイズ（10〜60%）へ操作幅の60%を割り当てる。
+  // パネル内の通常スライダーは従来どおり10〜150%の線形操作を維持する。
+  function charaScaleToMobilePosition(scaleValue) {
+    const scale = Math.max(10, Math.min(150, parseFloat(scaleValue) || 10));
+    return scale <= 60
+      ? ((scale - 10) / 50) * 60
+      : 60 + ((scale - 60) / 90) * 40;
   }
+
+  function mobilePositionToCharaScale(positionValue) {
+    const position = Math.max(0, Math.min(100, parseFloat(positionValue) || 0));
+    return Math.round(position <= 60
+      ? 10 + (position / 60) * 50
+      : 60 + ((position - 60) / 40) * 90);
+  }
+
+  function syncMobileCharaScale() {
+    mobileCharaScaleInput.value = charaScaleToMobilePosition(charaScaleInput.value);
+    mobileCharaScaleInput.setAttribute('aria-valuetext', `${Math.round(parseFloat(charaScaleInput.value))}%`);
+  }
+
+  syncMobileCharaScale();
 
   const standardParams = [
     { id: 'charaX', unit: '%' },
@@ -3976,7 +3995,8 @@
   });
 
   mobileCharaScaleInput.addEventListener('input', () => {
-    charaScaleInput.value = mobileCharaScaleInput.value;
+    charaScaleInput.value = mobilePositionToCharaScale(mobileCharaScaleInput.value);
+    mobileCharaScaleInput.setAttribute('aria-valuetext', `${charaScaleInput.value}%`);
     charaScaleInput.dispatchEvent(new Event('input', { bubbles: true }));
   });
 
