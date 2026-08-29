@@ -1277,6 +1277,68 @@
     display: block;
   }
 
+  /* プレビュー適用中オーバーレイ */
+  .preset-apply-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.92);
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 22px;
+    background: rgba(18, 22, 31, 0.82);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: var(--radius-full);
+    color: #ffffff;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.35);
+    z-index: 40;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+                visibility 0.22s;
+  }
+  .preset-apply-overlay.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  .preset-apply-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: presetSpin 0.65s linear infinite;
+    flex-shrink: 0;
+  }
+  .preset-apply-icon {
+    width: 18px;
+    height: 18px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    color: #4cd964;
+    flex-shrink: 0;
+  }
+  .preset-apply-icon svg {
+    width: 18px;
+    height: 18px;
+  }
+  .preset-apply-text {
+    font-size: 0.86rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+  }
+  @keyframes presetSpin {
+    to { transform: rotate(360deg); }
+  }
+
   /* ============================================
      スマホ・タブレット対応 (レスポンシブ)
   ============================================ */
@@ -1734,6 +1796,15 @@
   </div>
 
   <div class="compare-badge" id="compareBadge">BEFORE (未加工プレビュー)</div>
+
+  <!-- 適用中オーバーレイ -->
+  <div class="preset-apply-overlay" id="presetApplyOverlay" aria-live="polite">
+    <div class="preset-apply-spinner" id="presetApplySpinner"></div>
+    <div class="preset-apply-icon" id="presetApplyCheck">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+    </div>
+    <span class="preset-apply-text" id="presetApplyText"></span>
+  </div>
 
   <!-- 初回2本指操作ガイドトースト -->
   <div class="gesture-guide-toast" id="gestureGuideToast">
@@ -4007,10 +4078,68 @@
     setUploadStatus('');
   });
 
+  // プレビュー適用中オーバーレイ表示制御
+  let previewOverlayTimer = null;
+
+  function showPreviewOverlay(messageJa, messageEn, isProgress = true, duration = 800) {
+    const overlay = document.getElementById('presetApplyOverlay');
+    const textEl = document.getElementById('presetApplyText');
+    const spinner = document.getElementById('presetApplySpinner');
+    const check = document.getElementById('presetApplyCheck');
+    if (!overlay || !textEl) return;
+
+    clearTimeout(previewOverlayTimer);
+
+    const isEn = localStorage.getItem('mazechara-language') === 'en';
+    textEl.textContent = isEn ? messageEn : messageJa;
+    textEl.setAttribute('data-text-ja', messageJa);
+    textEl.setAttribute('data-text-en', messageEn);
+
+    if (isProgress) {
+      if (spinner) spinner.style.display = 'block';
+      if (check) check.style.display = 'none';
+    } else {
+      if (spinner) spinner.style.display = 'none';
+      if (check) check.style.display = 'flex';
+    }
+
+    overlay.classList.add('visible');
+
+    if (duration > 0) {
+      previewOverlayTimer = setTimeout(() => {
+        overlay.classList.remove('visible');
+      }, duration);
+    }
+  }
+
+  function hidePreviewOverlay() {
+    clearTimeout(previewOverlayTimer);
+    const overlay = document.getElementById('presetApplyOverlay');
+    if (overlay) overlay.classList.remove('visible');
+  }
+
+  window.addEventListener('mazechara-language-change', (e) => {
+    const isEn = e.detail?.language === 'en';
+    const textEl = document.getElementById('presetApplyText');
+    if (textEl) {
+      const txt = textEl.getAttribute(isEn ? 'data-text-en' : 'data-text-ja');
+      if (txt) textEl.textContent = txt;
+    }
+  });
+
   // 自動マッチボタン
   function runAutoMatch() {
-    if (!bgImg) return;
-    autoAnalyzeAndMatchLighting(bgImg);
+    if (!bgImg) {
+      showPreviewOverlay('背景写真を読み込んでください', 'Please load a background photo first', false, 1400);
+      return;
+    }
+    showPreviewOverlay('自動マッチを適用中...', 'Applying Auto Match...', true, 0);
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        autoAnalyzeAndMatchLighting(bgImg);
+        showPreviewOverlay('自動マッチを適用しました', 'Auto Match applied', false, 750);
+      }, 40);
+    });
   }
 
   document.getElementById('autoMatchBtn').addEventListener('click', runAutoMatch);
@@ -4740,16 +4869,41 @@
     requestRender();
   }
 
+  const presetLabels = {
+    standard: { ja: '「標準」プリセット', en: '"Standard" preset' },
+    sunny: { ja: '「晴天」プリセット', en: '"Sunny" preset' },
+    cloudy: { ja: '「くもり」プリセット', en: '"Cloudy" preset' },
+    sunset: { ja: '「夕暮れ」プリセット', en: '"Sunset" preset' },
+    night: { ja: '「夜景」プリセット', en: '"Night" preset' },
+    indoor: { ja: '「室内」プリセット', en: '"Indoor" preset' }
+  };
+
   document.querySelectorAll('.preset-btn').forEach(btn => {
-    btn.addEventListener('click', () => applyPreset(btn.getAttribute('data-preset')));
+    btn.addEventListener('click', () => {
+      const key = btn.getAttribute('data-preset');
+      const label = presetLabels[key] || { ja: 'プリセット', en: 'Preset' };
+      showPreviewOverlay(`${label.ja}を適用中...`, `Applying ${label.en}...`, true, 0);
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          applyPreset(key);
+          showPreviewOverlay(`${label.ja}を適用しました`, `${label.en} applied`, false, 650);
+        }, 30);
+      });
+    });
   });
 
   // リセット（ライティング・色調等の設定のみ初期化し、キャラクターのサイズと位置は維持）
   document.getElementById('resetBtn').addEventListener('click', () => {
-    applyPreset('standard', { preserveShadowAngle: false });
-    invalidateAll();
-    updateBgBlurCache();
-    requestRender();
+    showPreviewOverlay('設定をリセット中...', 'Resetting settings...', true, 0);
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        applyPreset('standard', { preserveShadowAngle: false });
+        invalidateAll();
+        updateBgBlurCache();
+        requestRender();
+        showPreviewOverlay('設定をリセットしました', 'Settings reset', false, 650);
+      }, 30);
+    });
   });
 
   // requestAnimationFrame
