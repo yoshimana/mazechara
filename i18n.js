@@ -112,8 +112,58 @@
     'フィルムグレインはキャラと写真の質感差を小さくします。': 'Film grain reduces the texture difference between character and photo.',
     'ビネットは四隅を暗く、または明るくして視線を中央へ集めます。': 'Vignette darkens or brightens the corners to guide attention toward the center.',
     '増田あのに😶‍🌫️/顕なめ @MousdaAnony さまには、解説用動画のキャラクター素材をご提供いただきました。': 'Character assets for the tutorial video were kindly provided by 増田あのに😶‍🌫️/顕なめ @MousdaAnony.',
-    'アクセス状況の把握には Google Analytics を利用しています。画像データや編集内容が計測サービスへ送信されることはありません。': 'Google Analytics is used to understand site traffic. Image data and editing content are not sent to analytics services.'
+    'アクセス状況の把握には Google Analytics を利用しています。画像データや編集内容が計測サービスへ送信されることはありません。': 'Google Analytics is used to understand site traffic. Image data and editing content are not sent to analytics services.',
+    '長押しまたはクリックで合成前と比較': 'Press and hold or click to compare with original',
+    'キャラクターを左右反転': 'Flip character horizontally',
+    '使い方マニュアルを開く': 'Open user manual',
+    '設定パネルを開く': 'Open settings panel',
+    '設定パネルを表示': 'Show settings panel',
+    '設定パネルを展開': 'Show settings panel',
+    '設定パネルを右に隠してプレビューを最大化': 'Hide settings panel to maximize preview',
+    '設定パネルを折りたたんでプレビューを広く表示': 'Hide settings panel for a larger preview',
+    '閉じる': 'Close',
+    'プレビュー表示ズーム': 'Preview zoom',
+    'ズーム・位置リセット (100%)': 'Reset zoom and position (100%)',
+    'キャラクターを中心に幅いっぱいで表示': 'Fit character in center',
+    'キャラクターの移動とサイズ変更をロック': 'Lock character movement and size',
+    'キャラクターのロックを解除': 'Unlock character',
+    '設定を初期化': 'Reset settings',
+    'スポットライトの色': 'Spotlight color',
+    '接地影を有効にする': 'Enable contact shadow',
+    'スポットライトを有効にする': 'Enable spotlight',
+    '背景ボケを有効にする': 'Enable background blur',
+    '色調・トーン補正を有効にする': 'Enable color and tone adjustment',
+    'ライトラップを有効にする': 'Enable light wrap',
+    'リムライトを有効にする': 'Enable rim light',
+    'フィルムグレインを有効にする': 'Enable film grain',
+    'ビネット効果を有効にする': 'Enable vignette',
+    '暗': 'Dark', '明': 'Bright'
   };
+
+  const attributeOriginals = new WeakMap();
+  function translateAttributes(language) {
+    const isEn = language === 'en';
+    const elements = document.querySelectorAll('[title], [placeholder], [aria-label]');
+    elements.forEach((el) => {
+      ['title', 'placeholder', 'aria-label'].forEach((attr) => {
+        if (!el.hasAttribute(attr)) return;
+        let origs = attributeOriginals.get(el);
+        if (!origs) {
+          origs = {};
+          attributeOriginals.set(el, origs);
+        }
+        if (origs[attr] === undefined) {
+          origs[attr] = el.getAttribute(attr);
+        }
+        if (isEn) {
+          const key = normalized(origs[attr]);
+          if (text[key]) el.setAttribute(attr, text[key]);
+        } else {
+          el.setAttribute(attr, origs[attr]);
+        }
+      });
+    });
+  }
 
   function normalized(value) { return value.replace(/\s+/g, ' ').trim(); }
   function translateNode(node) {
@@ -134,6 +184,7 @@
     }});
     const nodes = []; while (walker.nextNode()) nodes.push(walker.currentNode);
     nodes.forEach(language === 'en' ? translateNode : restoreNode);
+    translateAttributes(language);
     document.title = language === 'en' ? ({ index: 'MazeChara — Blend 2D Characters into Photos', manual: 'Manual — MazeChara', terms: 'Terms & Notices — MazeChara' }[document.body.dataset.page] || document.title) : document.body.dataset.titleJa;
   }
   function setLanguage(language) {

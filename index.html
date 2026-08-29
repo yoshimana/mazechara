@@ -4168,10 +4168,32 @@
     { id: 'bgSaturation', unit: '%' },
     { id: 'bgTemp', unit: '%' },
     // ビネット効果
-    { id: 'vignette', unit: '', transform: v => { const n = parseInt(v, 10); if (n === 0) return 'オフ'; return n < 0 ? '暗 ' + Math.abs(n) + '%' : '明 ' + n + '%'; } },
+    { id: 'vignette', unit: '', transform: v => {
+      const n = parseInt(v, 10);
+      const isEnglish = localStorage.getItem('mazechara-language') === 'en';
+      if (n === 0) return isEnglish ? 'Off' : 'オフ';
+      return isEnglish
+        ? (n < 0 ? 'Dark ' + Math.abs(n) + '%' : 'Bright ' + n + '%')
+        : (n < 0 ? '暗 ' + Math.abs(n) + '%' : '明 ' + n + '%');
+    } },
     { id: 'vignetteRadius', unit: '%' },
     { id: 'vignetteFeather', unit: '%' }
   ];
+
+  function updateVignetteValDisplay() {
+    const el = document.getElementById('vignette');
+    const valEl = document.getElementById('vignetteVal');
+    if (!el || !valEl) return;
+    const n = parseInt(el.value, 10);
+    const isEnglish = localStorage.getItem('mazechara-language') === 'en';
+    if (n === 0) {
+      valEl.textContent = isEnglish ? 'Off' : 'オフ';
+    } else {
+      valEl.textContent = isEnglish
+        ? (n < 0 ? 'Dark ' + Math.abs(n) + '%' : 'Bright ' + n + '%')
+        : (n < 0 ? '暗 ' + Math.abs(n) + '%' : '明 ' + n + '%');
+    }
+  }
 
   standardParams.forEach(p => {
     const el = document.getElementById(p.id);
@@ -4245,10 +4267,17 @@
   const pickRimBtn = document.getElementById('pickRimBtn');
   const setSpotPosBtn = document.getElementById('setSpotPosBtn');
 
+  function updateSpotPosBtnLabel() {
+    const isEnglish = localStorage.getItem('mazechara-language') === 'en';
+    setSpotPosBtn.textContent = isSettingSpotPos
+      ? (isEnglish ? 'Confirm position' : '位置を決定')
+      : (isEnglish ? 'Set position' : '位置を指定');
+  }
+
   function startSpotPositionMode() {
     if (isSettingSpotPos) return;
     isSettingSpotPos = true;
-    setSpotPosBtn.textContent = '位置を決定';
+    updateSpotPosBtnLabel();
     setSpotPosBtn.classList.add('active');
     canvas.classList.add('spotlight-pos-mode');
     pipetteTarget = 'none';
@@ -4263,7 +4292,7 @@
   function finishSpotPositionMode() {
     if (!isSettingSpotPos) return;
     isSettingSpotPos = false;
-    setSpotPosBtn.textContent = '位置を指定';
+    updateSpotPosBtnLabel();
     setSpotPosBtn.classList.remove('active');
     canvas.classList.remove('spotlight-pos-mode');
     requestRender();
@@ -4439,6 +4468,16 @@
 
   zoomFitBtn.addEventListener('click', autoFitPreview);
 
+  function updateCharaLockUI() {
+    const isEnglish = localStorage.getItem('mazechara-language') === 'en';
+    charaLockLabel.textContent = isCharaLocked
+      ? (isEnglish ? 'Unlock character' : 'キャラクターロックを解除')
+      : (isEnglish ? 'Lock character' : 'キャラクターをロック');
+    charaLockBtn.title = isCharaLocked
+      ? (isEnglish ? 'Unlock character' : 'キャラクターのロックを解除')
+      : (isEnglish ? 'Lock character movement and size' : 'キャラクターの移動とサイズ変更をロック');
+  }
+
   charaLockBtn.addEventListener('click', () => {
     isCharaLocked = !isCharaLocked;
     charaLockBtn.classList.toggle('active', isCharaLocked);
@@ -4446,11 +4485,7 @@
     previewContainer.classList.toggle('chara-locked', isCharaLocked);
     document.querySelector('.mobile-chara-scale-control')?.classList.toggle('locked', isCharaLocked);
     [charaXInput, charaYInput, charaScaleInput, mobileCharaScaleInput].forEach((input) => { input.disabled = isCharaLocked; });
-    const isEnglish = localStorage.getItem('mazechara-language') === 'en';
-    charaLockLabel.textContent = isCharaLocked
-      ? (isEnglish ? 'Unlock character' : 'キャラクターロックを解除')
-      : (isEnglish ? 'Lock character' : 'キャラクターをロック');
-    charaLockBtn.title = isCharaLocked ? 'キャラクターのロックを解除' : 'キャラクターの移動とサイズ変更をロック';
+    updateCharaLockUI();
   });
 
   zoomResetBtn.addEventListener('click', () => {
@@ -4510,7 +4545,12 @@
     }
   }
 
-  window.addEventListener('mazechara-language-change', updatePanelToggleUI);
+  window.addEventListener('mazechara-language-change', () => {
+    updatePanelToggleUI();
+    updateSpotPosBtnLabel();
+    updateVignetteValDisplay();
+    updateCharaLockUI();
+  });
 
   togglePanelBtn.addEventListener('click', () => {
     document.body.classList.toggle('panel-collapsed');
@@ -4535,6 +4575,9 @@
   });
   updatePanelToggleUI();
   updateMobileBottomActions();
+  updateSpotPosBtnLabel();
+  updateVignetteValDisplay();
+  updateCharaLockUI();
 
   // プリセット定義と適用
   const presets = {
@@ -5798,10 +5841,13 @@
       if (!blob) return;
 
       const file = new File([blob], 'mazechara_photo.jpg', { type: 'image/jpeg' });
+      const isEnglish = localStorage.getItem('mazechara-language') === 'en';
       const shareData = {
         files: [file],
-        title: 'まぜキャラ',
-        text: 'まぜキャラで作りました\n#まぜキャラ #イラスト溶け込み\nhttps://4407.jp/app/mazechara/'
+        title: isEnglish ? 'MazeChara' : 'まぜキャラ',
+        text: isEnglish
+          ? 'Made with MazeChara\n#MazeChara #PhotoBlend\nhttps://4407.jp/app/mazechara/'
+          : 'まぜキャラで作りました\n#まぜキャラ #イラスト溶け込み\nhttps://4407.jp/app/mazechara/'
       };
 
       if (shouldUseNativeShareForExport() && navigator.share && navigator.canShare?.({ files: [file] })) {
