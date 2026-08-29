@@ -2421,8 +2421,58 @@
     return isMobileDevice ? 16 * 1000 * 1000 : 24 * 1000 * 1000;
   }
 
-  function setUploadStatus(message = '') {
-    uploadStatus.textContent = message;
+  let currentUploadStatusKey = '';
+  let currentUploadStatusParams = null;
+
+  function renderUploadStatus() {
+    if (!currentUploadStatusKey) {
+      uploadStatus.textContent = '';
+      return;
+    }
+    const isEnglish = localStorage.getItem('mazechara-language') === 'en';
+    switch (currentUploadStatusKey) {
+      case 'format_error':
+        uploadStatus.textContent = isEnglish
+          ? 'Please select a JPEG, PNG, or WebP image.'
+          : 'JPEG・PNG・WebP形式の画像を選択してください。';
+        break;
+      case 'size_error':
+        uploadStatus.textContent = isEnglish
+          ? 'Please choose an image file under 50 MB.'
+          : '画像ファイルは50MB以下にしてください。';
+        break;
+      case 'load_error':
+        uploadStatus.textContent = isEnglish
+          ? 'Unsupported image format or unreadable file.'
+          : '対応していない画像形式、または読み込めないファイルです。';
+        break;
+      case 'pixel_error':
+        uploadStatus.textContent = isEnglish
+          ? 'Images must be 48 megapixels (48 MP) or smaller.'
+          : '画像は最大4,800万画素（48MP）以下にしてください。';
+        break;
+      case 'process_error':
+        uploadStatus.textContent = isEnglish
+          ? 'Failed to process the image.'
+          : '画像の処理に失敗しました。';
+        break;
+      case 'optimized':
+        if (currentUploadStatusParams) {
+          const { mp, targetMp, targetW, targetH } = currentUploadStatusParams;
+          uploadStatus.textContent = isEnglish
+            ? `High-resolution image (${mp} MP) was automatically optimized to ${targetMp} MP (${targetW}×${targetH}) for smooth editing.`
+            : `高解像度画像（${mp}MP）を端末内で快適に編集できるよう最適解像度（${targetMp}MP: ${targetW}×${targetH}）に自動調整しました。`;
+        }
+        break;
+      default:
+        uploadStatus.textContent = currentUploadStatusKey;
+    }
+  }
+
+  function setUploadStatus(key = '', params = null) {
+    currentUploadStatusKey = key;
+    currentUploadStatusParams = params;
+    renderUploadStatus();
   }
 
   function addControlAccessibility() {
@@ -2465,6 +2515,7 @@
 
   window.addEventListener('mazechara-language-change', () => {
     if (!bgImg && !charaImg) initPlaceholder();
+    renderUploadStatus();
   });
 
   // アコーディオン設定
@@ -3967,11 +4018,11 @@
 
   function loadImageForEditing(file, type) {
     if (!SUPPORTED_IMAGE_TYPES.has(file.type)) {
-      setUploadStatus('JPEG・PNG・WebP形式の画像を選択してください。');
+      setUploadStatus('format_error');
       return;
     }
     if (file.size > MAX_IMAGE_BYTES) {
-      setUploadStatus('画像ファイルは50MB以下にしてください。');
+      setUploadStatus('size_error');
       return;
     }
 
@@ -3979,14 +4030,14 @@
     const img = new Image();
     img.onerror = () => {
       URL.revokeObjectURL(objectUrl);
-      setUploadStatus('対応していない画像形式、または読み込めないファイルです。');
+      setUploadStatus('load_error');
     };
     img.onload = () => {
       URL.revokeObjectURL(objectUrl);
       const rawPixels = img.width * img.height;
 
       if (rawPixels > MAX_RAW_IMAGE_PIXELS) {
-        setUploadStatus('画像は最大4,800万画素（48MP）以下にしてください。');
+        setUploadStatus('pixel_error');
         return;
       }
 
@@ -4007,7 +4058,7 @@
 
         rCanvas.toBlob((blob) => {
           if (!blob) {
-            setUploadStatus('画像の処理に失敗しました。');
+            setUploadStatus('process_error');
             return;
           }
           const blobUrl = URL.createObjectURL(blob);
@@ -4016,7 +4067,7 @@
             URL.revokeObjectURL(blobUrl);
             const mp = (rawPixels / 1000000).toFixed(0);
             const targetMp = ((targetW * targetH) / 1000000).toFixed(0);
-            setUploadStatus(`高解像度画像（${mp}MP）を端末内で快適に編集できるよう最適解像度（${targetMp}MP: ${targetW}×${targetH}）に自動調整しました。`);
+            setUploadStatus('optimized', { mp, targetMp, targetW, targetH });
             openCropper(resizedImg, type);
           };
           resizedImg.src = blobUrl;
