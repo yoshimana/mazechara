@@ -2,6 +2,11 @@
   const STORAGE_KEY = 'mazechara-language';
   const originals = new WeakMap();
   const text = {
+    "まぜキャラ": "MazeChara",
+    "まぜキャラ：二次元✖️三次元・キャラ溶け込みツール": "MazeChara: 2D Character Photo-Blending Tool",
+    "まぜキャラ — 二次元キャラクターを写真へ自然に溶け込ませるWebツール": "MazeChara — Blend 2D Characters into Photos",
+    "まぜキャラ - 二次元✖️三次元・キャラ溶け込みツール": "MazeChara — 2D Character Photo-Blending Tool",
+    "技術参考: 此ノ世うに (@konoyo_uni) / X": "Technique reference: 此ノ世うに (@konoyo_uni) / X",
     "使い方マニュアル - まぜキャラ": "User Manual — MazeChara",
     "まぜキャラ 使い方マニュアル": "MazeChara User Manual",
     "二次元キャラクターを三次元の背景写真へ自然に溶け込ませるための操作ガイドです。": "A comprehensive guide for blending 2D characters naturally into 3D background photos.",
@@ -301,7 +306,7 @@
     const nodes = []; while (walker.nextNode()) nodes.push(walker.currentNode);
     nodes.forEach(language === 'en' ? translateNode : restoreNode);
     translateAttributes(language);
-    document.title = language === 'en' ? ({ index: 'MazeChara — Blend 2D Characters into Photos', manual: 'Manual — MazeChara', terms: 'Terms & Notices — MazeChara' }[document.body.dataset.page] || document.title) : document.body.dataset.titleJa;
+    document.title = language === 'en' ? ({ index: 'MazeChara — Blend 2D Characters into Photos', manual: 'User Manual — MazeChara', terms: 'Terms & Notices — MazeChara' }[document.body.dataset.page] || document.title) : document.body.dataset.titleJa;
   }
   function setLanguage(language) {
     localStorage.setItem(STORAGE_KEY, language);
