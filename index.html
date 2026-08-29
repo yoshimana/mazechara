@@ -3341,12 +3341,14 @@
     return cleanedCanvas;
   }
 
-  function applyCleanupThreshold() {
+  function applyCleanupThreshold(shouldAutoFit = true) {
     const value = Number(cleanupThreshold.value);
     cleanupThresholdVal.textContent = `${value}%`;
     rawLoadedImg = createCleanedCharacterImage(value);
-    const autoBox = getNonTransparentBoundingBox(rawLoadedImg);
-    cropRect = { x: autoBox.x, y: autoBox.y, w: autoBox.w, h: autoBox.h };
+    if (shouldAutoFit) {
+      const autoBox = getNonTransparentBoundingBox(rawLoadedImg);
+      cropRect = { x: autoBox.x, y: autoBox.y, w: autoBox.w, h: autoBox.h };
+    }
     renderCropCanvas();
   }
 
@@ -3621,6 +3623,8 @@
     const pos = getCropCanvasPointerPos(e);
     const mode = getCropHandleAt(pos, false);
     if (!mode) return;
+    // 手動調整を始めた後に、遅延中のゴミ除去処理で枠を自動位置へ戻さない。
+    clearTimeout(cleanupInputTimer);
     isCropDragging = true;
     cropDragMode = mode;
     cropStartPos = pos;
@@ -3640,6 +3644,8 @@
     const mode = getCropHandleAt(pos, true);
     if (!mode) return;
     e.preventDefault();
+    // 手動調整を始めた後に、遅延中のゴミ除去処理で枠を自動位置へ戻さない。
+    clearTimeout(cleanupInputTimer);
     isCropDragging = true;
     cropDragMode = mode;
     cropStartPos = pos;
@@ -3657,7 +3663,8 @@
 
   document.getElementById('cropApplyBtn').addEventListener('click', () => {
     clearTimeout(cleanupInputTimer);
-    if (cropTargetType === 'chara' && cleanupBtn.classList.contains('active')) applyCleanupThreshold();
+    // 除去結果は最新化するが、ユーザーが手動調整したトリミング枠は維持する。
+    if (cropTargetType === 'chara' && cleanupBtn.classList.contains('active')) applyCleanupThreshold(false);
     const cutCanvas = document.createElement('canvas');
     cutCanvas.width = Math.round(cropRect.w);
     cutCanvas.height = Math.round(cropRect.h);
