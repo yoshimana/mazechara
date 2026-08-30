@@ -2662,12 +2662,9 @@
         const redScale = 1 + scaleDelta;
         const blueScale = Math.max(0.3, 1 - scaleDelta * 0.5);
 
-        // 元画像のRGBを中央基準にし、緑は基準波長の補助として25%だけ加える。
-        effectCtx.drawImage(chromaSourceCanvas, 0, 0);
-        effectCtx.globalCompositeOperation = 'lighter';
-        effectCtx.globalAlpha = 0.25;
+        // 緑を中央基準、赤・青を分散させ、RGBの総量が偏らない収差レイヤーを作る。
         effectCtx.drawImage(chromaGreenCanvas, 0, 0);
-        effectCtx.globalAlpha = 1;
+        effectCtx.globalCompositeOperation = 'lighter';
         effectCtx.save();
         effectCtx.translate(workCx, workCy);
         effectCtx.scale(blueScale, blueScale);
@@ -2683,12 +2680,9 @@
         const dx = Math.cos(rad) * maxOffset;
         const dy = Math.sin(rad) * maxOffset;
 
-        // 元画像のRGBを中央基準にし、緑は基準波長の補助として25%だけ加える。
-        effectCtx.drawImage(chromaSourceCanvas, 0, 0);
-        effectCtx.globalCompositeOperation = 'lighter';
-        effectCtx.globalAlpha = 0.25;
+        // 緑を中央基準、赤・青を分散させ、RGBの総量が偏らない収差レイヤーを作る。
         effectCtx.drawImage(chromaGreenCanvas, 0, 0);
-        effectCtx.globalAlpha = 1;
+        effectCtx.globalCompositeOperation = 'lighter';
         effectCtx.drawImage(chromaBlueCanvas, -dx, -dy);
         effectCtx.drawImage(chromaRedCanvas, dx, dy);
       }
@@ -2702,6 +2696,9 @@
       if (tCtx.globalCompositeOperation !== 'color') {
         tCtx.globalCompositeOperation = 'screen';
         tCtx.globalAlpha = 0.35;
+      } else {
+        // 色収差を元画像へ半量だけ混ぜ、全画面の色かぶりを防ぎながら色のずれを残す。
+        tCtx.globalAlpha = 0.50;
       }
       tCtx.drawImage(chromaTempBlurCanvas, 0, 0, w, h);
       tCtx.restore();
