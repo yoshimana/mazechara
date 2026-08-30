@@ -2515,7 +2515,7 @@
   const chromaCyanCanvas = document.createElement('canvas');
   const chromaSourceCanvas = document.createElement('canvas');
 
-  function applyChromaticAberration(targetCanvas, amount, angleDeg, blurAmount, type = 'radial') {
+  function applyChromaticAberration(targetCanvas, amount, angleDeg, blurAmount, type = 'radial', lightAngleDeg = -45) {
     if (amount <= 0) return;
     const w = targetCanvas.width;
     const h = targetCanvas.height;
@@ -2556,24 +2556,37 @@
     }
 
     if (type === 'radial') {
-      // 放射状（レンズ風）：中心からの拡大・縮小
-      const scaleDelta = Math.max(0.005, (maxOffset / minDim) * 2.6);
+      // 光源の向き（lightAngleDeg）の影響を反映
+      const lightRad = (lightAngleDeg * Math.PI) / 180;
+      const lCos = Math.cos(lightRad);
+      const lSin = Math.sin(lightRad);
+
+      // 光源の差し込む方向から光が抜ける方向へと放射中心をシフト
+      const cx = w / 2 - lCos * (w * 0.32);
+      const cy = h / 2 - lSin * (h * 0.32);
+
+      const scaleDelta = Math.max(0.005, (maxOffset / minDim) * 2.8);
       const redScale = 1 + scaleDelta;
       const cyanScale = Math.max(0.1, 1 - scaleDelta);
 
-      // シアン（縮小）
+      // 光源の向き（光軸）に沿った指向性シフト
+      const lightShift = maxOffset * 0.5;
+      const shiftX = lCos * lightShift;
+      const shiftY = lSin * lightShift;
+
+      // シアン（縮小 + 光源方向へ）
       tCtx.save();
-      tCtx.translate(w / 2, h / 2);
+      tCtx.translate(cx, cy);
       tCtx.scale(cyanScale, cyanScale);
-      tCtx.drawImage(chromaCyanCanvas, -w / 2, -h / 2);
+      tCtx.drawImage(chromaCyanCanvas, -cx - shiftX * 0.5, -cy - shiftY * 0.5);
       tCtx.restore();
 
-      // 赤（拡大 + lighter 加算合成）
+      // 赤（拡大 + lighter 加算合成 + 光の進行方向へ）
       tCtx.globalCompositeOperation = 'lighter';
       tCtx.save();
-      tCtx.translate(w / 2, h / 2);
+      tCtx.translate(cx, cy);
       tCtx.scale(redScale, redScale);
-      tCtx.drawImage(chromaRedCanvas, -w / 2, -h / 2);
+      tCtx.drawImage(chromaRedCanvas, -cx + shiftX * 0.5, -cy + shiftY * 0.5);
       tCtx.restore();
     } else {
       // 平行（均一）：指定角度に応じた水平・垂直オフセット
@@ -4522,7 +4535,8 @@
         beginCharaScaleInteraction();
       }
 
-      if (p.id.startsWith('bg') || p.id === 'bgBlur' || (['chromaAmount', 'chromaAngle', 'chromaBlur'].includes(p.id) && chromaTarget === 'bg')) {
+      const isChromaOnForInvalidate = document.getElementById('chromaToggle')?.checked;
+      if (p.id.startsWith('bg') || p.id === 'bgBlur' || (['chromaAmount', 'chromaAngle', 'chromaBlur'].includes(p.id) && chromaTarget === 'bg') || (p.id === 'lightAngle' && isChromaOnForInvalidate && chromaTarget === 'bg')) {
         invalidateBg();
         updateBgBlurCache();
       } else if (['charaScale', 'multiplyOpacity', 'overlayOpacity', 'lightAngle', 'rimOpacity', 'rimWidth', 'rimBlur', 'bright', 'contrast', 'saturation', 'temp', 'grainOpacity', 'grainScale'].includes(p.id) || (['chromaAmount', 'chromaAngle', 'chromaBlur'].includes(p.id) && chromaTarget === 'chara')) {
@@ -5618,6 +5632,7 @@
     const chromaAmount = parseFloat(document.getElementById('chromaAmount').value);
     const chromaAngle = parseFloat(document.getElementById('chromaAngle').value);
     const chromaBlur = parseFloat(document.getElementById('chromaBlur').value);
+    const lightAngle = parseFloat(document.getElementById('lightAngle').value);
 
     // 1. 背景の描画（色調補正 + DoF被写界深度グラデーション）
     if (bgImg) {
@@ -5647,7 +5662,8 @@
         isChromaOn && chromaTarget === 'bg' ? chromaAmount : 0,
         isChromaOn && chromaTarget === 'bg' ? chromaAngle : 0,
         isChromaOn && chromaTarget === 'bg' ? chromaBlur : 0,
-        isChromaOn && chromaTarget === 'bg' ? chromaType : ''
+        isChromaOn && chromaTarget === 'bg' ? chromaType : '',
+        isChromaOn && chromaTarget === 'bg' ? lightAngle : 0
       ].join('|');
 
       if (bgDisplayKey !== cachedBgDisplayKey) {
@@ -5684,7 +5700,7 @@
 
         // 背景のみへの色収差
         if (isChromaOn && chromaTarget === 'bg' && chromaAmount > 0) {
-          applyChromaticAberration(cachedBgDisplayCanvas, chromaAmount, chromaAngle, chromaBlur, chromaType);
+          applyChromaticAberration(cachedBgDisplayCanvas, chromaAmount, chromaAngle, chromaBlur, chromaType, lightAngle);
         }
 
         // 完成背景へ合成済みの中間Canvasは、大画像の常駐メモリを抑えるため解放する。
@@ -6082,7 +6098,7 @@
 
       // 4-5. Pro Mode: キャラクター単体への色収差 (chromaTarget === 'chara')
       if (isChromaOn && chromaTarget === 'chara' && chromaAmount > 0) {
-        applyChromaticAberration(cachedCharaBaseCanvas, chromaAmount, chromaAngle, chromaBlur, chromaType);
+        applyChromaticAberration(cachedCharaBaseCanvas, chromaAmount, chromaAngle, chromaBlur, chromaType, lightAngle);
       }
 
       isCharaBaseDirty = false;
@@ -6308,7 +6324,7 @@
 
     // 7. 全体への色収差 (chromaTarget === 'all')
     if (isChromaOn && chromaTarget === 'all' && chromaAmount > 0) {
-      applyChromaticAberration(canvas, chromaAmount, chromaAngle, chromaBlur, chromaType);
+      applyChromaticAberration(canvas, chromaAmount, chromaAngle, chromaBlur, chromaType, lightAngle);
     }
 
     // 8. 全体へのフィルムグレイン (grainTarget === 'all')
