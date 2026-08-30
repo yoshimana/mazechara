@@ -2533,7 +2533,11 @@
   const chromaGreenCanvas = document.createElement('canvas');
   const chromaBlueCanvas = document.createElement('canvas');
   const chromaSourceCanvas = document.createElement('canvas');
+  const chromaTempBlurCanvas = document.createElement('canvas');
   const cachedCharaChromaCanvas = document.createElement('canvas');
+  const cachedCharaFringeCanvas = document.createElement('canvas');
+  let isCharaChromaDirty = true;
+  let lastCharaChromaKey = '';
 
   function releaseChromaCanvases() {
     chromaRedCanvas.width = 1;
@@ -2544,8 +2548,14 @@
     chromaBlueCanvas.height = 1;
     chromaSourceCanvas.width = 1;
     chromaSourceCanvas.height = 1;
+    chromaTempBlurCanvas.width = 1;
+    chromaTempBlurCanvas.height = 1;
     cachedCharaChromaCanvas.width = 1;
     cachedCharaChromaCanvas.height = 1;
+    cachedCharaFringeCanvas.width = 1;
+    cachedCharaFringeCanvas.height = 1;
+    isCharaChromaDirty = true;
+    lastCharaChromaKey = '';
   }
 
   function applyChromaticAberration(targetCanvas, amount, angleDeg, blurAmount, type = 'radial', lightAngleDeg = -45, isOpaque = false) {
@@ -2555,8 +2565,9 @@
     if (w < 2 || h < 2) return;
 
     // iOS Safari の Canvas メモリ制限（384MB）と大画像 GPU ブラーによる WebProcess クラッシュを完全防止
-    // 作業解像度を安全なサイズ（長辺最大 1280px）にクランプして処理
-    const MAX_CHROMA_DIM = 1280;
+    // モバイルは安全な1600px、PCは2560pxに最適クランプして高解像度と安全性を両立
+    const isMobileChroma = window.innerWidth <= 900 || ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+    const MAX_CHROMA_DIM = isMobileChroma ? 1600 : 2560;
     const maxDim = Math.max(w, h);
     const downScale = maxDim > MAX_CHROMA_DIM ? MAX_CHROMA_DIM / maxDim : 1.0;
     const workW = Math.max(2, Math.round(w * downScale));
@@ -2604,16 +2615,14 @@
     if (blurPx > 0.3) {
       const blueBlurPx = blurPx * 0.5;
       if (supportsCanvasBlurFilter()) {
-        const tempBlur = document.createElement('canvas');
-        tempBlur.width = workW;
-        tempBlur.height = workH;
-        const bCtx = tempBlur.getContext('2d');
+        const bCtx = prepareCanvas(chromaTempBlurCanvas, workW, workH);
+        bCtx.clearRect(0, 0, workW, workH);
 
         // 赤（100%ぼかし）
         bCtx.filter = `blur(${blurPx.toFixed(1)}px)`;
         bCtx.drawImage(chromaRedCanvas, 0, 0);
         redCtx.clearRect(0, 0, workW, workH);
-        redCtx.drawImage(tempBlur, 0, 0);
+        redCtx.drawImage(chromaTempBlurCanvas, 0, 0);
 
         // 青（赤の半分のぼかし）
         if (blueBlurPx > 0.3) {
@@ -2621,8 +2630,9 @@
           bCtx.filter = `blur(${blueBlurPx.toFixed(1)}px)`;
           bCtx.drawImage(chromaBlueCanvas, 0, 0);
           blueCtx.clearRect(0, 0, workW, workH);
-          blueCtx.drawImage(tempBlur, 0, 0);
+          blueCtx.drawImage(chromaTempBlurCanvas, 0, 0);
         }
+        bCtx.filter = 'none';
       } else {
         applyThreePassBoxBlur(chromaRedCanvas, blurPx, true);
         if (blueBlurPx > 0.3) {
@@ -2709,16 +2719,13 @@
 
   function invalidateChara() {
     isCharaBaseDirty = true;
+    isCharaChromaDirty = true;
     isCastShadowDirty = true;
     isContactShadowDirty = true;
   }
 
-  function invalidateCastShadow() {
-    isCastShadowDirty = true;
-  }
-
-  function invalidateContactShadow() {
-    isContactShadowDirty = true;
+  function invalidateCharaChroma() {
+    isCharaChromaDirty = true;
   }
 
   function invalidateAll() {
@@ -5272,6 +5279,7 @@
     isCharaScaling = false;
     clearTimeout(charaScaleIdleTimer);
     charaScaleIdleTimer = null;
+    isCharaChromaDirty = true;
     requestRender();
   }
 
@@ -6214,43 +6222,68 @@
     }
 
     // 4-5. Pro Mode: キャラクター単体への色収差 (chromaTarget === 'chara')
-    // キャラの描画エリア端でエフェクトが切れないよう、色ズレ＋ぼかし分のパディングを持ったキャンバスで処理
-    let charaDrawCanvas = cachedCharaBaseCanvas;
-    let charaDrawX = charaLeft;
-    let charaDrawY = charaTop;
-    let charaDrawW = cW;
-    let charaDrawH = cH;
+    // 芯（顔・服・瞳のディテール・不透明度）は100%完全保持し、外側フリンジのみを背景に自然に馴染ませる
+    let cachedCharaPad = 0;
+    const isChromaChara = isChromaOn && chromaTarget === 'chara' && chromaAmount > 0;
 
-    if (isChromaOn && chromaTarget === 'chara' && chromaAmount > 0) {
+    if (isChromaChara) {
       const minDim = Math.min(cW, cH);
       const maxOffset = Math.max(1, Math.min(minDim * 0.045 * (chromaAmount / 100), 64));
       const blurPx = chromaBlur > 0 ? Math.min(maxOffset * 0.6 * (chromaBlur / 100), 16) : 0;
-      // 放射ズレ・平行ズレともに外側の赤フリンジや光軸シフト・ぼかしが切れないよう十分なパディングを確保
       const extraSpread = chromaType === 'radial' ? maxOffset * 0.8 : 0;
-      const chromaPad = Math.ceil(maxOffset + extraSpread + blurPx * 2.0 + 16);
+      cachedCharaPad = Math.ceil(maxOffset + extraSpread + blurPx * 2.0 + 16);
 
-      const paddedW = Math.round(cW + chromaPad * 2);
-      const paddedH = Math.round(cH + chromaPad * 2);
-      const chCtx = prepareCanvas(cachedCharaChromaCanvas, paddedW, paddedH);
-      chCtx.clearRect(0, 0, paddedW, paddedH);
-      chCtx.drawImage(cachedCharaBaseCanvas, chromaPad, chromaPad);
+      const paddedW = Math.round(cW + cachedCharaPad * 2);
+      const paddedH = Math.round(cH + cachedCharaPad * 2);
 
-      applyChromaticAberration(cachedCharaChromaCanvas, chromaAmount, chromaAngle, chromaBlur, chromaType, lightAngle, false);
+      const chromaKey = [
+        charaImageVersion,
+        cW,
+        cH,
+        isCharaFlipped,
+        chromaAmount,
+        chromaAngle,
+        chromaBlur,
+        chromaType,
+        lightAngle,
+        cachedCharaPad
+      ].join('_');
 
-      charaDrawCanvas = cachedCharaChromaCanvas;
-      charaDrawX = charaLeft - chromaPad;
-      charaDrawY = charaTop - chromaPad;
-      charaDrawW = paddedW;
-      charaDrawH = paddedH;
+      // 移動中・拡縮操作中は再計算をスキップし、既存キャッシュを描画して60fpsを維持
+      const canReuseDuringInteraction = (isCharaDragging || isCharaScaling) && cachedCharaFringeCanvas.width > 0 && cachedCharaFringeCanvas.height > 0;
+
+      if (!canReuseDuringInteraction && (isCharaChromaDirty || lastCharaChromaKey !== chromaKey || cachedCharaFringeCanvas.width !== paddedW || cachedCharaFringeCanvas.height !== paddedH)) {
+        const chCtx = prepareCanvas(cachedCharaChromaCanvas, paddedW, paddedH);
+        chCtx.clearRect(0, 0, paddedW, paddedH);
+        chCtx.drawImage(cachedCharaBaseCanvas, cachedCharaPad, cachedCharaPad);
+
+        applyChromaticAberration(cachedCharaChromaCanvas, chromaAmount, chromaAngle, chromaBlur, chromaType, lightAngle, false);
+
+        // 外側フリンジ差分キャンバス: 色収差結果から元キャラのマスクを destination-out でくり抜き、外側フリンジのみを抽出
+        const frCtx = prepareCanvas(cachedCharaFringeCanvas, paddedW, paddedH);
+        frCtx.clearRect(0, 0, paddedW, paddedH);
+        frCtx.drawImage(cachedCharaChromaCanvas, 0, 0);
+
+        frCtx.save();
+        frCtx.globalCompositeOperation = 'destination-out';
+        frCtx.drawImage(cachedCharaBaseCanvas, cachedCharaPad, cachedCharaPad);
+        frCtx.restore();
+
+        lastCharaChromaKey = chromaKey;
+        isCharaChromaDirty = false;
+      }
     }
 
-    // キャラ本体を描画（色収差適用時は不透明度90%）
-    ctx.save();
-    if (isChromaOn && chromaTarget === 'chara' && chromaAmount > 0) {
-      ctx.globalAlpha = 0.9;
+    // 1. 外側フリンジを背景写真の上に自然な光の透過度（0.7）で描画
+    if (isChromaChara && cachedCharaFringeCanvas.width > 0 && cachedCharaFringeCanvas.height > 0) {
+      ctx.save();
+      ctx.globalAlpha = 0.7;
+      ctx.drawImage(cachedCharaFringeCanvas, charaLeft - cachedCharaPad, charaTop - cachedCharaPad, cW + cachedCharaPad * 2, cH + cachedCharaPad * 2);
+      ctx.restore();
     }
-    ctx.drawImage(charaDrawCanvas, charaDrawX, charaDrawY, charaDrawW, charaDrawH);
-    ctx.restore();
+
+    // 2. キャラクター本体を高解像度・完全不透明（globalAlpha = 1.0）で描画（芯のディテール・色を100%保持）
+    ctx.drawImage(cachedCharaBaseCanvas, charaLeft, charaTop, cW, cH);
 
     // 4-3. Pro Mode: 高品位・シルキーライトラップ (Light Wrap / 周囲光の滑らかな回り込み)
     const isWrapOn = document.getElementById('wrapToggle').checked;
