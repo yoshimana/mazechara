@@ -2645,6 +2645,7 @@
       // 赤（拡大 + lighter 加算合成 + 光の進行方向へ）
       tCtx.globalCompositeOperation = 'lighter';
       tCtx.save();
+      if (!isOpaque) tCtx.globalAlpha = 0.72;
       tCtx.translate(cx, cy);
       tCtx.scale(redScale, redScale);
       tCtx.drawImage(chromaRedCanvas, -cx + shiftX * 0.7, -cy + shiftY * 0.7, w, h);
@@ -2658,7 +2659,10 @@
       tCtx.drawImage(chromaCyanCanvas, -dx, -dy, w, h);
 
       tCtx.globalCompositeOperation = 'lighter';
+      tCtx.save();
+      if (!isOpaque) tCtx.globalAlpha = 0.72;
       tCtx.drawImage(chromaRedCanvas, dx, dy, w, h);
+      tCtx.restore();
     }
     tCtx.restore();
 
@@ -6205,6 +6209,11 @@
       chCtx.drawImage(cachedCharaBaseCanvas, chromaPad, chromaPad);
 
       applyChromaticAberration(cachedCharaChromaCanvas, chromaAmount, chromaAngle, chromaBlur, chromaType, lightAngle, false);
+
+      // キャラ本体の芯の色とシャープネスを100%維持し、外側フリンジのみを柔らかく透過させる
+      chCtx.save();
+      chCtx.drawImage(cachedCharaBaseCanvas, chromaPad, chromaPad);
+      chCtx.restore();
 
       charaDrawCanvas = cachedCharaChromaCanvas;
       charaDrawX = charaLeft - chromaPad;
