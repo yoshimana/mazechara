@@ -2528,17 +2528,20 @@
   // フィルムグレインのメモ化キャッシュ
   const noisePatternCache = new Map();
 
-  // 色収差 レンダリング用キャンバスキャッシュ
+  // 色収差 (RGB 3色分解) レンダリング用キャンバスキャッシュ
   const chromaRedCanvas = document.createElement('canvas');
-  const chromaCyanCanvas = document.createElement('canvas');
+  const chromaGreenCanvas = document.createElement('canvas');
+  const chromaBlueCanvas = document.createElement('canvas');
   const chromaSourceCanvas = document.createElement('canvas');
   const cachedCharaChromaCanvas = document.createElement('canvas');
 
   function releaseChromaCanvases() {
     chromaRedCanvas.width = 1;
     chromaRedCanvas.height = 1;
-    chromaCyanCanvas.width = 1;
-    chromaCyanCanvas.height = 1;
+    chromaGreenCanvas.width = 1;
+    chromaGreenCanvas.height = 1;
+    chromaBlueCanvas.width = 1;
+    chromaBlueCanvas.height = 1;
     chromaSourceCanvas.width = 1;
     chromaSourceCanvas.height = 1;
     cachedCharaChromaCanvas.width = 1;
@@ -2577,18 +2580,27 @@
     redCtx.drawImage(chromaSourceCanvas, 0, 0);
     redCtx.globalCompositeOperation = 'source-over';
 
-    const cyanCtx = prepareCanvas(chromaCyanCanvas, workW, workH);
-    cyanCtx.drawImage(chromaSourceCanvas, 0, 0);
-    cyanCtx.globalCompositeOperation = 'multiply';
-    cyanCtx.fillStyle = '#00ffff';
-    cyanCtx.fillRect(0, 0, workW, workH);
-    cyanCtx.globalCompositeOperation = 'destination-in';
-    cyanCtx.drawImage(chromaSourceCanvas, 0, 0);
-    cyanCtx.globalCompositeOperation = 'source-over';
+    const greenCtx = prepareCanvas(chromaGreenCanvas, workW, workH);
+    greenCtx.drawImage(chromaSourceCanvas, 0, 0);
+    greenCtx.globalCompositeOperation = 'multiply';
+    greenCtx.fillStyle = '#00ff00';
+    greenCtx.fillRect(0, 0, workW, workH);
+    greenCtx.globalCompositeOperation = 'destination-in';
+    greenCtx.drawImage(chromaSourceCanvas, 0, 0);
+    greenCtx.globalCompositeOperation = 'source-over';
+
+    const blueCtx = prepareCanvas(chromaBlueCanvas, workW, workH);
+    blueCtx.drawImage(chromaSourceCanvas, 0, 0);
+    blueCtx.globalCompositeOperation = 'multiply';
+    blueCtx.fillStyle = '#0000ff';
+    blueCtx.fillRect(0, 0, workW, workH);
+    blueCtx.globalCompositeOperation = 'destination-in';
+    blueCtx.drawImage(chromaSourceCanvas, 0, 0);
+    blueCtx.globalCompositeOperation = 'source-over';
 
     const blurPx = blurAmount > 0 ? Math.min(maxOffset * 0.6 * (blurAmount / 100), 16 * downScale) : 0;
 
-    // 滲み・ぼかしは赤（外側フリンジ）のみに適用し、シアン（主輪郭・解像度）のシャープさを100%維持
+    // 滲み・ぼかし（赤レイヤーに適用して外側への自然な光の滲みを演出）
     if (blurPx > 0.3) {
       if (supportsCanvasBlurFilter()) {
         const tempBlur = document.createElement('canvas');
@@ -2626,28 +2638,30 @@
       const maxCornerDist = Math.hypot(Math.max(cx, w - cx), Math.max(cy, h - cy));
       const scaleDelta = Math.max(0.002, targetMaxOffset / Math.max(maxCornerDist, 100));
 
-      // キャラクター本体のサイズ感を損なわないよう、主たる明度を持つシアンは原寸（1.0）を維持
-      // 赤（外側フリンジ）のみを外側へ拡大することで、キャラが縮小せず収差エフェクトのみが広がる
       const redScale = 1 + scaleDelta;
-      const cyanScale = 1.0;
+      const greenScale = 1.0;
+      const blueScale = Math.max(0.2, 1 - scaleDelta * 0.5);
 
       const lightShift = targetMaxOffset * 0.35;
       const shiftX = lCos * lightShift;
       const shiftY = lSin * lightShift;
 
-      // シアン（原寸 + 光源方向への微小シフト）
-      tCtx.save();
-      tCtx.translate(cx, cy);
-      tCtx.scale(cyanScale, cyanScale);
-      tCtx.drawImage(chromaCyanCanvas, -cx - shiftX * 0.3, -cy - shiftY * 0.3, w, h);
-      tCtx.restore();
+      // 1. 緑（基準レイヤー・原寸・中央）
+      tCtx.drawImage(chromaGreenCanvas, 0, 0, w, h);
 
-      // 赤（拡大 + lighter 加算合成 + 光の進行方向へ）
+      // 2. 青（短波長・光源側へ微小シフト・加算合成）
       tCtx.globalCompositeOperation = 'lighter';
       tCtx.save();
       tCtx.translate(cx, cy);
+      tCtx.scale(blueScale, blueScale);
+      tCtx.drawImage(chromaBlueCanvas, -cx - shiftX * 0.5, -cy - shiftY * 0.5, w, h);
+      tCtx.restore();
+
+      // 3. 赤（長波長・外側へ拡大 + 光の進行方向へシフト・加算合成）
+      tCtx.save();
+      tCtx.translate(cx, cy);
       tCtx.scale(redScale, redScale);
-      tCtx.drawImage(chromaRedCanvas, -cx + shiftX * 0.7, -cy + shiftY * 0.7, w, h);
+      tCtx.drawImage(chromaRedCanvas, -cx + shiftX * 0.5, -cy + shiftY * 0.5, w, h);
       tCtx.restore();
     } else {
       const targetMaxOffset = maxOffset / downScale;
@@ -2655,9 +2669,14 @@
       const dx = Math.cos(rad) * targetMaxOffset;
       const dy = Math.sin(rad) * targetMaxOffset;
 
-      tCtx.drawImage(chromaCyanCanvas, -dx, -dy, w, h);
+      // 1. 緑（中央・原点）
+      tCtx.drawImage(chromaGreenCanvas, 0, 0, w, h);
 
+      // 2. 青（逆方向へシフト・加算合成）
       tCtx.globalCompositeOperation = 'lighter';
+      tCtx.drawImage(chromaBlueCanvas, -dx, -dy, w, h);
+
+      // 3. 赤（進行方向へシフト・加算合成）
       tCtx.drawImage(chromaRedCanvas, dx, dy, w, h);
     }
     tCtx.restore();
