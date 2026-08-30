@@ -2645,9 +2645,9 @@
 
     const tCtx = targetCanvas.getContext('2d');
 
-    // 背景・全体は、縮小したRGB処理結果で元画像そのものを置き換えない。
-    // 既存の一時Canvasに色成分だけを生成し、元Canvasへ color 合成することで
-    // 写真の明度・輪郭・細部を原解像度のまま保持する（iOS WebKitは下の安全経路へ分岐）。
+    // 背景・全体は、縮小したRGB処理結果で元画像を全面置換しない。
+    // 元Canvasを下敷きに残して通常合成し、色ずれと輪郭の解像感を両立する。
+    // iOS WebKitは下の安全経路へ分岐する。
     if (isOpaque && !isIOSWebKit) {
       const effectCtx = prepareCanvas(chromaTempBlurCanvas, workW, workH);
       effectCtx.imageSmoothingEnabled = true;
@@ -2659,7 +2659,7 @@
         const workCy = workH / 2 - Math.sin(lightRad) * (workH * 0.15);
         const maxCornerDist = Math.hypot(Math.max(workCx, workW - workCx), Math.max(workCy, workH - workCy));
         const scaleDelta = Math.max(0.002, maxOffset / Math.max(maxCornerDist, 100 * downScale));
-        const redScale = 1 + scaleDelta;
+        const redScale = 1 + scaleDelta * 1.2;
         const blueScale = Math.max(0.3, 1 - scaleDelta * 0.5);
 
         // 緑を中央基準、赤・青を分散させ、RGBの総量が偏らない収差レイヤーを作る。
@@ -2684,22 +2684,17 @@
         effectCtx.drawImage(chromaGreenCanvas, 0, 0);
         effectCtx.globalCompositeOperation = 'lighter';
         effectCtx.drawImage(chromaBlueCanvas, -dx, -dy);
-        effectCtx.drawImage(chromaRedCanvas, dx, dy);
+        effectCtx.drawImage(chromaRedCanvas, dx * 1.2, dy * 1.2);
       }
 
       effectCtx.globalCompositeOperation = 'source-over';
       tCtx.save();
       tCtx.imageSmoothingEnabled = true;
       tCtx.imageSmoothingQuality = 'high';
-      tCtx.globalCompositeOperation = 'color';
-      // 古いWebKit等で color が受理されない場合も、元画像を消さない軽い色合成へ退避する。
-      if (tCtx.globalCompositeOperation !== 'color') {
-        tCtx.globalCompositeOperation = 'screen';
-        tCtx.globalAlpha = 0.35;
-      } else {
-        // 色収差を元画像へ半量だけ混ぜ、全画面の色かぶりを防ぎながら色のずれを残す。
-        tCtx.globalAlpha = 0.50;
-      }
+      // 特殊な color 合成は赤と緑を黄色へ寄せるため使わず、RGB分離結果を通常合成する。
+      // 元画像を35%残すことで輪郭の解像感を維持しつつ、赤・緑・青の帯を素直に見せる。
+      tCtx.globalCompositeOperation = 'source-over';
+      tCtx.globalAlpha = 0.65;
       tCtx.drawImage(chromaTempBlurCanvas, 0, 0, w, h);
       tCtx.restore();
       return;
