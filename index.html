@@ -2679,6 +2679,18 @@
       tCtx.drawImage(chromaBlueCanvas, -cx, -cy, w, h);
       tCtx.restore();
 
+      // 2-B. キャラ対象時の中間シアン/緑帯（青分散量の約45%位置、alpha 0.28で描画）
+      // 青外縁と元キャラの間に細いシアン/緑のスペクトル帯を形成
+      if (!isOpaque) {
+        const midGreenScale = 1 - (1 - blueScale) * 0.45;
+        tCtx.save();
+        tCtx.globalAlpha = 0.28;
+        tCtx.translate(cx, cy);
+        tCtx.scale(midGreenScale, midGreenScale);
+        tCtx.drawImage(chromaGreenCanvas, -cx, -cy, w, h);
+        tCtx.restore();
+      }
+
       // 3. 赤（長波長・中心 cx,cy を不動点として外向き分散・加算合成）
       tCtx.save();
       tCtx.translate(cx, cy);
@@ -2697,6 +2709,15 @@
       // 2. 青（逆方向へシフト・加算合成）
       tCtx.globalCompositeOperation = 'lighter';
       tCtx.drawImage(chromaBlueCanvas, -dx, -dy, w, h);
+
+      // 2-B. キャラ対象時の中間シアン/緑帯（青ズレ量の45%位置、alpha 0.28で描画）
+      // 青外縁と元キャラの間に細いシアン/緑のスペクトル帯を形成
+      if (!isOpaque) {
+        tCtx.save();
+        tCtx.globalAlpha = 0.28;
+        tCtx.drawImage(chromaGreenCanvas, -dx * 0.45, -dy * 0.45, w, h);
+        tCtx.restore();
+      }
 
       // 3. 赤（進行方向へシフト・加算合成）
       tCtx.drawImage(chromaRedCanvas, dx, dy, w, h);
