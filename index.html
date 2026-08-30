@@ -2679,15 +2679,23 @@
       tCtx.drawImage(chromaBlueCanvas, -cx, -cy, w, h);
       tCtx.restore();
 
-      // 2-B. キャラ対象時の中間シアン/緑帯（青分散量の約45%位置、alpha 0.28で描画）
-      // 青外縁と元キャラの間に細いシアン/緑のスペクトル帯を形成
+      // 2-B. キャラ対象時の中間シアン/緑帯
+      // 放射では原寸の緑を縮小すると元キャラの内側に収まり、後段の芯のくり抜きで消える。
+      // 既にぼかした青レイヤーのアルファだけを再利用して、輪郭外にも残る軽量な中間帯を作る。
       if (!isOpaque) {
         const midGreenScale = 1 - (1 - blueScale) * 0.45;
+        const midGreenCtx = prepareCanvas(chromaTempBlurCanvas, workW, workH);
+        midGreenCtx.fillStyle = '#00ff80';
+        midGreenCtx.fillRect(0, 0, workW, workH);
+        midGreenCtx.globalCompositeOperation = 'destination-in';
+        midGreenCtx.drawImage(chromaBlueCanvas, 0, 0);
+        midGreenCtx.globalCompositeOperation = 'source-over';
+
         tCtx.save();
         tCtx.globalAlpha = 0.28;
         tCtx.translate(cx, cy);
         tCtx.scale(midGreenScale, midGreenScale);
-        tCtx.drawImage(chromaGreenCanvas, -cx, -cy, w, h);
+        tCtx.drawImage(chromaTempBlurCanvas, -cx, -cy, w, h);
         tCtx.restore();
       }
 
