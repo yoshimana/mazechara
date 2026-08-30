@@ -2600,20 +2600,34 @@
 
     const blurPx = blurAmount > 0 ? Math.min(maxOffset * 0.6 * (blurAmount / 100), 16 * downScale) : 0;
 
-    // 滲み・ぼかし（赤レイヤーに適用して外側への自然な光の滲みを演出）
+    // 滲み・ぼかし（赤レイヤーに100%、青レイヤーには半分の強度を適用）
     if (blurPx > 0.3) {
+      const blueBlurPx = blurPx * 0.5;
       if (supportsCanvasBlurFilter()) {
         const tempBlur = document.createElement('canvas');
         tempBlur.width = workW;
         tempBlur.height = workH;
         const bCtx = tempBlur.getContext('2d');
-        bCtx.filter = `blur(${blurPx.toFixed(1)}px)`;
 
+        // 赤（100%ぼかし）
+        bCtx.filter = `blur(${blurPx.toFixed(1)}px)`;
         bCtx.drawImage(chromaRedCanvas, 0, 0);
         redCtx.clearRect(0, 0, workW, workH);
         redCtx.drawImage(tempBlur, 0, 0);
+
+        // 青（赤の半分のぼかし）
+        if (blueBlurPx > 0.3) {
+          bCtx.clearRect(0, 0, workW, workH);
+          bCtx.filter = `blur(${blueBlurPx.toFixed(1)}px)`;
+          bCtx.drawImage(chromaBlueCanvas, 0, 0);
+          blueCtx.clearRect(0, 0, workW, workH);
+          blueCtx.drawImage(tempBlur, 0, 0);
+        }
       } else {
         applyThreePassBoxBlur(chromaRedCanvas, blurPx, true);
+        if (blueBlurPx > 0.3) {
+          applyThreePassBoxBlur(chromaBlueCanvas, blueBlurPx, true);
+        }
       }
     }
 
