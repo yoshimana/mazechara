@@ -2453,6 +2453,8 @@
 
   let cachedCharaBaseCanvas = document.createElement('canvas');
   let isCharaBaseDirty = true;
+  const scalePreviewCharaCanvas = document.createElement('canvas');
+  let cachedCharaBaseImageVersion = -1;
 
   let cachedCastShadowCanvas = document.createElement('canvas');
   let isCastShadowDirty = true;
@@ -4992,7 +4994,21 @@
     requestRender();
   }
 
+  function captureCharaScalePreview() {
+    if (!charaImg || cachedCharaBaseImageVersion !== charaImageVersion || cachedCharaBaseCanvas.width < 2 || cachedCharaBaseCanvas.height < 2) {
+      scalePreviewCharaCanvas.width = 1;
+      scalePreviewCharaCanvas.height = 1;
+      return;
+    }
+
+    const previewCtx = prepareCanvas(scalePreviewCharaCanvas, cachedCharaBaseCanvas.width, cachedCharaBaseCanvas.height);
+    previewCtx.imageSmoothingEnabled = true;
+    previewCtx.imageSmoothingQuality = 'medium';
+    previewCtx.drawImage(cachedCharaBaseCanvas, 0, 0);
+  }
+
   function beginCharaScaleInteraction() {
+    if (!isCharaScaling) captureCharaScalePreview();
     isCharaScaling = true;
     clearTimeout(charaScaleIdleTimer);
     charaScaleIdleTimer = null;
@@ -5756,8 +5772,7 @@
     const cW = Math.round(charaW);
     const cH = Math.round(charaH);
 
-    const canReuseCharaDuringScale = isCharaScaling && cachedCharaBaseCanvas.width > 0 && cachedCharaBaseCanvas.height > 0;
-    if (!canReuseCharaDuringScale && (isCharaBaseDirty || cachedCharaBaseCanvas.width !== cW || cachedCharaBaseCanvas.height !== cH)) {
+    if (!isCharaScaling && (isCharaBaseDirty || cachedCharaBaseCanvas.width !== cW || cachedCharaBaseCanvas.height !== cH)) {
       cachedCharaBaseCanvas.width = cW;
       cachedCharaBaseCanvas.height = cH;
       const cCtx = cachedCharaBaseCanvas.getContext('2d');
@@ -5913,10 +5928,30 @@
       cCtx.restore();
 
       isCharaBaseDirty = false;
+      cachedCharaBaseImageVersion = charaImageVersion;
     }
 
-    // 2. キャラクター本体を高解像度・完全不透明（globalAlpha = 1.0）で描画（芯のディテール・色を100%保持）
-    ctx.drawImage(cachedCharaBaseCanvas, charaLeft, charaTop, cW, cH);
+    // 2. 拡縮中は直前の加工済み画像だけを伸縮し、効果の再計算を操作終了後まで遅延する。
+    if (isCharaScaling && scalePreviewCharaCanvas.width > 1 && scalePreviewCharaCanvas.height > 1) {
+      ctx.drawImage(scalePreviewCharaCanvas, charaLeft, charaTop, cW, cH);
+    } else if (isCharaScaling) {
+      // 初回キャッシュがまだない場合も、元画像を直接描いてスライダーの初動を止めない。
+      ctx.save();
+      if (isCharaFlipped) {
+        ctx.translate(charaLeft + cW, charaTop);
+        ctx.scale(-1, 1);
+        ctx.drawImage(charaImg, 0, 0, cW, cH);
+      } else {
+        ctx.drawImage(charaImg, charaLeft, charaTop, cW, cH);
+      }
+      ctx.restore();
+    } else {
+      ctx.drawImage(cachedCharaBaseCanvas, charaLeft, charaTop, cW, cH);
+      if (scalePreviewCharaCanvas.width > 1 || scalePreviewCharaCanvas.height > 1) {
+        scalePreviewCharaCanvas.width = 1;
+        scalePreviewCharaCanvas.height = 1;
+      }
+    }
 
     // 4-3. Pro Mode: 高品位・シルキーライトラップ (Light Wrap / 周囲光の滑らかな回り込み)
     const isWrapOn = document.getElementById('wrapToggle').checked;
