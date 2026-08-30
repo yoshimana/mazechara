@@ -44,7 +44,7 @@
     "キャラクターの足元から奥へ向かう、自然な背景ボケを作れます。": "Creates realistic background blur that deepens naturally from the character feet toward the horizon.",
     "周辺光量（ビネット効果）": "Vignette (Peripheral Light)",
     "写真の四隅を暗く、または明るく調整できます。中央でオフです。": "Darkens or brightens the corners of the photo. Centered at 0 to turn off.",
-    "6. 色収差 (RGB色ズレ)": "6. Chromatic Aberration",
+    "6. 色収差": "6. Chromatic Aberration",
     "色収差": "Chromatic Aberration",
     "ズレのタイプ": "Aberration Type",
     "放射 (レンズ風)": "Radial (Lens)",

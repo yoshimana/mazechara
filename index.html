@@ -2406,10 +2406,10 @@
           </div>
         </div>
 
-        <!-- 6. 色収差 (RGB色ズレ) -->
+        <!-- 6. 色収差 -->
         <div class="sub-accordion-item" id="subChroma">
           <div class="sub-accordion-header">
-            <span>6. 色収差 (RGB色ズレ)</span>
+            <span>6. 色収差</span>
             <label class="switch">
               <input type="checkbox" id="chromaToggle">
               <span class="slider-toggle"></span>
@@ -2528,7 +2528,7 @@
   // フィルムグレインのメモ化キャッシュ
   const noisePatternCache = new Map();
 
-  // 色収差 (RGB色ズレ) レンダリング用キャンバスキャッシュ
+  // 色収差 レンダリング用キャンバスキャッシュ
   const chromaRedCanvas = document.createElement('canvas');
   const chromaCyanCanvas = document.createElement('canvas');
   const chromaSourceCanvas = document.createElement('canvas');
