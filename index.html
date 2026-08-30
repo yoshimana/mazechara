@@ -2525,7 +2525,7 @@
     button.addEventListener('click', () => setSpotLayer(button.dataset.layer));
   });
 
-  const MAX_IMAGE_BYTES = 50 * 1024 * 1024;
+  const MAX_IMAGE_BYTES = 30 * 1024 * 1024;
   const MAX_RAW_IMAGE_PIXELS = 48 * 1000 * 1000;
   const SUPPORTED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
   const uploadStatus = document.getElementById('uploadStatus');
@@ -2553,8 +2553,8 @@
         break;
       case 'size_error':
         uploadStatus.textContent = isEnglish
-          ? 'Please choose an image file under 50 MB.'
-          : '画像ファイルは50MB以下にしてください。';
+          ? 'Please choose an image file under 30 MB.'
+          : '画像ファイルは30MB以下にしてください。';
         break;
       case 'load_error':
         uploadStatus.textContent = isEnglish
