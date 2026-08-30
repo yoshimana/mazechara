@@ -2522,38 +2522,32 @@
     if (w < 2 || h < 2) return;
 
     const minDim = Math.min(w, h);
-    // 100%で短辺の約2.5%（最大48px）
-    const maxOffset = Math.min(minDim * 0.025 * (amount / 100), 48);
-    if (maxOffset < 0.2) return;
+    // 100%で短辺の約4.5%（最大64px）、25%でも約12〜16pxとしっかり視認できる強度
+    const maxOffset = Math.max(1, Math.min(minDim * 0.045 * (amount / 100), 64));
 
-    const srcCanvas = prepareCanvas(chromaSourceCanvas, w, h);
-    const srcCtx = srcCanvas.getContext('2d');
-    srcCtx.clearRect(0, 0, w, h);
+    const srcCtx = prepareCanvas(chromaSourceCanvas, w, h);
     srcCtx.drawImage(targetCanvas, 0, 0);
 
-    const redCanvas = prepareCanvas(chromaRedCanvas, w, h);
-    const redCtx = redCanvas.getContext('2d');
-    redCtx.clearRect(0, 0, w, h);
-    redCtx.drawImage(srcCanvas, 0, 0);
+    const redCtx = prepareCanvas(chromaRedCanvas, w, h);
+    redCtx.drawImage(chromaSourceCanvas, 0, 0);
     redCtx.globalCompositeOperation = 'multiply';
     redCtx.fillStyle = '#ff0000';
     redCtx.fillRect(0, 0, w, h);
     redCtx.globalCompositeOperation = 'destination-in';
-    redCtx.drawImage(srcCanvas, 0, 0);
+    redCtx.drawImage(chromaSourceCanvas, 0, 0);
 
-    const cyanCanvas = prepareCanvas(chromaCyanCanvas, w, h);
-    const cyanCtx = cyanCanvas.getContext('2d');
-    cyanCtx.clearRect(0, 0, w, h);
-    cyanCtx.drawImage(srcCanvas, 0, 0);
+    const cyanCtx = prepareCanvas(chromaCyanCanvas, w, h);
+    cyanCtx.drawImage(chromaSourceCanvas, 0, 0);
     cyanCtx.globalCompositeOperation = 'multiply';
     cyanCtx.fillStyle = '#00ffff';
     cyanCtx.fillRect(0, 0, w, h);
     cyanCtx.globalCompositeOperation = 'destination-in';
-    cyanCtx.drawImage(srcCanvas, 0, 0);
+    cyanCtx.drawImage(chromaSourceCanvas, 0, 0);
 
-    const blurPx = blurAmount > 0 ? Math.min(maxOffset * 0.8 * (blurAmount / 100), 16) : 0;
+    const blurPx = blurAmount > 0 ? Math.min(maxOffset * 0.6 * (blurAmount / 100), 16) : 0;
 
     const tCtx = targetCanvas.getContext('2d');
+    tCtx.setTransform(1, 0, 0, 1, 0, 0);
     tCtx.clearRect(0, 0, w, h);
 
     tCtx.save();
@@ -2562,31 +2556,35 @@
     }
 
     if (type === 'radial') {
-      const scaleDelta = (maxOffset / minDim) * 1.6;
+      // 放射状（レンズ風）：中心からの拡大・縮小
+      const scaleDelta = Math.max(0.005, (maxOffset / minDim) * 2.6);
       const redScale = 1 + scaleDelta;
       const cyanScale = Math.max(0.1, 1 - scaleDelta);
 
+      // シアン（縮小）
       tCtx.save();
       tCtx.translate(w / 2, h / 2);
       tCtx.scale(cyanScale, cyanScale);
-      tCtx.drawImage(cyanCanvas, -w / 2, -h / 2);
+      tCtx.drawImage(chromaCyanCanvas, -w / 2, -h / 2);
       tCtx.restore();
 
+      // 赤（拡大 + lighter 加算合成）
       tCtx.globalCompositeOperation = 'lighter';
       tCtx.save();
       tCtx.translate(w / 2, h / 2);
       tCtx.scale(redScale, redScale);
-      tCtx.drawImage(redCanvas, -w / 2, -h / 2);
+      tCtx.drawImage(chromaRedCanvas, -w / 2, -h / 2);
       tCtx.restore();
     } else {
+      // 平行（均一）：指定角度に応じた水平・垂直オフセット
       const rad = (angleDeg * Math.PI) / 180;
       const dx = Math.cos(rad) * maxOffset;
       const dy = Math.sin(rad) * maxOffset;
 
-      tCtx.drawImage(cyanCanvas, -dx, -dy);
+      tCtx.drawImage(chromaCyanCanvas, -dx, -dy);
 
       tCtx.globalCompositeOperation = 'lighter';
-      tCtx.drawImage(redCanvas, dx, dy);
+      tCtx.drawImage(chromaRedCanvas, dx, dy);
     }
     tCtx.restore();
   }
@@ -2798,10 +2796,10 @@
 
     function onSubToggleChanged() {
       item.classList.toggle('open', toggle.checked);
-      if (toggleId === 'gradingToggle') {
+      if (toggleId === 'gradingToggle' || toggleId === 'chromaToggle') {
         invalidateAll();
         updateBgBlurCache();
-      } else if (['wrapToggle', 'rimToggle', 'grainToggle', 'chromaToggle'].includes(toggleId)) {
+      } else if (['wrapToggle', 'rimToggle', 'grainToggle'].includes(toggleId)) {
         invalidateChara();
       }
       requestRender();
@@ -2846,7 +2844,7 @@
       document.querySelectorAll('#chromaTargetSegment .segment-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       chromaTarget = btn.getAttribute('data-target');
-      invalidateChara();
+      invalidateAll();
       requestRender();
     });
   });
@@ -2861,7 +2859,7 @@
       if (chromaAngleRow) {
         chromaAngleRow.style.display = chromaType === 'linear' ? 'flex' : 'none';
       }
-      invalidateChara();
+      invalidateAll();
       requestRender();
     });
   });
