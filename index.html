@@ -2746,6 +2746,72 @@
       tCtx.restore();
     }
 
+    // RGB加算で補色（C/M/Y）に見える分離領域だけを、対応するR/G/Bへ戻す。
+    // 元画像と変化していない画素はそのまま保ち、大画像でもメモリが膨らまないよう帯単位で処理する。
+    const resultCtx = prepareCanvas(chromaTempBlurCanvas, workW, workH);
+    resultCtx.imageSmoothingEnabled = true;
+    resultCtx.imageSmoothingQuality = 'high';
+    resultCtx.drawImage(targetCanvas, 0, 0, workW, workH);
+
+    const rowBatch = 128;
+    for (let rowY = 0; rowY < workH; rowY += rowBatch) {
+      const batchH = Math.min(rowBatch, workH - rowY);
+      const resultImage = resultCtx.getImageData(0, rowY, workW, batchH);
+      const sourceImage = srcCtx.getImageData(0, rowY, workW, batchH);
+      const out = resultImage.data;
+      const source = sourceImage.data;
+
+      for (let i = 0; i < out.length; i += 4) {
+        const r = out[i];
+        const g = out[i + 1];
+        const b = out[i + 2];
+        const changed = Math.max(
+          Math.abs(r - source[i]),
+          Math.abs(g - source[i + 1]),
+          Math.abs(b - source[i + 2])
+        );
+        if (changed < 3 || out[i + 3] === 0) continue;
+
+        const cyan = Math.max(0, Math.min(g, b) - r);
+        const magenta = Math.max(0, Math.min(r, b) - g);
+        const yellow = Math.max(0, Math.min(r, g) - b);
+        const dominant = Math.max(cyan, magenta, yellow);
+        if (dominant < 2) continue;
+
+        let mappedR = r;
+        let mappedG = g;
+        let mappedB = b;
+        if (dominant === cyan) {
+          // C (G+B) -> R
+          mappedR = Math.max(g, b);
+          mappedG = r;
+          mappedB = r;
+        } else if (dominant === magenta) {
+          // M (R+B) -> G
+          mappedR = g;
+          mappedG = Math.max(r, b);
+          mappedB = g;
+        } else {
+          // Y (R+G) -> B
+          mappedR = b;
+          mappedG = b;
+          mappedB = Math.max(r, g);
+        }
+
+        const mix = Math.min(1, changed / 96);
+        out[i] = Math.round(r + (mappedR - r) * mix);
+        out[i + 1] = Math.round(g + (mappedG - g) * mix);
+        out[i + 2] = Math.round(b + (mappedB - b) * mix);
+      }
+
+      resultCtx.putImageData(resultImage, 0, rowY);
+    }
+
+    tCtx.clearRect(0, 0, w, h);
+    tCtx.imageSmoothingEnabled = true;
+    tCtx.imageSmoothingQuality = 'high';
+    tCtx.drawImage(chromaTempBlurCanvas, 0, 0, w, h);
+
   }
 
   function invalidateBg() {
