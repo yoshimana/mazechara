@@ -2624,24 +2624,28 @@
       const lCos = Math.cos(lightRad);
       const lSin = Math.sin(lightRad);
 
-      const cx = w / 2 - lCos * (w * 0.32);
-      const cy = h / 2 - lSin * (h * 0.32);
+      const cx = w / 2 - lCos * (w * 0.2);
+      const cy = h / 2 - lSin * (h * 0.2);
 
-      const targetMinDim = Math.min(w, h);
       const targetMaxOffset = maxOffset / downScale;
-      const scaleDelta = Math.max(0.005, (targetMaxOffset / targetMinDim) * 2.8);
-      const redScale = 1 + scaleDelta;
-      const cyanScale = Math.max(0.1, 1 - scaleDelta);
+      // 中心から最も遠い距離を計算し、端での最大ズレが targetMaxOffset に収まるよう正確にスケーリング
+      const maxCornerDist = Math.hypot(Math.max(cx, w - cx), Math.max(cy, h - cy));
+      const scaleDelta = Math.max(0.002, targetMaxOffset / Math.max(maxCornerDist, 100));
 
-      const lightShift = targetMaxOffset * 0.5;
+      // キャラクター本体のサイズ感を損なわないよう、主たる明度を持つシアンは原寸（1.0）を維持
+      // 赤（外側フリンジ）のみを外側へ拡大することで、キャラが縮小せず収差エフェクトのみが広がる
+      const redScale = 1 + scaleDelta;
+      const cyanScale = 1.0;
+
+      const lightShift = targetMaxOffset * 0.35;
       const shiftX = lCos * lightShift;
       const shiftY = lSin * lightShift;
 
-      // シアン（縮小 + 光源方向へ）
+      // シアン（原寸 + 光源方向への微小シフト）
       tCtx.save();
       tCtx.translate(cx, cy);
       tCtx.scale(cyanScale, cyanScale);
-      tCtx.drawImage(chromaCyanCanvas, -cx - shiftX * 0.5, -cy - shiftY * 0.5, w, h);
+      tCtx.drawImage(chromaCyanCanvas, -cx - shiftX * 0.3, -cy - shiftY * 0.3, w, h);
       tCtx.restore();
 
       // 赤（拡大 + lighter 加算合成 + 光の進行方向へ）
@@ -2649,7 +2653,7 @@
       tCtx.save();
       tCtx.translate(cx, cy);
       tCtx.scale(redScale, redScale);
-      tCtx.drawImage(chromaRedCanvas, -cx + shiftX * 0.5, -cy + shiftY * 0.5, w, h);
+      tCtx.drawImage(chromaRedCanvas, -cx + shiftX * 0.7, -cy + shiftY * 0.7, w, h);
       tCtx.restore();
     } else {
       const targetMaxOffset = maxOffset / downScale;
@@ -6196,7 +6200,9 @@
       const minDim = Math.min(cW, cH);
       const maxOffset = Math.max(1, Math.min(minDim * 0.045 * (chromaAmount / 100), 64));
       const blurPx = chromaBlur > 0 ? Math.min(maxOffset * 0.6 * (chromaBlur / 100), 16) : 0;
-      const chromaPad = Math.ceil(maxOffset + blurPx * 1.5 + 8);
+      // 放射ズレ・平行ズレともに外側の赤フリンジや光軸シフト・ぼかしが切れないよう十分なパディングを確保
+      const extraSpread = chromaType === 'radial' ? maxOffset * 0.8 : 0;
+      const chromaPad = Math.ceil(maxOffset + extraSpread + blurPx * 2.0 + 16);
 
       const paddedW = Math.round(cW + chromaPad * 2);
       const paddedH = Math.round(cH + chromaPad * 2);
