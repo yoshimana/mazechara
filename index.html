@@ -2731,7 +2731,7 @@
 
       // 2. 青（短波長・中心 cx,cy を不動点として内向き分散・加算合成）
       tCtx.globalCompositeOperation = 'lighter';
-      if (!isOpaque) tCtx.globalAlpha = 0.68;
+      if (!isOpaque) tCtx.globalAlpha = 0.84;
       tCtx.save();
       tCtx.translate(cx, cy);
       tCtx.scale(blueScale, blueScale);
@@ -2751,7 +2751,7 @@
         midGreenCtx.globalCompositeOperation = 'source-over';
 
         tCtx.save();
-        tCtx.globalAlpha = 0.20;
+        tCtx.globalAlpha = 0.25;
         tCtx.translate(cx, cy);
         tCtx.scale(midGreenScale, midGreenScale);
         tCtx.drawImage(chromaTempBlurCanvas, -cx, -cy, w, h);
@@ -2759,7 +2759,7 @@
       }
 
       // 3. 赤（長波長・中心 cx,cy を不動点として外向き分散・加算合成）
-      if (!isOpaque) tCtx.globalAlpha = 0.55;
+      if (!isOpaque) tCtx.globalAlpha = 0.68;
       tCtx.save();
       tCtx.translate(cx, cy);
       tCtx.scale(redScale, redScale);
@@ -2776,20 +2776,20 @@
 
       // 2. 青（逆方向へシフト・加算合成）
       tCtx.globalCompositeOperation = 'lighter';
-      if (!isOpaque) tCtx.globalAlpha = 0.68;
+      if (!isOpaque) tCtx.globalAlpha = 0.84;
       tCtx.drawImage(chromaBlueCanvas, -dx, -dy, w, h);
 
-      // 2-B. キャラ対象時の中間シアン/緑帯（青ズレ量の45%位置、alpha 0.20で描画）
+      // 2-B. キャラ対象時の中間シアン/緑帯（青ズレ量の45%位置、alpha 0.25で描画）
       // 青外縁と元キャラの間に細いシアン/緑のスペクトル帯を形成
       if (!isOpaque) {
         tCtx.save();
-        tCtx.globalAlpha = 0.20;
+        tCtx.globalAlpha = 0.25;
         tCtx.drawImage(chromaGreenCanvas, -dx * 0.45, -dy * 0.45, w, h);
         tCtx.restore();
       }
 
       // 3. 赤（進行方向へシフト・加算合成）
-      if (!isOpaque) tCtx.globalAlpha = 0.55;
+      if (!isOpaque) tCtx.globalAlpha = 0.68;
       tCtx.drawImage(chromaRedCanvas, dx, dy, w, h);
     }
     tCtx.restore();
@@ -6367,11 +6367,11 @@
       }
     }
 
-    // 1. 外側フリンジを74%で合成し、各色との積で青約50%・赤約41%・緑約15%にする。
+    // 1. 外側フリンジを90%で合成し、各色との積で青約76%・赤約61%・緑約23%にする。
     if (isChromaChara && cachedCharaFringeCanvas.width > 0 && cachedCharaFringeCanvas.height > 0) {
       ctx.save();
       ctx.globalCompositeOperation = 'screen';
-      ctx.globalAlpha = 0.74;
+      ctx.globalAlpha = 0.90;
       ctx.drawImage(cachedCharaFringeCanvas, charaLeft - cachedCharaPad, charaTop - cachedCharaPad, cW + cachedCharaPad * 2, cH + cachedCharaPad * 2);
       ctx.restore();
     }
