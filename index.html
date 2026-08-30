@@ -2567,6 +2567,8 @@
     // iOS Safari の Canvas メモリ制限（384MB）と大画像 GPU ブラーによる WebProcess クラッシュを完全防止
     // モバイルは安全な1600px、PCは2560pxに最適クランプして高解像度と安全性を両立
     const isMobileChroma = window.innerWidth <= 900 || ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+    const isIOSWebKit = /iP(?:hone|ad|od)/i.test(navigator.userAgent || '')
+      || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     const MAX_CHROMA_DIM = isMobileChroma ? 1600 : 2560;
     const maxDim = Math.max(w, h);
     const downScale = maxDim > MAX_CHROMA_DIM ? MAX_CHROMA_DIM / maxDim : 1.0;
@@ -2645,8 +2647,8 @@
 
     // 背景・全体は、縮小したRGB処理結果で元画像そのものを置き換えない。
     // 既存の一時Canvasに色成分だけを生成し、元Canvasへ color 合成することで
-    // 写真の明度・輪郭・細部を原解像度のまま保持する（Safariでも追加Canvas/blurなし）。
-    if (isOpaque) {
+    // 写真の明度・輪郭・細部を原解像度のまま保持する（iOS WebKitは下の安全経路へ分岐）。
+    if (isOpaque && !isIOSWebKit) {
       const effectCtx = prepareCanvas(chromaTempBlurCanvas, workW, workH);
       effectCtx.imageSmoothingEnabled = true;
       effectCtx.imageSmoothingQuality = 'high';
@@ -2787,6 +2789,15 @@
       tCtx.drawImage(chromaRedCanvas, dx, dy, w, h);
     }
     tCtx.restore();
+
+    // iPhone/iPadのWebKitは、大きな出力Canvasへの color 合成でGPU中間バッファが
+    // 急増してWebProcessが終了する場合があるため、安定していた従来の低解像度経路を使う。
+    if (isOpaque) {
+      tCtx.save();
+      tCtx.globalCompositeOperation = 'destination-over';
+      tCtx.drawImage(chromaSourceCanvas, 0, 0, w, h);
+      tCtx.restore();
+    }
 
   }
 
