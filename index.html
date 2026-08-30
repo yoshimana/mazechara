@@ -2644,38 +2644,36 @@
       const lCos = Math.cos(lightRad);
       const lSin = Math.sin(lightRad);
 
-      const cx = w / 2 - lCos * (w * 0.2);
-      const cy = h / 2 - lSin * (h * 0.2);
+      // 光軸中心（光源の向きに応じた自然な光学中心）
+      const cx = w / 2 - lCos * (w * 0.15);
+      const cy = h / 2 - lSin * (h * 0.15);
 
       const targetMaxOffset = maxOffset / downScale;
       // 中心から最も遠い距離を計算し、端での最大ズレが targetMaxOffset に収まるよう正確にスケーリング
       const maxCornerDist = Math.hypot(Math.max(cx, w - cx), Math.max(cy, h - cy));
       const scaleDelta = Math.max(0.002, targetMaxOffset / Math.max(maxCornerDist, 100));
 
+      // 光学中心 (cx, cy) においては色ズレはゼロ（完全な元の色）
+      // 中心から外周に向かうにつれて、赤は外側へ拡大、青は内側へ分散する
       const redScale = 1 + scaleDelta;
-      const greenScale = 1.0;
-      const blueScale = Math.max(0.2, 1 - scaleDelta * 0.5);
+      const blueScale = Math.max(0.3, 1 - scaleDelta * 0.5);
 
-      const lightShift = targetMaxOffset * 0.35;
-      const shiftX = lCos * lightShift;
-      const shiftY = lSin * lightShift;
-
-      // 1. 緑（基準レイヤー・原寸・中央）
+      // 1. 緑（中央基準レイヤー・原寸）
       tCtx.drawImage(chromaGreenCanvas, 0, 0, w, h);
 
-      // 2. 青（短波長・光源側へ微小シフト・加算合成）
+      // 2. 青（短波長・中心 cx,cy を不動点として内向き分散・加算合成）
       tCtx.globalCompositeOperation = 'lighter';
       tCtx.save();
       tCtx.translate(cx, cy);
       tCtx.scale(blueScale, blueScale);
-      tCtx.drawImage(chromaBlueCanvas, -cx - shiftX * 0.5, -cy - shiftY * 0.5, w, h);
+      tCtx.drawImage(chromaBlueCanvas, -cx, -cy, w, h);
       tCtx.restore();
 
-      // 3. 赤（長波長・外側へ拡大 + 光の進行方向へシフト・加算合成）
+      // 3. 赤（長波長・中心 cx,cy を不動点として外向き分散・加算合成）
       tCtx.save();
       tCtx.translate(cx, cy);
       tCtx.scale(redScale, redScale);
-      tCtx.drawImage(chromaRedCanvas, -cx + shiftX * 0.5, -cy + shiftY * 0.5, w, h);
+      tCtx.drawImage(chromaRedCanvas, -cx, -cy, w, h);
       tCtx.restore();
     } else {
       const targetMaxOffset = maxOffset / downScale;
