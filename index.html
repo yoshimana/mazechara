@@ -5121,6 +5121,9 @@
       document.getElementById('chromaToggle').checked = false;
       document.getElementById('subChroma').classList.remove('open');
     }
+    if (!document.getElementById('chromaToggle').checked) {
+      releaseChromaCanvases();
+    }
     chromaTarget = p.chromaTarget || 'all';
     document.querySelectorAll('#chromaTargetSegment .segment-btn').forEach(btn => {
       btn.classList.toggle('active', btn.getAttribute('data-target') === chromaTarget);
