@@ -73,18 +73,13 @@
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body {
-    height: 100%;
-    height: 100dvh;
-    overflow: hidden;
-    overscroll-behavior: none;
-    -webkit-text-size-adjust: 100%;
-  }
   body {
     font-family: 'Zen Maru Gothic', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     background-color: var(--bg-main);
     color: var(--text-main);
     display: flex;
+    height: 100vh;
+    overflow: hidden;
     letter-spacing: 0.02em;
   }
 
@@ -1430,30 +1425,24 @@
 
     /* プレビューエリア（上部固定・タッチ操作対応） */
     .preview-container {
-      flex: 0 0 38vh;
-      flex: 0 0 38dvh;
-      min-height: 200px;
-      max-height: 42vh;
-      max-height: 42dvh;
+      flex: 0 0 40vh;
+      min-height: 180px;
+      max-height: 45vh;
       justify-content: flex-start;
-      padding: max(46px, calc(env(safe-area-inset-top, 0px) + 38px)) 10px 58px;
+      padding: 52px 10px 10px;
       background: radial-gradient(circle at center, #ffffff 0%, #e2e8f0 100%);
       transition: none;
-      position: relative;
-      flex-shrink: 0;
     }
 
     /* パネル折りたたみ時：縦長写真も画面いっぱいに広く表示 */
     body.panel-collapsed .preview-container {
-      flex: 1 1 auto !important;
+      flex: 1 !important;
       max-height: calc(100dvh - 54px) !important;
       height: calc(100dvh - 54px) !important;
-      min-height: 0 !important;
-      padding: max(46px, calc(env(safe-area-inset-top, 0px) + 38px)) 10px 58px;
     }
 
     .preview-topbar {
-      top: max(8px, env(safe-area-inset-top, 8px));
+      top: 8px;
       left: 10px;
       right: 10px;
     }
@@ -1570,20 +1559,14 @@
     }
 
     .canvas-wrapper {
-      /* パネル開閉（上げ下げ）でプレビュー領域が伸び縮みしても、Canvasの表示サイズは一切変えない */
-      max-height: max(140px, calc(38dvh - 86px));
-      max-width: 100%;
+      max-height: 100%;
       box-shadow: 0 8px 24px rgba(45, 52, 54, 0.1);
       border-width: 2px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
     }
 
     canvas {
-      max-height: max(140px, calc(38dvh - 86px));
-      max-width: 100%;
-      object-fit: contain;
+      /* 上52px・下10pxの余白とCanvas枠4pxを除いた固定表示高。 */
+      max-height: calc(40vh - 66px);
     }
 
     .compare-badge {
@@ -1779,6 +1762,19 @@
   }
 
   @media (max-width: 480px) {
+    .preview-container {
+      flex: 1 1 auto;
+      min-height: 0;
+      max-height: none;
+    }
+    canvas {
+      /* パネル開閉でプレビュー領域が伸びても、Canvasの表示サイズは変えない。 */
+      max-height: calc(100dvh - clamp(300px, 42dvh, 350px) - 66px);
+    }
+    .sidebar {
+      flex: 0 0 clamp(300px, 42dvh, 350px);
+      height: clamp(300px, 42dvh, 350px);
+    }
     .presets-grid {
       grid-template-columns: repeat(3, 1fr);
       gap: 4px;
