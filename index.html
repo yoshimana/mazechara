@@ -2533,7 +2533,16 @@
   const chromaCyanCanvas = document.createElement('canvas');
   const chromaSourceCanvas = document.createElement('canvas');
 
-  function applyChromaticAberration(targetCanvas, amount, angleDeg, blurAmount, type = 'radial', lightAngleDeg = -45) {
+  function releaseChromaCanvases() {
+    chromaRedCanvas.width = 1;
+    chromaRedCanvas.height = 1;
+    chromaCyanCanvas.width = 1;
+    chromaCyanCanvas.height = 1;
+    chromaSourceCanvas.width = 1;
+    chromaSourceCanvas.height = 1;
+  }
+
+  function applyChromaticAberration(targetCanvas, amount, angleDeg, blurAmount, type = 'radial', lightAngleDeg = -45, isOpaque = false) {
     if (amount <= 0) return;
     const w = targetCanvas.width;
     const h = targetCanvas.height;
@@ -2564,12 +2573,18 @@
 
     const blurPx = blurAmount > 0 ? Math.min(maxOffset * 0.6 * (blurAmount / 100), 16) : 0;
 
+    // Safari 互換性: filter 未サポート環境では手動 3-pass blur を適用
+    if (blurPx > 0.3 && !supportsCanvasBlurFilter()) {
+      applyThreePassBoxBlur(chromaRedCanvas, blurPx, true);
+      applyThreePassBoxBlur(chromaCyanCanvas, blurPx, true);
+    }
+
     const tCtx = targetCanvas.getContext('2d');
     tCtx.setTransform(1, 0, 0, 1, 0, 0);
     tCtx.clearRect(0, 0, w, h);
 
     tCtx.save();
-    if (blurPx > 0.3) {
+    if (blurPx > 0.3 && supportsCanvasBlurFilter()) {
       tCtx.filter = `blur(${blurPx.toFixed(1)}px)`;
     }
 
@@ -2618,6 +2633,14 @@
       tCtx.drawImage(chromaRedCanvas, dx, dy);
     }
     tCtx.restore();
+
+    // 背景や全体など元が不透明な画像の場合、端のシフト・縮小によるアルファ欠け（隙間）を元画像で完全に下敷き補填
+    if (isOpaque) {
+      tCtx.save();
+      tCtx.globalCompositeOperation = 'destination-over';
+      tCtx.drawImage(chromaSourceCanvas, 0, 0);
+      tCtx.restore();
+    }
   }
 
   function invalidateBg() {
@@ -2835,6 +2858,9 @@
     function onSubToggleChanged() {
       item.classList.toggle('open', toggle.checked);
       if (toggleId === 'gradingToggle' || toggleId === 'chromaToggle') {
+        if (toggleId === 'chromaToggle' && !toggle.checked) {
+          releaseChromaCanvases();
+        }
         invalidateAll();
         updateBgBlurCache();
       } else if (['wrapToggle', 'rimToggle', 'grainToggle'].includes(toggleId)) {
@@ -5140,6 +5166,7 @@
     requestAnimationFrame(() => {
       setTimeout(() => {
         applyPreset('standard', { preserveShadowAngle: false });
+        releaseChromaCanvases();
         invalidateAll();
         updateBgBlurCache();
         requestRender();
@@ -5725,7 +5752,7 @@
 
         // 背景のみへの色収差
         if (isChromaOn && chromaTarget === 'bg' && chromaAmount > 0) {
-          applyChromaticAberration(cachedBgDisplayCanvas, chromaAmount, chromaAngle, chromaBlur, chromaType, lightAngle);
+          applyChromaticAberration(cachedBgDisplayCanvas, chromaAmount, chromaAngle, chromaBlur, chromaType, lightAngle, true);
         }
 
         // 完成背景へ合成済みの中間Canvasは、大画像の常駐メモリを抑えるため解放する。
@@ -6349,7 +6376,11 @@
 
     // 7. 全体への色収差 (chromaTarget === 'all')
     if (isChromaOn && chromaTarget === 'all' && chromaAmount > 0) {
-      applyChromaticAberration(canvas, chromaAmount, chromaAngle, chromaBlur, chromaType, lightAngle);
+      // キャラ移動中・拡縮操作中は毎フレームの全画面再計算をバイパスし、操作終了後に高精細適用する
+      const isInteracting = isCharaDragging || isCharaScaling;
+      if (!isInteracting) {
+        applyChromaticAberration(canvas, chromaAmount, chromaAngle, chromaBlur, chromaType, lightAngle, true);
+      }
     }
 
     // 8. 全体へのフィルムグレイン (grainTarget === 'all')
