@@ -6558,10 +6558,40 @@
     return isMobileUserAgent || isIPadDesktopMode;
   }
 
+  function createExportCanvas() {
+    // 背景なしの場合だけ、軽量な960x720編集Canvasとは別に2倍解像度で再描画する。
+    // 現在のCanvasを引き伸ばさず、render()がキャラ原画像・影・各効果を1920x1440向けに作り直す。
+    if (bgImg || !charaImg || (canvas.width === 1920 && canvas.height === 1440)) return canvas;
+
+    const editWidth = canvas.width;
+    const editHeight = canvas.height;
+    const exportCanvas = document.createElement('canvas');
+    exportCanvas.width = 1920;
+    exportCanvas.height = 1440;
+
+    try {
+      canvas.width = exportCanvas.width;
+      canvas.height = exportCanvas.height;
+      invalidateAll();
+      render();
+
+      const exportCtx = exportCanvas.getContext('2d');
+      exportCtx.drawImage(canvas, 0, 0);
+    } finally {
+      canvas.width = editWidth;
+      canvas.height = editHeight;
+      invalidateAll();
+      render();
+    }
+
+    return exportCanvas;
+  }
+
   // スマートフォン・タブレットは保存／共有、PCは常にファイルへダウンロードする。
   document.getElementById('exportBtn').addEventListener('click', () => {
     if (!bgImg && !charaImg) return;
-    canvas.toBlob(async (blob) => {
+    const exportCanvas = createExportCanvas();
+    exportCanvas.toBlob(async (blob) => {
       if (!blob) return;
 
       const file = new File([blob], 'mazechara_photo.jpg', { type: 'image/jpeg' });
