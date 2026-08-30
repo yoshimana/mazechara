@@ -1476,11 +1476,13 @@
     }
 
     .zoom-control-wrap {
-      padding: 4px 8px;
-      gap: 4px;
+      height: 40px;
+      padding: 0 6px 0 10px;
+      gap: 5px;
+      box-sizing: border-box;
     }
     .zoom-control-wrap input[type="range"] {
-      width: 70px;
+      width: 68px;
     }
     .zoom-reset-btn {
       width: 40px;
@@ -1490,10 +1492,19 @@
       flex: 0 0 40px;
       touch-action: manipulation;
     }
+    .zoom-control-wrap .zoom-reset-btn {
+      width: 30px;
+      height: 30px;
+      flex: 0 0 30px;
+    }
     .zoom-reset-btn svg,
     .chara-lock-btn svg {
       width: 17px;
       height: 17px;
+    }
+    .zoom-control-wrap .zoom-reset-btn svg {
+      width: 15px;
+      height: 15px;
     }
     #viewZoomVal {
       font-size: 0.68rem;
@@ -1510,8 +1521,8 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-width: 64px;
-      height: 50px;
+      min-width: 58px;
+      height: 40px;
       padding: 0 12px;
       border: 1.5px solid rgba(255, 255, 255, 0.58);
       border-radius: var(--radius-full);
@@ -1520,7 +1531,7 @@
       box-shadow: 0 3px 12px rgba(255, 107, 139, 0.28);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
-      font-size: 0.78rem;
+      font-size: 0.76rem;
       font-weight: 800;
       opacity: 0;
       visibility: hidden;
