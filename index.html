@@ -929,7 +929,6 @@
   #subWrap { order: 3; }
   #subGrain { order: 4; }
   #subVignette { order: 5; }
-  #subChroma { order: 6; }
   .sub-accordion-header {
     display: flex;
     justify-content: space-between;
@@ -2406,46 +2405,6 @@
           </div>
         </div>
 
-        <!-- 6. 色収差 -->
-        <div class="sub-accordion-item" id="subChroma">
-          <div class="sub-accordion-header">
-            <span>6. 色収差</span>
-            <label class="switch">
-              <input type="checkbox" id="chromaToggle">
-              <span class="slider-toggle"></span>
-            </label>
-          </div>
-          <div class="sub-accordion-body">
-            <div class="param-row">
-              <div class="param-label"><span>適用対象</span></div>
-              <div class="segment-control" id="chromaTargetSegment">
-                <button class="segment-btn active" type="button" data-target="all">全体 (推奨)</button>
-                <button class="segment-btn" type="button" data-target="chara">キャラ</button>
-                <button class="segment-btn" type="button" data-target="bg">背景</button>
-              </div>
-            </div>
-            <div class="param-row">
-              <div class="param-label"><span>ズレのタイプ</span></div>
-              <div class="segment-control" id="chromaTypeSegment">
-                <button class="segment-btn active" type="button" data-type="radial">放射 (レンズ風)</button>
-                <button class="segment-btn" type="button" data-type="linear">平行 (均一)</button>
-              </div>
-            </div>
-            <div class="param-row">
-              <div class="param-label"><span>色ズレの強さ</span><span id="chromaAmountVal" class="param-value">5%</span></div>
-              <input type="range" id="chromaAmount" min="0" max="100" value="5">
-            </div>
-            <div class="param-row" id="chromaAngleRow" style="display: none;">
-              <div class="param-label"><span>ズレの角度</span><span id="chromaAngleVal" class="param-value">0°</span></div>
-              <input type="range" id="chromaAngle" min="-180" max="180" value="0">
-            </div>
-            <div class="param-row">
-              <div class="param-label"><span>滲み・ぼかし</span><span id="chromaBlurVal" class="param-value">10%</span></div>
-              <input type="range" id="chromaBlur" min="0" max="100" value="10">
-            </div>
-          </div>
-        </div>
-
       </div>
     </div>
 
@@ -2528,292 +2487,6 @@
   // フィルムグレインのメモ化キャッシュ
   const noisePatternCache = new Map();
 
-  // 色収差 (RGB 3色分解) レンダリング用キャンバスキャッシュ
-  const chromaRedCanvas = document.createElement('canvas');
-  const chromaGreenCanvas = document.createElement('canvas');
-  const chromaBlueCanvas = document.createElement('canvas');
-  const chromaSourceCanvas = document.createElement('canvas');
-  const chromaTempBlurCanvas = document.createElement('canvas');
-  const cachedCharaChromaCanvas = document.createElement('canvas');
-  const cachedCharaFringeCanvas = document.createElement('canvas');
-  let isCharaChromaDirty = true;
-  let lastCharaChromaKey = '';
-
-  function releaseChromaCanvases() {
-    chromaRedCanvas.width = 1;
-    chromaRedCanvas.height = 1;
-    chromaGreenCanvas.width = 1;
-    chromaGreenCanvas.height = 1;
-    chromaBlueCanvas.width = 1;
-    chromaBlueCanvas.height = 1;
-    chromaSourceCanvas.width = 1;
-    chromaSourceCanvas.height = 1;
-    chromaTempBlurCanvas.width = 1;
-    chromaTempBlurCanvas.height = 1;
-    cachedCharaChromaCanvas.width = 1;
-    cachedCharaChromaCanvas.height = 1;
-    cachedCharaFringeCanvas.width = 1;
-    cachedCharaFringeCanvas.height = 1;
-    isCharaChromaDirty = true;
-    lastCharaChromaKey = '';
-  }
-
-  function applyChromaticAberration(targetCanvas, amount, angleDeg, blurAmount, type = 'radial', lightAngleDeg = -45, isOpaque = false) {
-    if (amount <= 0) return;
-    const w = targetCanvas.width;
-    const h = targetCanvas.height;
-    if (w < 2 || h < 2) return;
-
-    // iOS Safari のCanvasメモリ制限を考慮し、モバイル1600px・PC2560pxを上限にする。
-    const isMobileChroma = window.innerWidth <= 900 || ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-    const MAX_CHROMA_DIM = isMobileChroma ? 1600 : 2560;
-    const maxDim = Math.max(w, h);
-    const downScale = maxDim > MAX_CHROMA_DIM ? MAX_CHROMA_DIM / maxDim : 1.0;
-    const workW = Math.max(2, Math.round(w * downScale));
-    const workH = Math.max(2, Math.round(h * downScale));
-
-    const minDim = Math.min(workW, workH);
-    // 100%で短辺の約4.5%（最大64px）、25%でも約12〜16pxとしっかり視認できる強度
-    const maxOffset = Math.max(1, Math.min(minDim * 0.045 * (amount / 100), 64 * downScale));
-
-    const srcCtx = prepareCanvas(chromaSourceCanvas, workW, workH);
-    srcCtx.imageSmoothingEnabled = true;
-    srcCtx.imageSmoothingQuality = 'medium';
-    srcCtx.drawImage(targetCanvas, 0, 0, workW, workH);
-
-    const redCtx = prepareCanvas(chromaRedCanvas, workW, workH);
-    const greenCtx = prepareCanvas(chromaGreenCanvas, workW, workH);
-    const blueCtx = prepareCanvas(chromaBlueCanvas, workW, workH);
-
-    // 元画像からR・G・Bを全面抽出し、それぞれを別位置へ動かして1枚の画像へ再構成する。
-    redCtx.drawImage(chromaSourceCanvas, 0, 0);
-    redCtx.globalCompositeOperation = 'multiply';
-    redCtx.fillStyle = '#ff0000';
-    redCtx.fillRect(0, 0, workW, workH);
-    redCtx.globalCompositeOperation = 'destination-in';
-    redCtx.drawImage(chromaSourceCanvas, 0, 0);
-    redCtx.globalCompositeOperation = 'source-over';
-
-    greenCtx.drawImage(chromaSourceCanvas, 0, 0);
-    greenCtx.globalCompositeOperation = 'multiply';
-    greenCtx.fillStyle = '#00ff00';
-    greenCtx.fillRect(0, 0, workW, workH);
-    greenCtx.globalCompositeOperation = 'destination-in';
-    greenCtx.drawImage(chromaSourceCanvas, 0, 0);
-    greenCtx.globalCompositeOperation = 'source-over';
-
-    blueCtx.drawImage(chromaSourceCanvas, 0, 0);
-    blueCtx.globalCompositeOperation = 'multiply';
-    blueCtx.fillStyle = '#0000ff';
-    blueCtx.fillRect(0, 0, workW, workH);
-    blueCtx.globalCompositeOperation = 'destination-in';
-    blueCtx.drawImage(chromaSourceCanvas, 0, 0);
-    blueCtx.globalCompositeOperation = 'source-over';
-
-    const blurPx = blurAmount > 0 ? Math.min(maxOffset * 0.6 * (blurAmount / 100), 16 * downScale) : 0;
-
-    // 滲み・ぼかし（赤レイヤーに100%、青レイヤーには半分の強度を適用）
-    if (blurPx > 0.3) {
-      const blueBlurPx = blurPx * 0.5;
-      if (supportsCanvasBlurFilter()) {
-        const bCtx = prepareCanvas(chromaTempBlurCanvas, workW, workH);
-        bCtx.clearRect(0, 0, workW, workH);
-
-        // 赤（100%ぼかし）
-        bCtx.filter = `blur(${blurPx.toFixed(1)}px)`;
-        bCtx.drawImage(chromaRedCanvas, 0, 0);
-        redCtx.clearRect(0, 0, workW, workH);
-        redCtx.drawImage(chromaTempBlurCanvas, 0, 0);
-
-        // 青（赤の半分のぼかし）
-        if (blueBlurPx > 0.3) {
-          bCtx.clearRect(0, 0, workW, workH);
-          bCtx.filter = `blur(${blueBlurPx.toFixed(1)}px)`;
-          bCtx.drawImage(chromaBlueCanvas, 0, 0);
-          blueCtx.clearRect(0, 0, workW, workH);
-          blueCtx.drawImage(chromaTempBlurCanvas, 0, 0);
-        }
-        bCtx.filter = 'none';
-      } else {
-        applyThreePassBoxBlur(chromaRedCanvas, blurPx, true);
-        if (blueBlurPx > 0.3) {
-          applyThreePassBoxBlur(chromaBlueCanvas, blueBlurPx, true);
-        }
-      }
-    }
-
-    const tCtx = targetCanvas.getContext('2d');
-
-    tCtx.setTransform(1, 0, 0, 1, 0, 0);
-    tCtx.clearRect(0, 0, w, h);
-
-    tCtx.save();
-    tCtx.imageSmoothingEnabled = true;
-    tCtx.imageSmoothingQuality = 'high';
-
-    if (type === 'radial') {
-      const lightRad = (lightAngleDeg * Math.PI) / 180;
-      const lCos = Math.cos(lightRad);
-      const lSin = Math.sin(lightRad);
-
-      // 光軸中心（光源の向きに応じた自然な光学中心）
-      const cx = w / 2 - lCos * (w * 0.15);
-      const cy = h / 2 - lSin * (h * 0.15);
-
-      const targetMaxOffset = maxOffset / downScale;
-      // 中心から最も遠い距離を計算し、端での最大ズレが targetMaxOffset に収まるよう正確にスケーリング
-      const maxCornerDist = Math.hypot(Math.max(cx, w - cx), Math.max(cy, h - cy));
-      const scaleDelta = Math.max(0.002, targetMaxOffset / Math.max(maxCornerDist, 100));
-
-      // 光学中心 (cx, cy) においては色ズレはゼロ（完全な元の色）
-      // 中心から外周に向かうにつれて、赤は外側へ拡大、青は内側へ分散する
-      const redScale = 1 + scaleDelta;
-      const blueScale = Math.max(0.3, 1 - scaleDelta * 0.5);
-
-      // 1. 緑（中央基準レイヤー・原寸）
-      tCtx.drawImage(chromaGreenCanvas, 0, 0, w, h);
-
-      // 2. 青（短波長・中心 cx,cy を不動点として内向き分散・加算合成）
-      tCtx.globalCompositeOperation = 'lighter';
-      if (!isOpaque) tCtx.globalAlpha = 0.84;
-      tCtx.save();
-      tCtx.translate(cx, cy);
-      tCtx.scale(blueScale, blueScale);
-      tCtx.drawImage(chromaBlueCanvas, -cx, -cy, w, h);
-      tCtx.restore();
-
-      // 2-B. キャラ対象時の中間シアン/緑帯
-      // 放射では原寸の緑を縮小すると元キャラの内側に収まり、後段の芯のくり抜きで消える。
-      // 既にぼかした青レイヤーのアルファだけを再利用して、輪郭外にも残る軽量な中間帯を作る。
-      if (!isOpaque) {
-        const midGreenScale = 1 - (1 - blueScale) * 0.45;
-        const midGreenCtx = prepareCanvas(chromaTempBlurCanvas, workW, workH);
-        midGreenCtx.fillStyle = '#00ff80';
-        midGreenCtx.fillRect(0, 0, workW, workH);
-        midGreenCtx.globalCompositeOperation = 'destination-in';
-        midGreenCtx.drawImage(chromaBlueCanvas, 0, 0);
-        midGreenCtx.globalCompositeOperation = 'source-over';
-
-        tCtx.save();
-        tCtx.globalAlpha = 0.25;
-        tCtx.translate(cx, cy);
-        tCtx.scale(midGreenScale, midGreenScale);
-        tCtx.drawImage(chromaTempBlurCanvas, -cx, -cy, w, h);
-        tCtx.restore();
-      }
-
-      // 3. 赤（長波長・中心 cx,cy を不動点として外向き分散・加算合成）
-      if (!isOpaque) tCtx.globalAlpha = 0.68;
-      tCtx.save();
-      tCtx.translate(cx, cy);
-      tCtx.scale(redScale, redScale);
-      tCtx.drawImage(chromaRedCanvas, -cx, -cy, w, h);
-      tCtx.restore();
-    } else {
-      const targetMaxOffset = maxOffset / downScale;
-      const rad = (angleDeg * Math.PI) / 180;
-      const dx = Math.cos(rad) * targetMaxOffset;
-      const dy = Math.sin(rad) * targetMaxOffset;
-
-      // 1. 緑（中央・原点）
-      tCtx.drawImage(chromaGreenCanvas, 0, 0, w, h);
-
-      // 2. 青（逆方向へシフト・加算合成）
-      tCtx.globalCompositeOperation = 'lighter';
-      if (!isOpaque) tCtx.globalAlpha = 0.84;
-      tCtx.drawImage(chromaBlueCanvas, -dx, -dy, w, h);
-
-      // 2-B. キャラ対象時の中間シアン/緑帯（青ズレ量の45%位置、alpha 0.25で描画）
-      // 青外縁と元キャラの間に細いシアン/緑のスペクトル帯を形成
-      if (!isOpaque) {
-        tCtx.save();
-        tCtx.globalAlpha = 0.25;
-        tCtx.drawImage(chromaGreenCanvas, -dx * 0.45, -dy * 0.45, w, h);
-        tCtx.restore();
-      }
-
-      // 3. 赤（進行方向へシフト・加算合成）
-      if (!isOpaque) tCtx.globalAlpha = 0.68;
-      tCtx.drawImage(chromaRedCanvas, dx, dy, w, h);
-    }
-    tCtx.restore();
-
-    // 不透明な背景・全体では、チャンネル移動で生じた端の透明部分だけ元画像で補う。
-    if (isOpaque) {
-      tCtx.save();
-      tCtx.globalCompositeOperation = 'destination-over';
-      tCtx.drawImage(chromaSourceCanvas, 0, 0, w, h);
-      tCtx.restore();
-    }
-
-    // RGB加算で補色（C/M/Y）に見える分離領域だけを、対応するR/G/Bへ戻す。
-    // 元画像と変化していない画素はそのまま保ち、大画像でもメモリが膨らまないよう帯単位で処理する。
-    const resultCtx = prepareCanvas(chromaTempBlurCanvas, workW, workH);
-    resultCtx.imageSmoothingEnabled = true;
-    resultCtx.imageSmoothingQuality = 'high';
-    resultCtx.drawImage(targetCanvas, 0, 0, workW, workH);
-
-    const rowBatch = 128;
-    for (let rowY = 0; rowY < workH; rowY += rowBatch) {
-      const batchH = Math.min(rowBatch, workH - rowY);
-      const resultImage = resultCtx.getImageData(0, rowY, workW, batchH);
-      const sourceImage = srcCtx.getImageData(0, rowY, workW, batchH);
-      const out = resultImage.data;
-      const source = sourceImage.data;
-
-      for (let i = 0; i < out.length; i += 4) {
-        const r = out[i];
-        const g = out[i + 1];
-        const b = out[i + 2];
-        const changed = Math.max(
-          Math.abs(r - source[i]),
-          Math.abs(g - source[i + 1]),
-          Math.abs(b - source[i + 2])
-        );
-        if (changed < 3 || out[i + 3] === 0) continue;
-
-        const cyan = Math.max(0, Math.min(g, b) - r);
-        const magenta = Math.max(0, Math.min(r, b) - g);
-        const yellow = Math.max(0, Math.min(r, g) - b);
-        const dominant = Math.max(cyan, magenta, yellow);
-        if (dominant < 2) continue;
-
-        let mappedR = r;
-        let mappedG = g;
-        let mappedB = b;
-        if (dominant === cyan) {
-          // C (G+B) -> R
-          mappedR = Math.max(g, b);
-          mappedG = r;
-          mappedB = r;
-        } else if (dominant === magenta) {
-          // M (R+B) -> G
-          mappedR = g;
-          mappedG = Math.max(r, b);
-          mappedB = g;
-        } else {
-          // Y (R+G) -> B
-          mappedR = b;
-          mappedG = b;
-          mappedB = Math.max(r, g);
-        }
-
-        const mix = Math.min(1, changed / 96);
-        out[i] = Math.round(r + (mappedR - r) * mix);
-        out[i + 1] = Math.round(g + (mappedG - g) * mix);
-        out[i + 2] = Math.round(b + (mappedB - b) * mix);
-      }
-
-      resultCtx.putImageData(resultImage, 0, rowY);
-    }
-
-    tCtx.clearRect(0, 0, w, h);
-    tCtx.imageSmoothingEnabled = true;
-    tCtx.imageSmoothingQuality = 'high';
-    tCtx.drawImage(chromaTempBlurCanvas, 0, 0, w, h);
-
-  }
-
   function invalidateBg() {
     isBgDirty = true;
     isBgBlurDirty = true;
@@ -2821,13 +2494,8 @@
 
   function invalidateChara() {
     isCharaBaseDirty = true;
-    isCharaChromaDirty = true;
     isCastShadowDirty = true;
     isContactShadowDirty = true;
-  }
-
-  function invalidateCharaChroma() {
-    isCharaChromaDirty = true;
   }
 
   function invalidateAll() {
@@ -3025,10 +2693,7 @@
 
     function onSubToggleChanged() {
       item.classList.toggle('open', toggle.checked);
-      if (toggleId === 'gradingToggle' || toggleId === 'chromaToggle') {
-        if (toggleId === 'chromaToggle' && !toggle.checked) {
-          releaseChromaCanvases();
-        }
+      if (toggleId === 'gradingToggle') {
         invalidateAll();
         updateBgBlurCache();
       } else if (['wrapToggle', 'rimToggle', 'grainToggle'].includes(toggleId)) {
@@ -3055,7 +2720,6 @@
   setupSubAccordion('subGrain', 'grainToggle');
   setupSubAccordion('subColorGrading', 'gradingToggle');
   setupSubAccordion('subVignette', 'vignetteToggle');
-  setupSubAccordion('subChroma', 'chromaToggle');
 
   // フィルムグレイン対象セグメント切り替え
   document.querySelectorAll('#grainTargetSegment .segment-btn').forEach(btn => {
@@ -3064,34 +2728,6 @@
       btn.classList.add('active');
       grainTarget = btn.getAttribute('data-target');
       invalidateChara();
-      requestRender();
-    });
-  });
-
-  // 色収差 対象セグメント切り替え
-  let chromaTarget = 'all';
-  let chromaType = 'radial';
-  document.querySelectorAll('#chromaTargetSegment .segment-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('#chromaTargetSegment .segment-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      chromaTarget = btn.getAttribute('data-target');
-      invalidateAll();
-      requestRender();
-    });
-  });
-
-  // 色収差 ズレのタイプ切り替え (放射 / 平行)
-  const chromaAngleRow = document.getElementById('chromaAngleRow');
-  document.querySelectorAll('#chromaTypeSegment .segment-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('#chromaTypeSegment .segment-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      chromaType = btn.getAttribute('data-type');
-      if (chromaAngleRow) {
-        chromaAngleRow.style.display = chromaType === 'linear' ? 'flex' : 'none';
-      }
-      invalidateAll();
       requestRender();
     });
   });
@@ -4719,11 +4355,7 @@
         : (n < 0 ? '暗 ' + Math.abs(n) + '%' : '明 ' + n + '%');
     } },
     { id: 'vignetteRadius', unit: '%' },
-    { id: 'vignetteFeather', unit: '%' },
-    // 色収差
-    { id: 'chromaAmount', unit: '%' },
-    { id: 'chromaAngle', unit: '°' },
-    { id: 'chromaBlur', unit: '%' }
+    { id: 'vignetteFeather', unit: '%' }
   ];
 
   function updateVignetteValDisplay() {
@@ -4754,11 +4386,10 @@
         beginCharaScaleInteraction();
       }
 
-      const isChromaOnForInvalidate = document.getElementById('chromaToggle')?.checked;
-      if (p.id.startsWith('bg') || p.id === 'bgBlur' || (['chromaAmount', 'chromaAngle', 'chromaBlur'].includes(p.id) && chromaTarget === 'bg') || (p.id === 'lightAngle' && isChromaOnForInvalidate && chromaTarget === 'bg')) {
+      if (p.id.startsWith('bg') || p.id === 'bgBlur') {
         invalidateBg();
         updateBgBlurCache();
-      } else if (['charaScale', 'multiplyOpacity', 'overlayOpacity', 'lightAngle', 'rimOpacity', 'rimWidth', 'rimBlur', 'bright', 'contrast', 'saturation', 'temp', 'grainOpacity', 'grainScale'].includes(p.id) || (['chromaAmount', 'chromaAngle', 'chromaBlur'].includes(p.id) && chromaTarget === 'chara')) {
+      } else if (['charaScale', 'multiplyOpacity', 'overlayOpacity', 'lightAngle', 'rimOpacity', 'rimWidth', 'rimBlur', 'bright', 'contrast', 'saturation', 'temp', 'grainOpacity', 'grainScale'].includes(p.id)) {
         invalidateChara();
       } else if (['shadowBlur', 'shadowWaveAmp', 'shadowWaveAngle'].includes(p.id)) {
         invalidateCastShadow();
@@ -5139,8 +4770,7 @@
       grainOn: false, grainTarget: 'all', gradingOn: true,
       bright: 0, contrast: 0, saturation: 0, temp: 0,
       bgBright: 0, bgContrast: 0, bgSaturation: 0, bgTemp: 0,
-      vignette: 0, vignetteRadius: 50, vignetteFeather: 60, vignetteOn: true,
-      chromaAmount: 5, chromaAngle: 0, chromaBlur: 10, chromaOn: false, chromaTarget: 'all', chromaType: 'radial'
+      vignette: 0, vignetteRadius: 50, vignetteFeather: 60, vignetteOn: true
     },
     sunny: {
       shadowColor: '#2b3a4a', lightColor: '#fff8e7', rimColor: '#ffffff',
@@ -5282,27 +4912,6 @@
       document.getElementById('vignetteToggle').checked = p.vignetteOn;
       document.getElementById('subVignette').classList.toggle('open', p.vignetteOn);
     }
-    if (p.chromaOn !== undefined) {
-      document.getElementById('chromaToggle').checked = p.chromaOn;
-      document.getElementById('subChroma').classList.toggle('open', p.chromaOn);
-    } else {
-      document.getElementById('chromaToggle').checked = false;
-      document.getElementById('subChroma').classList.remove('open');
-    }
-    if (!document.getElementById('chromaToggle').checked) {
-      releaseChromaCanvases();
-    }
-    chromaTarget = p.chromaTarget || 'all';
-    document.querySelectorAll('#chromaTargetSegment .segment-btn').forEach(btn => {
-      btn.classList.toggle('active', btn.getAttribute('data-target') === chromaTarget);
-    });
-    chromaType = p.chromaType || 'radial';
-    document.querySelectorAll('#chromaTypeSegment .segment-btn').forEach(btn => {
-      btn.classList.toggle('active', btn.getAttribute('data-type') === chromaType);
-    });
-    const cAngleRow = document.getElementById('chromaAngleRow');
-    if (cAngleRow) cAngleRow.style.display = chromaType === 'linear' ? 'flex' : 'none';
-
     invalidateAll();
     updateBgBlurCache();
     requestRender();
@@ -5337,7 +4946,6 @@
     requestAnimationFrame(() => {
       setTimeout(() => {
         applyPreset('standard', { preserveShadowAngle: false });
-        releaseChromaCanvases();
         invalidateAll();
         updateBgBlurCache();
         requestRender();
@@ -5381,7 +4989,6 @@
     isCharaScaling = false;
     clearTimeout(charaScaleIdleTimer);
     charaScaleIdleTimer = null;
-    isCharaChromaDirty = true;
     requestRender();
   }
 
@@ -5852,10 +5459,6 @@
     const grainOpacity = parseFloat(document.getElementById('grainOpacity').value) / 100;
     const grainScale = parseFloat(document.getElementById('grainScale').value) / 10;
 
-    const isChromaOn = !isComparingBefore && document.getElementById('chromaToggle').checked;
-    const chromaAmount = parseFloat(document.getElementById('chromaAmount').value);
-    const chromaAngle = parseFloat(document.getElementById('chromaAngle').value);
-    const chromaBlur = parseFloat(document.getElementById('chromaBlur').value);
     const lightAngle = parseFloat(document.getElementById('lightAngle').value);
 
     // 1. 背景の描画（色調補正 + DoF被写界深度グラデーション）
@@ -5881,13 +5484,7 @@
         dofFade,
         isGrainOn && grainTarget === 'bg' ? 1 : 0,
         isGrainOn && grainTarget === 'bg' ? grainOpacity : 0,
-        isGrainOn && grainTarget === 'bg' ? grainScale : 0,
-        isChromaOn && chromaTarget === 'bg' ? 1 : 0,
-        isChromaOn && chromaTarget === 'bg' ? chromaAmount : 0,
-        isChromaOn && chromaTarget === 'bg' ? chromaAngle : 0,
-        isChromaOn && chromaTarget === 'bg' ? chromaBlur : 0,
-        isChromaOn && chromaTarget === 'bg' ? chromaType : '',
-        isChromaOn && chromaTarget === 'bg' ? lightAngle : 0
+        isGrainOn && grainTarget === 'bg' ? grainScale : 0
       ].join('|');
 
       if (bgDisplayKey !== cachedBgDisplayKey) {
@@ -5920,11 +5517,6 @@
           displayCtx.globalAlpha = grainOpacity;
           displayCtx.drawImage(bgNoise, 0, 0, canvas.width, canvas.height);
           displayCtx.restore();
-        }
-
-        // 背景のみへの色収差
-        if (isChromaOn && chromaTarget === 'bg' && chromaAmount > 0) {
-          applyChromaticAberration(cachedBgDisplayCanvas, chromaAmount, chromaAngle, chromaBlur, chromaType, lightAngle, true);
         }
 
         // 完成背景へ合成済みの中間Canvasは、大画像の常駐メモリを抑えるため解放する。
@@ -6323,68 +5915,6 @@
       isCharaBaseDirty = false;
     }
 
-    // 4-5. Pro Mode: キャラクター単体への色収差 (chromaTarget === 'chara')
-    // 芯（顔・服・瞳のディテール・不透明度）は100%完全保持し、外側フリンジのみを背景に自然に馴染ませる
-    let cachedCharaPad = 0;
-    const isChromaChara = isChromaOn && chromaTarget === 'chara' && chromaAmount > 0;
-
-    if (isChromaChara) {
-      const minDim = Math.min(cW, cH);
-      const maxOffset = Math.max(1, Math.min(minDim * 0.045 * (chromaAmount / 100), 64));
-      const blurPx = chromaBlur > 0 ? Math.min(maxOffset * 0.6 * (chromaBlur / 100), 16) : 0;
-      const extraSpread = chromaType === 'radial' ? maxOffset * 0.8 : 0;
-      cachedCharaPad = Math.ceil(maxOffset + extraSpread + blurPx * 2.0 + 16);
-
-      const paddedW = Math.round(cW + cachedCharaPad * 2);
-      const paddedH = Math.round(cH + cachedCharaPad * 2);
-
-      const chromaKey = [
-        charaImageVersion,
-        cW,
-        cH,
-        isCharaFlipped,
-        chromaAmount,
-        chromaAngle,
-        chromaBlur,
-        chromaType,
-        lightAngle,
-        cachedCharaPad
-      ].join('_');
-
-      // 移動中・拡縮操作中は再計算をスキップし、既存キャッシュを描画して60fpsを維持
-      const canReuseDuringInteraction = (isCharaDragging || isCharaScaling) && cachedCharaFringeCanvas.width > 0 && cachedCharaFringeCanvas.height > 0;
-
-      if (!canReuseDuringInteraction && (isCharaChromaDirty || lastCharaChromaKey !== chromaKey || cachedCharaFringeCanvas.width !== paddedW || cachedCharaFringeCanvas.height !== paddedH)) {
-        const chCtx = prepareCanvas(cachedCharaChromaCanvas, paddedW, paddedH);
-        chCtx.clearRect(0, 0, paddedW, paddedH);
-        chCtx.drawImage(cachedCharaBaseCanvas, cachedCharaPad, cachedCharaPad);
-
-        applyChromaticAberration(cachedCharaChromaCanvas, chromaAmount, chromaAngle, chromaBlur, chromaType, lightAngle, false);
-
-        // 外側フリンジ差分キャンバス: 色収差結果から元キャラのマスクを destination-out でくり抜き、外側フリンジのみを抽出
-        const frCtx = prepareCanvas(cachedCharaFringeCanvas, paddedW, paddedH);
-        frCtx.clearRect(0, 0, paddedW, paddedH);
-        frCtx.drawImage(cachedCharaChromaCanvas, 0, 0);
-
-        frCtx.save();
-        frCtx.globalCompositeOperation = 'destination-out';
-        frCtx.drawImage(cachedCharaBaseCanvas, cachedCharaPad, cachedCharaPad);
-        frCtx.restore();
-
-        lastCharaChromaKey = chromaKey;
-        isCharaChromaDirty = false;
-      }
-    }
-
-    // 1. 外側フリンジを90%で合成し、各色との積で青約76%・赤約61%・緑約23%にする。
-    if (isChromaChara && cachedCharaFringeCanvas.width > 0 && cachedCharaFringeCanvas.height > 0) {
-      ctx.save();
-      ctx.globalCompositeOperation = 'screen';
-      ctx.globalAlpha = 0.90;
-      ctx.drawImage(cachedCharaFringeCanvas, charaLeft - cachedCharaPad, charaTop - cachedCharaPad, cW + cachedCharaPad * 2, cH + cachedCharaPad * 2);
-      ctx.restore();
-    }
-
     // 2. キャラクター本体を高解像度・完全不透明（globalAlpha = 1.0）で描画（芯のディテール・色を100%保持）
     ctx.drawImage(cachedCharaBaseCanvas, charaLeft, charaTop, cW, cH);
 
@@ -6603,16 +6133,7 @@
       }
     }
 
-    // 7. 全体への色収差 (chromaTarget === 'all')
-    if (isChromaOn && chromaTarget === 'all' && chromaAmount > 0) {
-      // キャラ移動中・拡縮操作中は毎フレームの全画面再計算をバイパスし、操作終了後に高精細適用する
-      const isInteracting = isCharaDragging || isCharaScaling;
-      if (!isInteracting) {
-        applyChromaticAberration(canvas, chromaAmount, chromaAngle, chromaBlur, chromaType, lightAngle, true);
-      }
-    }
-
-    // 8. 全体へのフィルムグレイン (grainTarget === 'all')
+    // 7. 全体へのフィルムグレイン (grainTarget === 'all')
     if (isGrainOn && grainTarget === 'all' && grainOpacity > 0) {
       const wholeNoise = getNoisePattern(canvas.width, canvas.height, grainScale);
       ctx.save();
