@@ -2662,8 +2662,12 @@
         const redScale = 1 + scaleDelta;
         const blueScale = Math.max(0.3, 1 - scaleDelta * 0.5);
 
-        effectCtx.drawImage(chromaGreenCanvas, 0, 0);
+        // 元画像のRGBを中央基準にし、緑は基準波長の補助として25%だけ加える。
+        effectCtx.drawImage(chromaSourceCanvas, 0, 0);
         effectCtx.globalCompositeOperation = 'lighter';
+        effectCtx.globalAlpha = 0.25;
+        effectCtx.drawImage(chromaGreenCanvas, 0, 0);
+        effectCtx.globalAlpha = 1;
         effectCtx.save();
         effectCtx.translate(workCx, workCy);
         effectCtx.scale(blueScale, blueScale);
@@ -2679,8 +2683,12 @@
         const dx = Math.cos(rad) * maxOffset;
         const dy = Math.sin(rad) * maxOffset;
 
-        effectCtx.drawImage(chromaGreenCanvas, 0, 0);
+        // 元画像のRGBを中央基準にし、緑は基準波長の補助として25%だけ加える。
+        effectCtx.drawImage(chromaSourceCanvas, 0, 0);
         effectCtx.globalCompositeOperation = 'lighter';
+        effectCtx.globalAlpha = 0.25;
+        effectCtx.drawImage(chromaGreenCanvas, 0, 0);
+        effectCtx.globalAlpha = 1;
         effectCtx.drawImage(chromaBlueCanvas, -dx, -dy);
         effectCtx.drawImage(chromaRedCanvas, dx, dy);
       }
