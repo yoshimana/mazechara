@@ -2388,6 +2388,46 @@
           </div>
         </div>
 
+        <!-- 6. 色収差 (RGB色ズレ) -->
+        <div class="sub-accordion-item" id="subChroma">
+          <div class="sub-accordion-header">
+            <span>6. 色収差 (RGB色ズレ)</span>
+            <label class="switch">
+              <input type="checkbox" id="chromaToggle">
+              <span class="slider-toggle"></span>
+            </label>
+          </div>
+          <div class="sub-accordion-body">
+            <div class="param-row">
+              <div class="param-label"><span>適用対象</span></div>
+              <div class="segment-control" id="chromaTargetSegment">
+                <button class="segment-btn active" type="button" data-target="all">全体 (推奨)</button>
+                <button class="segment-btn" type="button" data-target="chara">キャラ</button>
+                <button class="segment-btn" type="button" data-target="bg">背景</button>
+              </div>
+            </div>
+            <div class="param-row">
+              <div class="param-label"><span>ズレのタイプ</span></div>
+              <div class="segment-control" id="chromaTypeSegment">
+                <button class="segment-btn active" type="button" data-type="radial">放射 (レンズ風)</button>
+                <button class="segment-btn" type="button" data-type="linear">平行 (均一)</button>
+              </div>
+            </div>
+            <div class="param-row">
+              <div class="param-label"><span>色ズレの強さ</span><span id="chromaAmountVal" class="param-value">25%</span></div>
+              <input type="range" id="chromaAmount" min="0" max="100" value="25">
+            </div>
+            <div class="param-row" id="chromaAngleRow" style="display: none;">
+              <div class="param-label"><span>ズレの角度</span><span id="chromaAngleVal" class="param-value">0°</span></div>
+              <input type="range" id="chromaAngle" min="-180" max="180" value="0">
+            </div>
+            <div class="param-row">
+              <div class="param-label"><span>滲み・ぼかし</span><span id="chromaBlurVal" class="param-value">20%</span></div>
+              <input type="range" id="chromaBlur" min="0" max="100" value="20">
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
 
@@ -2469,6 +2509,87 @@
 
   // フィルムグレインのメモ化キャッシュ
   const noisePatternCache = new Map();
+
+  // 色収差 (RGB色ズレ) レンダリング用キャンバスキャッシュ
+  const chromaRedCanvas = document.createElement('canvas');
+  const chromaCyanCanvas = document.createElement('canvas');
+  const chromaSourceCanvas = document.createElement('canvas');
+
+  function applyChromaticAberration(targetCanvas, amount, angleDeg, blurAmount, type = 'radial') {
+    if (amount <= 0) return;
+    const w = targetCanvas.width;
+    const h = targetCanvas.height;
+    if (w < 2 || h < 2) return;
+
+    const minDim = Math.min(w, h);
+    // 100%で短辺の約2.5%（最大48px）
+    const maxOffset = Math.min(minDim * 0.025 * (amount / 100), 48);
+    if (maxOffset < 0.2) return;
+
+    const srcCanvas = prepareCanvas(chromaSourceCanvas, w, h);
+    const srcCtx = srcCanvas.getContext('2d');
+    srcCtx.clearRect(0, 0, w, h);
+    srcCtx.drawImage(targetCanvas, 0, 0);
+
+    const redCanvas = prepareCanvas(chromaRedCanvas, w, h);
+    const redCtx = redCanvas.getContext('2d');
+    redCtx.clearRect(0, 0, w, h);
+    redCtx.drawImage(srcCanvas, 0, 0);
+    redCtx.globalCompositeOperation = 'multiply';
+    redCtx.fillStyle = '#ff0000';
+    redCtx.fillRect(0, 0, w, h);
+    redCtx.globalCompositeOperation = 'destination-in';
+    redCtx.drawImage(srcCanvas, 0, 0);
+
+    const cyanCanvas = prepareCanvas(chromaCyanCanvas, w, h);
+    const cyanCtx = cyanCanvas.getContext('2d');
+    cyanCtx.clearRect(0, 0, w, h);
+    cyanCtx.drawImage(srcCanvas, 0, 0);
+    cyanCtx.globalCompositeOperation = 'multiply';
+    cyanCtx.fillStyle = '#00ffff';
+    cyanCtx.fillRect(0, 0, w, h);
+    cyanCtx.globalCompositeOperation = 'destination-in';
+    cyanCtx.drawImage(srcCanvas, 0, 0);
+
+    const blurPx = blurAmount > 0 ? Math.min(maxOffset * 0.8 * (blurAmount / 100), 16) : 0;
+
+    const tCtx = targetCanvas.getContext('2d');
+    tCtx.clearRect(0, 0, w, h);
+
+    tCtx.save();
+    if (blurPx > 0.3) {
+      tCtx.filter = `blur(${blurPx.toFixed(1)}px)`;
+    }
+
+    if (type === 'radial') {
+      const scaleDelta = (maxOffset / minDim) * 1.6;
+      const redScale = 1 + scaleDelta;
+      const cyanScale = Math.max(0.1, 1 - scaleDelta);
+
+      tCtx.save();
+      tCtx.translate(w / 2, h / 2);
+      tCtx.scale(cyanScale, cyanScale);
+      tCtx.drawImage(cyanCanvas, -w / 2, -h / 2);
+      tCtx.restore();
+
+      tCtx.globalCompositeOperation = 'lighter';
+      tCtx.save();
+      tCtx.translate(w / 2, h / 2);
+      tCtx.scale(redScale, redScale);
+      tCtx.drawImage(redCanvas, -w / 2, -h / 2);
+      tCtx.restore();
+    } else {
+      const rad = (angleDeg * Math.PI) / 180;
+      const dx = Math.cos(rad) * maxOffset;
+      const dy = Math.sin(rad) * maxOffset;
+
+      tCtx.drawImage(cyanCanvas, -dx, -dy);
+
+      tCtx.globalCompositeOperation = 'lighter';
+      tCtx.drawImage(redCanvas, dx, dy);
+    }
+    tCtx.restore();
+  }
 
   function invalidateBg() {
     isBgDirty = true;
@@ -2680,7 +2801,7 @@
       if (toggleId === 'gradingToggle') {
         invalidateAll();
         updateBgBlurCache();
-      } else if (['wrapToggle', 'rimToggle', 'grainToggle'].includes(toggleId)) {
+      } else if (['wrapToggle', 'rimToggle', 'grainToggle', 'chromaToggle'].includes(toggleId)) {
         invalidateChara();
       }
       requestRender();
@@ -2704,6 +2825,7 @@
   setupSubAccordion('subGrain', 'grainToggle');
   setupSubAccordion('subColorGrading', 'gradingToggle');
   setupSubAccordion('subVignette', 'vignetteToggle');
+  setupSubAccordion('subChroma', 'chromaToggle');
 
   // フィルムグレイン対象セグメント切り替え
   document.querySelectorAll('#grainTargetSegment .segment-btn').forEach(btn => {
@@ -2711,6 +2833,34 @@
       document.querySelectorAll('#grainTargetSegment .segment-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       grainTarget = btn.getAttribute('data-target');
+      invalidateChara();
+      requestRender();
+    });
+  });
+
+  // 色収差 対象セグメント切り替え
+  let chromaTarget = 'all';
+  let chromaType = 'radial';
+  document.querySelectorAll('#chromaTargetSegment .segment-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#chromaTargetSegment .segment-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      chromaTarget = btn.getAttribute('data-target');
+      invalidateChara();
+      requestRender();
+    });
+  });
+
+  // 色収差 ズレのタイプ切り替え (放射 / 平行)
+  const chromaAngleRow = document.getElementById('chromaAngleRow');
+  document.querySelectorAll('#chromaTypeSegment .segment-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#chromaTypeSegment .segment-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      chromaType = btn.getAttribute('data-type');
+      if (chromaAngleRow) {
+        chromaAngleRow.style.display = chromaType === 'linear' ? 'flex' : 'none';
+      }
       invalidateChara();
       requestRender();
     });
@@ -4339,7 +4489,11 @@
         : (n < 0 ? '暗 ' + Math.abs(n) + '%' : '明 ' + n + '%');
     } },
     { id: 'vignetteRadius', unit: '%' },
-    { id: 'vignetteFeather', unit: '%' }
+    { id: 'vignetteFeather', unit: '%' },
+    // 色収差
+    { id: 'chromaAmount', unit: '%' },
+    { id: 'chromaAngle', unit: '°' },
+    { id: 'chromaBlur', unit: '%' }
   ];
 
   function updateVignetteValDisplay() {
@@ -4370,10 +4524,10 @@
         beginCharaScaleInteraction();
       }
 
-      if (p.id.startsWith('bg') || p.id === 'bgBlur') {
+      if (p.id.startsWith('bg') || p.id === 'bgBlur' || (['chromaAmount', 'chromaAngle', 'chromaBlur'].includes(p.id) && chromaTarget === 'bg')) {
         invalidateBg();
         updateBgBlurCache();
-      } else if (['charaScale', 'multiplyOpacity', 'overlayOpacity', 'lightAngle', 'rimOpacity', 'rimWidth', 'rimBlur', 'bright', 'contrast', 'saturation', 'temp', 'grainOpacity', 'grainScale'].includes(p.id)) {
+      } else if (['charaScale', 'multiplyOpacity', 'overlayOpacity', 'lightAngle', 'rimOpacity', 'rimWidth', 'rimBlur', 'bright', 'contrast', 'saturation', 'temp', 'grainOpacity', 'grainScale'].includes(p.id) || (['chromaAmount', 'chromaAngle', 'chromaBlur'].includes(p.id) && chromaTarget === 'chara')) {
         invalidateChara();
       } else if (['shadowBlur', 'shadowWaveAmp', 'shadowWaveAngle'].includes(p.id)) {
         invalidateCastShadow();
@@ -4754,7 +4908,8 @@
       grainOn: false, grainTarget: 'all', gradingOn: true,
       bright: 0, contrast: 0, saturation: 0, temp: 0,
       bgBright: 0, bgContrast: 0, bgSaturation: 0, bgTemp: 0,
-      vignette: 0, vignetteRadius: 50, vignetteFeather: 60, vignetteOn: true
+      vignette: 0, vignetteRadius: 50, vignetteFeather: 60, vignetteOn: true,
+      chromaAmount: 25, chromaAngle: 0, chromaBlur: 20, chromaOn: false, chromaTarget: 'all', chromaType: 'radial'
     },
     sunny: {
       shadowColor: '#2b3a4a', lightColor: '#fff8e7', rimColor: '#ffffff',
@@ -4896,6 +5051,23 @@
       document.getElementById('vignetteToggle').checked = p.vignetteOn;
       document.getElementById('subVignette').classList.toggle('open', p.vignetteOn);
     }
+    if (p.chromaOn !== undefined) {
+      document.getElementById('chromaToggle').checked = p.chromaOn;
+      document.getElementById('subChroma').classList.toggle('open', p.chromaOn);
+    } else {
+      document.getElementById('chromaToggle').checked = false;
+      document.getElementById('subChroma').classList.remove('open');
+    }
+    chromaTarget = p.chromaTarget || 'all';
+    document.querySelectorAll('#chromaTargetSegment .segment-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.getAttribute('data-target') === chromaTarget);
+    });
+    chromaType = p.chromaType || 'radial';
+    document.querySelectorAll('#chromaTypeSegment .segment-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.getAttribute('data-type') === chromaType);
+    });
+    const cAngleRow = document.getElementById('chromaAngleRow');
+    if (cAngleRow) cAngleRow.style.display = chromaType === 'linear' ? 'flex' : 'none';
 
     invalidateAll();
     updateBgBlurCache();
@@ -5444,6 +5616,11 @@
     const grainOpacity = parseFloat(document.getElementById('grainOpacity').value) / 100;
     const grainScale = parseFloat(document.getElementById('grainScale').value) / 10;
 
+    const isChromaOn = !isComparingBefore && document.getElementById('chromaToggle').checked;
+    const chromaAmount = parseFloat(document.getElementById('chromaAmount').value);
+    const chromaAngle = parseFloat(document.getElementById('chromaAngle').value);
+    const chromaBlur = parseFloat(document.getElementById('chromaBlur').value);
+
     // 1. 背景の描画（色調補正 + DoF被写界深度グラデーション）
     if (bgImg) {
       const isBgBlurOn = !isComparingBefore && document.getElementById('bgBlurToggle').checked;
@@ -5467,7 +5644,12 @@
         dofFade,
         isGrainOn && grainTarget === 'bg' ? 1 : 0,
         isGrainOn && grainTarget === 'bg' ? grainOpacity : 0,
-        isGrainOn && grainTarget === 'bg' ? grainScale : 0
+        isGrainOn && grainTarget === 'bg' ? grainScale : 0,
+        isChromaOn && chromaTarget === 'bg' ? 1 : 0,
+        isChromaOn && chromaTarget === 'bg' ? chromaAmount : 0,
+        isChromaOn && chromaTarget === 'bg' ? chromaAngle : 0,
+        isChromaOn && chromaTarget === 'bg' ? chromaBlur : 0,
+        isChromaOn && chromaTarget === 'bg' ? chromaType : ''
       ].join('|');
 
       if (bgDisplayKey !== cachedBgDisplayKey) {
@@ -5500,6 +5682,11 @@
           displayCtx.globalAlpha = grainOpacity;
           displayCtx.drawImage(bgNoise, 0, 0, canvas.width, canvas.height);
           displayCtx.restore();
+        }
+
+        // 背景のみへの色収差
+        if (isChromaOn && chromaTarget === 'bg' && chromaAmount > 0) {
+          applyChromaticAberration(cachedBgDisplayCanvas, chromaAmount, chromaAngle, chromaBlur, chromaType);
         }
 
         // 完成背景へ合成済みの中間Canvasは、大画像の常駐メモリを抑えるため解放する。
@@ -5895,6 +6082,11 @@
       cCtx.drawImage(charaImg, 0, 0, cW, cH);
       cCtx.restore();
 
+      // 4-5. Pro Mode: キャラクター単体への色収差 (chromaTarget === 'chara')
+      if (isChromaOn && chromaTarget === 'chara' && chromaAmount > 0) {
+        applyChromaticAberration(cachedCharaBaseCanvas, chromaAmount, chromaAngle, chromaBlur, chromaType);
+      }
+
       isCharaBaseDirty = false;
     }
 
@@ -6116,7 +6308,12 @@
       }
     }
 
-    // 7. 全体へのフィルムグレイン (grainTarget === 'all')
+    // 7. 全体への色収差 (chromaTarget === 'all')
+    if (isChromaOn && chromaTarget === 'all' && chromaAmount > 0) {
+      applyChromaticAberration(canvas, chromaAmount, chromaAngle, chromaBlur, chromaType);
+    }
+
+    // 8. 全体へのフィルムグレイン (grainTarget === 'all')
     if (isGrainOn && grainTarget === 'all' && grainOpacity > 0) {
       const wholeNoise = getNoisePattern(canvas.width, canvas.height, grainScale);
       ctx.save();
