@@ -2548,35 +2548,64 @@
     const h = targetCanvas.height;
     if (w < 2 || h < 2) return;
 
-    const minDim = Math.min(w, h);
+    // iOS Safari の Canvas メモリ制限（384MB）と大画像 GPU ブラーによる WebProcess クラッシュを完全防止
+    // 作業解像度を安全なサイズ（長辺最大 1280px）にクランプして処理
+    const MAX_CHROMA_DIM = 1280;
+    const maxDim = Math.max(w, h);
+    const downScale = maxDim > MAX_CHROMA_DIM ? MAX_CHROMA_DIM / maxDim : 1.0;
+    const workW = Math.max(2, Math.round(w * downScale));
+    const workH = Math.max(2, Math.round(h * downScale));
+
+    const minDim = Math.min(workW, workH);
     // 100%で短辺の約4.5%（最大64px）、25%でも約12〜16pxとしっかり視認できる強度
-    const maxOffset = Math.max(1, Math.min(minDim * 0.045 * (amount / 100), 64));
+    const maxOffset = Math.max(1, Math.min(minDim * 0.045 * (amount / 100), 64 * downScale));
 
-    const srcCtx = prepareCanvas(chromaSourceCanvas, w, h);
-    srcCtx.drawImage(targetCanvas, 0, 0);
+    const srcCtx = prepareCanvas(chromaSourceCanvas, workW, workH);
+    srcCtx.imageSmoothingEnabled = true;
+    srcCtx.imageSmoothingQuality = 'medium';
+    srcCtx.drawImage(targetCanvas, 0, 0, workW, workH);
 
-    const redCtx = prepareCanvas(chromaRedCanvas, w, h);
+    const redCtx = prepareCanvas(chromaRedCanvas, workW, workH);
     redCtx.drawImage(chromaSourceCanvas, 0, 0);
     redCtx.globalCompositeOperation = 'multiply';
     redCtx.fillStyle = '#ff0000';
-    redCtx.fillRect(0, 0, w, h);
+    redCtx.fillRect(0, 0, workW, workH);
     redCtx.globalCompositeOperation = 'destination-in';
     redCtx.drawImage(chromaSourceCanvas, 0, 0);
+    redCtx.globalCompositeOperation = 'source-over';
 
-    const cyanCtx = prepareCanvas(chromaCyanCanvas, w, h);
+    const cyanCtx = prepareCanvas(chromaCyanCanvas, workW, workH);
     cyanCtx.drawImage(chromaSourceCanvas, 0, 0);
     cyanCtx.globalCompositeOperation = 'multiply';
     cyanCtx.fillStyle = '#00ffff';
-    cyanCtx.fillRect(0, 0, w, h);
+    cyanCtx.fillRect(0, 0, workW, workH);
     cyanCtx.globalCompositeOperation = 'destination-in';
     cyanCtx.drawImage(chromaSourceCanvas, 0, 0);
+    cyanCtx.globalCompositeOperation = 'source-over';
 
-    const blurPx = blurAmount > 0 ? Math.min(maxOffset * 0.6 * (blurAmount / 100), 16) : 0;
+    const blurPx = blurAmount > 0 ? Math.min(maxOffset * 0.6 * (blurAmount / 100), 16 * downScale) : 0;
 
-    // Safari 互換性: filter 未サポート環境では手動 3-pass blur を適用
-    if (blurPx > 0.3 && !supportsCanvasBlurFilter()) {
-      applyThreePassBoxBlur(chromaRedCanvas, blurPx, true);
-      applyThreePassBoxBlur(chromaCyanCanvas, blurPx, true);
+    // 滲み・ぼかしは巨大な本体Canvasではなく、安全な作業Canvas内で処理してGPUパンクを防止
+    if (blurPx > 0.3) {
+      if (supportsCanvasBlurFilter()) {
+        const tempBlur = document.createElement('canvas');
+        tempBlur.width = workW;
+        tempBlur.height = workH;
+        const bCtx = tempBlur.getContext('2d');
+        bCtx.filter = `blur(${blurPx.toFixed(1)}px)`;
+
+        bCtx.drawImage(chromaRedCanvas, 0, 0);
+        redCtx.clearRect(0, 0, workW, workH);
+        redCtx.drawImage(tempBlur, 0, 0);
+
+        bCtx.clearRect(0, 0, workW, workH);
+        bCtx.drawImage(chromaCyanCanvas, 0, 0);
+        cyanCtx.clearRect(0, 0, workW, workH);
+        cyanCtx.drawImage(tempBlur, 0, 0);
+      } else {
+        applyThreePassBoxBlur(chromaRedCanvas, blurPx, true);
+        applyThreePassBoxBlur(chromaCyanCanvas, blurPx, true);
+      }
     }
 
     const tCtx = targetCanvas.getContext('2d');
@@ -2584,26 +2613,24 @@
     tCtx.clearRect(0, 0, w, h);
 
     tCtx.save();
-    if (blurPx > 0.3 && supportsCanvasBlurFilter()) {
-      tCtx.filter = `blur(${blurPx.toFixed(1)}px)`;
-    }
+    tCtx.imageSmoothingEnabled = true;
+    tCtx.imageSmoothingQuality = 'high';
 
     if (type === 'radial') {
-      // 光源の向き（lightAngleDeg）の影響を反映
       const lightRad = (lightAngleDeg * Math.PI) / 180;
       const lCos = Math.cos(lightRad);
       const lSin = Math.sin(lightRad);
 
-      // 光源の差し込む方向から光が抜ける方向へと放射中心をシフト
       const cx = w / 2 - lCos * (w * 0.32);
       const cy = h / 2 - lSin * (h * 0.32);
 
-      const scaleDelta = Math.max(0.005, (maxOffset / minDim) * 2.8);
+      const targetMinDim = Math.min(w, h);
+      const targetMaxOffset = maxOffset / downScale;
+      const scaleDelta = Math.max(0.005, (targetMaxOffset / targetMinDim) * 2.8);
       const redScale = 1 + scaleDelta;
       const cyanScale = Math.max(0.1, 1 - scaleDelta);
 
-      // 光源の向き（光軸）に沿った指向性シフト
-      const lightShift = maxOffset * 0.5;
+      const lightShift = targetMaxOffset * 0.5;
       const shiftX = lCos * lightShift;
       const shiftY = lSin * lightShift;
 
@@ -2611,7 +2638,7 @@
       tCtx.save();
       tCtx.translate(cx, cy);
       tCtx.scale(cyanScale, cyanScale);
-      tCtx.drawImage(chromaCyanCanvas, -cx - shiftX * 0.5, -cy - shiftY * 0.5);
+      tCtx.drawImage(chromaCyanCanvas, -cx - shiftX * 0.5, -cy - shiftY * 0.5, w, h);
       tCtx.restore();
 
       // 赤（拡大 + lighter 加算合成 + 光の進行方向へ）
@@ -2619,18 +2646,18 @@
       tCtx.save();
       tCtx.translate(cx, cy);
       tCtx.scale(redScale, redScale);
-      tCtx.drawImage(chromaRedCanvas, -cx + shiftX * 0.5, -cy + shiftY * 0.5);
+      tCtx.drawImage(chromaRedCanvas, -cx + shiftX * 0.5, -cy + shiftY * 0.5, w, h);
       tCtx.restore();
     } else {
-      // 平行（均一）：指定角度に応じた水平・垂直オフセット
+      const targetMaxOffset = maxOffset / downScale;
       const rad = (angleDeg * Math.PI) / 180;
-      const dx = Math.cos(rad) * maxOffset;
-      const dy = Math.sin(rad) * maxOffset;
+      const dx = Math.cos(rad) * targetMaxOffset;
+      const dy = Math.sin(rad) * targetMaxOffset;
 
-      tCtx.drawImage(chromaCyanCanvas, -dx, -dy);
+      tCtx.drawImage(chromaCyanCanvas, -dx, -dy, w, h);
 
       tCtx.globalCompositeOperation = 'lighter';
-      tCtx.drawImage(chromaRedCanvas, dx, dy);
+      tCtx.drawImage(chromaRedCanvas, dx, dy, w, h);
     }
     tCtx.restore();
 
@@ -2638,7 +2665,7 @@
     if (isOpaque) {
       tCtx.save();
       tCtx.globalCompositeOperation = 'destination-over';
-      tCtx.drawImage(chromaSourceCanvas, 0, 0);
+      tCtx.drawImage(chromaSourceCanvas, 0, 0, w, h);
       tCtx.restore();
     }
   }
