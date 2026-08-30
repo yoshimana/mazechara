@@ -2645,7 +2645,6 @@
       // 赤（拡大 + lighter 加算合成 + 光の進行方向へ）
       tCtx.globalCompositeOperation = 'lighter';
       tCtx.save();
-      if (!isOpaque) tCtx.globalAlpha = 0.72;
       tCtx.translate(cx, cy);
       tCtx.scale(redScale, redScale);
       tCtx.drawImage(chromaRedCanvas, -cx + shiftX * 0.7, -cy + shiftY * 0.7, w, h);
@@ -2659,10 +2658,7 @@
       tCtx.drawImage(chromaCyanCanvas, -dx, -dy, w, h);
 
       tCtx.globalCompositeOperation = 'lighter';
-      tCtx.save();
-      if (!isOpaque) tCtx.globalAlpha = 0.72;
       tCtx.drawImage(chromaRedCanvas, dx, dy, w, h);
-      tCtx.restore();
     }
     tCtx.restore();
 
@@ -6210,11 +6206,6 @@
 
       applyChromaticAberration(cachedCharaChromaCanvas, chromaAmount, chromaAngle, chromaBlur, chromaType, lightAngle, false);
 
-      // キャラ本体の芯の色とシャープネスを100%維持し、外側フリンジのみを柔らかく透過させる
-      chCtx.save();
-      chCtx.drawImage(cachedCharaBaseCanvas, chromaPad, chromaPad);
-      chCtx.restore();
-
       charaDrawCanvas = cachedCharaChromaCanvas;
       charaDrawX = charaLeft - chromaPad;
       charaDrawY = charaTop - chromaPad;
@@ -6222,8 +6213,13 @@
       charaDrawH = paddedH;
     }
 
-    // キャラ本体を描画
+    // キャラ本体を描画（色収差適用時は不透明度90%）
+    ctx.save();
+    if (isChromaOn && chromaTarget === 'chara' && chromaAmount > 0) {
+      ctx.globalAlpha = 0.9;
+    }
     ctx.drawImage(charaDrawCanvas, charaDrawX, charaDrawY, charaDrawW, charaDrawH);
+    ctx.restore();
 
     // 4-3. Pro Mode: 高品位・シルキーライトラップ (Light Wrap / 周囲光の滑らかな回り込み)
     const isWrapOn = document.getElementById('wrapToggle').checked;
