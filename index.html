@@ -1559,7 +1559,8 @@
     }
 
     .canvas-wrapper {
-      max-height: 100%;
+      /* パネル開閉（上げ下げ）でプレビュー領域が伸び縮みしても、Canvasの表示サイズは一切変えない */
+      max-height: max(140px, calc(38dvh - 86px));
       max-width: 100%;
       box-shadow: 0 8px 24px rgba(45, 52, 54, 0.1);
       border-width: 2px;
@@ -1569,7 +1570,7 @@
     }
 
     canvas {
-      max-height: 100%;
+      max-height: max(140px, calc(38dvh - 86px));
       max-width: 100%;
       object-fit: contain;
     }
