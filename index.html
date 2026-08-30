@@ -2642,6 +2642,62 @@
     }
 
     const tCtx = targetCanvas.getContext('2d');
+
+    // 背景・全体は、縮小したRGB処理結果で元画像そのものを置き換えない。
+    // 既存の一時Canvasに色成分だけを生成し、元Canvasへ color 合成することで
+    // 写真の明度・輪郭・細部を原解像度のまま保持する（Safariでも追加Canvas/blurなし）。
+    if (isOpaque) {
+      const effectCtx = prepareCanvas(chromaTempBlurCanvas, workW, workH);
+      effectCtx.imageSmoothingEnabled = true;
+      effectCtx.imageSmoothingQuality = 'high';
+
+      if (type === 'radial') {
+        const lightRad = (lightAngleDeg * Math.PI) / 180;
+        const workCx = workW / 2 - Math.cos(lightRad) * (workW * 0.15);
+        const workCy = workH / 2 - Math.sin(lightRad) * (workH * 0.15);
+        const maxCornerDist = Math.hypot(Math.max(workCx, workW - workCx), Math.max(workCy, workH - workCy));
+        const scaleDelta = Math.max(0.002, maxOffset / Math.max(maxCornerDist, 100 * downScale));
+        const redScale = 1 + scaleDelta;
+        const blueScale = Math.max(0.3, 1 - scaleDelta * 0.5);
+
+        effectCtx.drawImage(chromaGreenCanvas, 0, 0);
+        effectCtx.globalCompositeOperation = 'lighter';
+        effectCtx.save();
+        effectCtx.translate(workCx, workCy);
+        effectCtx.scale(blueScale, blueScale);
+        effectCtx.drawImage(chromaBlueCanvas, -workCx, -workCy);
+        effectCtx.restore();
+        effectCtx.save();
+        effectCtx.translate(workCx, workCy);
+        effectCtx.scale(redScale, redScale);
+        effectCtx.drawImage(chromaRedCanvas, -workCx, -workCy);
+        effectCtx.restore();
+      } else {
+        const rad = (angleDeg * Math.PI) / 180;
+        const dx = Math.cos(rad) * maxOffset;
+        const dy = Math.sin(rad) * maxOffset;
+
+        effectCtx.drawImage(chromaGreenCanvas, 0, 0);
+        effectCtx.globalCompositeOperation = 'lighter';
+        effectCtx.drawImage(chromaBlueCanvas, -dx, -dy);
+        effectCtx.drawImage(chromaRedCanvas, dx, dy);
+      }
+
+      effectCtx.globalCompositeOperation = 'source-over';
+      tCtx.save();
+      tCtx.imageSmoothingEnabled = true;
+      tCtx.imageSmoothingQuality = 'high';
+      tCtx.globalCompositeOperation = 'color';
+      // 古いWebKit等で color が受理されない場合も、元画像を消さない軽い色合成へ退避する。
+      if (tCtx.globalCompositeOperation !== 'color') {
+        tCtx.globalCompositeOperation = 'screen';
+        tCtx.globalAlpha = 0.35;
+      }
+      tCtx.drawImage(chromaTempBlurCanvas, 0, 0, w, h);
+      tCtx.restore();
+      return;
+    }
+
     tCtx.setTransform(1, 0, 0, 1, 0, 0);
     tCtx.clearRect(0, 0, w, h);
 
@@ -2732,13 +2788,6 @@
     }
     tCtx.restore();
 
-    // 背景や全体など元が不透明な画像の場合、端のシフト・縮小によるアルファ欠け（隙間）を元画像で完全に下敷き補填
-    if (isOpaque) {
-      tCtx.save();
-      tCtx.globalCompositeOperation = 'destination-over';
-      tCtx.drawImage(chromaSourceCanvas, 0, 0, w, h);
-      tCtx.restore();
-    }
   }
 
   function invalidateBg() {
