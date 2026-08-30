@@ -2588,7 +2588,7 @@
 
     const blurPx = blurAmount > 0 ? Math.min(maxOffset * 0.6 * (blurAmount / 100), 16 * downScale) : 0;
 
-    // 滲み・ぼかしは巨大な本体Canvasではなく、安全な作業Canvas内で処理してGPUパンクを防止
+    // 滲み・ぼかしは赤（外側フリンジ）のみに適用し、シアン（主輪郭・解像度）のシャープさを100%維持
     if (blurPx > 0.3) {
       if (supportsCanvasBlurFilter()) {
         const tempBlur = document.createElement('canvas');
@@ -2600,14 +2600,8 @@
         bCtx.drawImage(chromaRedCanvas, 0, 0);
         redCtx.clearRect(0, 0, workW, workH);
         redCtx.drawImage(tempBlur, 0, 0);
-
-        bCtx.clearRect(0, 0, workW, workH);
-        bCtx.drawImage(chromaCyanCanvas, 0, 0);
-        cyanCtx.clearRect(0, 0, workW, workH);
-        cyanCtx.drawImage(tempBlur, 0, 0);
       } else {
         applyThreePassBoxBlur(chromaRedCanvas, blurPx, true);
-        applyThreePassBoxBlur(chromaCyanCanvas, blurPx, true);
       }
     }
 
