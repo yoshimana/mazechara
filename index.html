@@ -2564,10 +2564,12 @@
     const h = targetCanvas.height;
     if (w < 2 || h < 2) return;
 
-    // iOS Safari の Canvas メモリ制限（384MB）と大画像 GPU ブラーによる WebProcess クラッシュを完全防止
-    // モバイルは安全な1600px、PCは2560pxに最適クランプして高解像度と安全性を両立
+    // iOS Safari のCanvasメモリとCPU負荷を抑える。輪郭抽出はモバイル900px・PC1400px、
+    // キャラの既存フリンジ処理はモバイル1600px・PC2560pxを上限にする。
     const isMobileChroma = window.innerWidth <= 900 || ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-    const MAX_CHROMA_DIM = isMobileChroma ? 1600 : 2560;
+    const MAX_CHROMA_DIM = isOpaque
+      ? (isMobileChroma ? 900 : 1400)
+      : (isMobileChroma ? 1600 : 2560);
     const maxDim = Math.max(w, h);
     const downScale = maxDim > MAX_CHROMA_DIM ? MAX_CHROMA_DIM / maxDim : 1.0;
     const workW = Math.max(2, Math.round(w * downScale));
@@ -2583,31 +2585,81 @@
     srcCtx.drawImage(targetCanvas, 0, 0, workW, workH);
 
     const redCtx = prepareCanvas(chromaRedCanvas, workW, workH);
-    redCtx.drawImage(chromaSourceCanvas, 0, 0);
-    redCtx.globalCompositeOperation = 'multiply';
-    redCtx.fillStyle = '#ff0000';
-    redCtx.fillRect(0, 0, workW, workH);
-    redCtx.globalCompositeOperation = 'destination-in';
-    redCtx.drawImage(chromaSourceCanvas, 0, 0);
-    redCtx.globalCompositeOperation = 'source-over';
-
     const greenCtx = prepareCanvas(chromaGreenCanvas, workW, workH);
-    greenCtx.drawImage(chromaSourceCanvas, 0, 0);
-    greenCtx.globalCompositeOperation = 'multiply';
-    greenCtx.fillStyle = '#00ff00';
-    greenCtx.fillRect(0, 0, workW, workH);
-    greenCtx.globalCompositeOperation = 'destination-in';
-    greenCtx.drawImage(chromaSourceCanvas, 0, 0);
-    greenCtx.globalCompositeOperation = 'source-over';
-
     const blueCtx = prepareCanvas(chromaBlueCanvas, workW, workH);
-    blueCtx.drawImage(chromaSourceCanvas, 0, 0);
-    blueCtx.globalCompositeOperation = 'multiply';
-    blueCtx.fillStyle = '#0000ff';
-    blueCtx.fillRect(0, 0, workW, workH);
-    blueCtx.globalCompositeOperation = 'destination-in';
-    blueCtx.drawImage(chromaSourceCanvas, 0, 0);
-    blueCtx.globalCompositeOperation = 'source-over';
+
+    if (isOpaque) {
+      // 全体・背景はチャンネル再結合を行わず、明暗差のある輪郭だけをRGBの光として使う。
+      // 低解像度の単純な右・下差分なので、Sobelより軽くSafariでも短時間で完了する。
+      const sourcePixels = srcCtx.getImageData(0, 0, workW, workH).data;
+      const edgeImage = greenCtx.createImageData(workW, workH);
+      const edgePixels = edgeImage.data;
+      const rowStride = workW * 4;
+
+      for (let y = 0; y < workH - 1; y++) {
+        const rowStart = y * rowStride;
+        for (let x = 0; x < workW - 1; x++) {
+          const i = rowStart + x * 4;
+          const right = i + 4;
+          const below = i + rowStride;
+          const luminance = (sourcePixels[i] * 77 + sourcePixels[i + 1] * 150 + sourcePixels[i + 2] * 29) >> 8;
+          const rightLuminance = (sourcePixels[right] * 77 + sourcePixels[right + 1] * 150 + sourcePixels[right + 2] * 29) >> 8;
+          const belowLuminance = (sourcePixels[below] * 77 + sourcePixels[below + 1] * 150 + sourcePixels[below + 2] * 29) >> 8;
+          const alphaEdge = Math.abs(sourcePixels[i + 3] - sourcePixels[right + 3])
+            + Math.abs(sourcePixels[i + 3] - sourcePixels[below + 3]);
+          const edge = Math.abs(luminance - rightLuminance) + Math.abs(luminance - belowLuminance) + alphaEdge;
+          // 微細な葉・粒子・JPEGノイズは除外し、形状として読める明暗境界だけを残す。
+          const alpha = Math.min(255, Math.max(0, (edge - 18) * 2.4));
+          edgePixels[i] = 255;
+          edgePixels[i + 1] = 255;
+          edgePixels[i + 2] = 255;
+          edgePixels[i + 3] = alpha;
+        }
+      }
+      greenCtx.putImageData(edgeImage, 0, 0);
+
+      redCtx.drawImage(chromaGreenCanvas, 0, 0);
+      redCtx.globalCompositeOperation = 'source-in';
+      redCtx.fillStyle = '#ff1744';
+      redCtx.fillRect(0, 0, workW, workH);
+      redCtx.globalCompositeOperation = 'source-over';
+
+      blueCtx.drawImage(chromaGreenCanvas, 0, 0);
+      blueCtx.globalCompositeOperation = 'source-in';
+      blueCtx.fillStyle = '#1769ff';
+      blueCtx.fillRect(0, 0, workW, workH);
+      blueCtx.globalCompositeOperation = 'source-over';
+
+      greenCtx.globalCompositeOperation = 'source-in';
+      greenCtx.fillStyle = '#00d96f';
+      greenCtx.fillRect(0, 0, workW, workH);
+      greenCtx.globalCompositeOperation = 'source-over';
+    } else {
+      // キャラ対象は既存のRGBチャンネル分離と外側フリンジ抽出を維持する。
+      redCtx.drawImage(chromaSourceCanvas, 0, 0);
+      redCtx.globalCompositeOperation = 'multiply';
+      redCtx.fillStyle = '#ff0000';
+      redCtx.fillRect(0, 0, workW, workH);
+      redCtx.globalCompositeOperation = 'destination-in';
+      redCtx.drawImage(chromaSourceCanvas, 0, 0);
+      redCtx.globalCompositeOperation = 'source-over';
+
+      greenCtx.drawImage(chromaSourceCanvas, 0, 0);
+      greenCtx.globalCompositeOperation = 'multiply';
+      greenCtx.fillStyle = '#00ff00';
+      greenCtx.fillRect(0, 0, workW, workH);
+      greenCtx.globalCompositeOperation = 'destination-in';
+      greenCtx.drawImage(chromaSourceCanvas, 0, 0);
+      greenCtx.globalCompositeOperation = 'source-over';
+
+      blueCtx.drawImage(chromaSourceCanvas, 0, 0);
+      blueCtx.globalCompositeOperation = 'multiply';
+      blueCtx.fillStyle = '#0000ff';
+      blueCtx.fillRect(0, 0, workW, workH);
+      blueCtx.globalCompositeOperation = 'destination-in';
+      blueCtx.drawImage(chromaSourceCanvas, 0, 0);
+      blueCtx.globalCompositeOperation = 'source-over';
+    }
 
     const blurPx = blurAmount > 0 ? Math.min(maxOffset * 0.6 * (blurAmount / 100), 16 * downScale) : 0;
 
@@ -2642,6 +2694,53 @@
     }
 
     const tCtx = targetCanvas.getContext('2d');
+
+    if (isOpaque) {
+      // 純色の輪郭を通常合成する。加算しないため、RGB同士から黄・紫・シアンを生成しない。
+      const targetMaxOffset = maxOffset / downScale;
+      tCtx.save();
+      tCtx.imageSmoothingEnabled = true;
+      tCtx.imageSmoothingQuality = 'high';
+      tCtx.globalCompositeOperation = 'source-over';
+
+      if (type === 'radial') {
+        const lightRad = (lightAngleDeg * Math.PI) / 180;
+        const cx = w / 2 - Math.cos(lightRad) * (w * 0.15);
+        const cy = h / 2 - Math.sin(lightRad) * (h * 0.15);
+        const maxCornerDist = Math.hypot(Math.max(cx, w - cx), Math.max(cy, h - cy));
+        const scaleDelta = Math.max(0.002, targetMaxOffset / Math.max(maxCornerDist, 100));
+
+        tCtx.globalAlpha = 0.78;
+        tCtx.save();
+        tCtx.translate(cx, cy);
+        tCtx.scale(1 + scaleDelta, 1 + scaleDelta);
+        tCtx.drawImage(chromaRedCanvas, -cx, -cy, w, h);
+        tCtx.restore();
+
+        tCtx.globalAlpha = 0.78;
+        tCtx.save();
+        tCtx.translate(cx, cy);
+        tCtx.scale(Math.max(0.3, 1 - scaleDelta), Math.max(0.3, 1 - scaleDelta));
+        tCtx.drawImage(chromaBlueCanvas, -cx, -cy, w, h);
+        tCtx.restore();
+
+        tCtx.globalAlpha = 0.58;
+        tCtx.drawImage(chromaGreenCanvas, 0, 0, w, h);
+      } else {
+        const rad = (angleDeg * Math.PI) / 180;
+        const dx = Math.cos(rad) * targetMaxOffset;
+        const dy = Math.sin(rad) * targetMaxOffset;
+
+        tCtx.globalAlpha = 0.78;
+        tCtx.drawImage(chromaRedCanvas, dx, dy, w, h);
+        tCtx.globalAlpha = 0.78;
+        tCtx.drawImage(chromaBlueCanvas, -dx, -dy, w, h);
+        tCtx.globalAlpha = 0.58;
+        tCtx.drawImage(chromaGreenCanvas, 0, 0, w, h);
+      }
+      tCtx.restore();
+      return;
+    }
 
     tCtx.setTransform(1, 0, 0, 1, 0, 0);
     tCtx.clearRect(0, 0, w, h);
