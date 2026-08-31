@@ -5686,7 +5686,8 @@
     }
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    const isGrainOn = !isComparingBefore && document.getElementById('grainToggle').checked;
+    // 低解像度操作プレビュー中は、粒子まで拡大されて粗く見えるためグレインを一時休止する。
+    const isGrainOn = !isComparingBefore && !interactionPreviewOriginalSize && document.getElementById('grainToggle').checked;
     const grainOpacity = parseFloat(document.getElementById('grainOpacity').value) / 100;
     const grainScale = parseFloat(document.getElementById('grainScale').value) / 10;
 
