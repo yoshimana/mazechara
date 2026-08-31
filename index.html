@@ -227,8 +227,8 @@
   .preview-container.chara-locked canvas { cursor: default; }
   .mobile-chara-scale-control.locked { opacity: 0.45; pointer-events: none; }
   .zoom-reset-btn svg {
-    width: 12px;
-    height: 12px;
+    width: 14px;
+    height: 14px;
   }
 
   /* プレビュー下部バー (ズームコントロール) */
@@ -1927,14 +1927,15 @@
     <button class="preview-quick-match-btn" id="previewQuickMatchBtn" type="button">マッチ</button>
     <div class="zoom-control-wrap" title="プレビュー表示ズーム">
       <svg class="zoom-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/><path d="M11 8v6"/><path d="M8 11h6"/></svg>
-      <input type="range" id="viewZoom" min="50" max="500" value="100" aria-label="プレビュー表示ズーム">
+      <input type="range" id="viewZoom" min="100" max="500" value="100" aria-label="プレビュー表示ズーム">
       <span id="viewZoomVal">100%</span>
-      <button class="zoom-reset-btn" id="zoomResetBtn" title="ズーム・位置リセット (100%)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+      <button class="zoom-reset-btn" id="zoomResetBtn" title="画像全体表示">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/><rect width="10" height="10" x="7" y="7" rx="1.5"/></svg>
+        <span class="sr-only">画像全体表示</span>
       </button>
-      <button class="zoom-reset-btn zoom-fit-btn" id="zoomFitBtn" title="キャラクターを中心に幅いっぱいで表示">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/><path d="M7 12h10"/></svg>
-        <span class="sr-only">オートフィット</span>
+      <button class="zoom-reset-btn zoom-fit-btn" id="zoomFitBtn" title="キャラクターを中心に表示">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="3"/><path d="M7 20a5 5 0 0 1 10 0"/><path d="M5 8V5h3"/><path d="M16 5h3v3"/><path d="M5 16v3h3"/><path d="M19 16v3h-3"/></svg>
+        <span class="sr-only">キャラクターを中心に表示</span>
       </button>
     </div>
     <button class="zoom-reset-btn chara-lock-btn" id="charaLockBtn" type="button" aria-pressed="false" title="キャラクターの移動とサイズ変更をロック">
@@ -4999,7 +5000,7 @@
   }
 
   function updateViewZoom(val) {
-    currentViewZoom = Math.max(50, Math.min(500, parseInt(val, 10)));
+    currentViewZoom = Math.max(100, Math.min(500, parseInt(val, 10)));
     viewZoomInput.value = currentViewZoom;
     viewZoomVal.textContent = currentViewZoom + '%';
     updateCanvasTransform();
@@ -5013,31 +5014,31 @@
     const previewRect = previewContainer.getBoundingClientRect();
     const wrapperRect = canvasWrapper.getBoundingClientRect();
     const currentScale = currentViewZoom / 100;
-    const baseWrapperWidth = wrapperRect.width / currentScale;
-    const previewStyle = getComputedStyle(previewContainer);
-    const horizontalPadding = parseFloat(previewStyle.paddingLeft) + parseFloat(previewStyle.paddingRight);
-    const targetWidth = Math.max(1, previewRect.width - horizontalPadding);
-    const fittedZoom = Math.max(50, Math.min(500, Math.round((targetWidth / baseWrapperWidth) * 100)));
 
-    // 現在の変形前のラッパー中心を求め、横は背景中央・縦はキャラクター中央へパンする。
+    // 現在の変形前のラッパー中心を算出
     const baseCenterX = (wrapperRect.left + wrapperRect.right) / 2 - panOffsetX;
     const baseCenterY = (wrapperRect.top + wrapperRect.bottom) / 2 - panOffsetY;
+
+    // キャラクターの中心位置（キャンバス座標）を算出
     let focusX = canvas.width / 2;
     let focusY = canvas.height / 2;
     if (charaImg) {
       const charaScale = parseFloat(charaScaleInput.value) / 100;
       const charaHeight = canvas.height * 0.75 * charaScale;
-      // 横方向は背景の中央を維持し、縦方向だけキャラクター中央へ合わせる。
+      focusX = canvas.width * (parseFloat(charaXInput.value) / 100);
       focusY = canvas.height * (parseFloat(charaYInput.value) / 100) - charaHeight / 2;
     }
 
+    // キャンバス内での中心からのズレ（表示スケールおよび現在のズーム率を反映）
     const displayScaleX = canvas.clientWidth / canvas.width;
     const displayScaleY = canvas.clientHeight / canvas.height;
-    const focusOffsetX = (focusX - canvas.width / 2) * displayScaleX * (fittedZoom / 100);
-    const focusOffsetY = (focusY - canvas.height / 2) * displayScaleY * (fittedZoom / 100);
+    const focusOffsetX = (focusX - canvas.width / 2) * displayScaleX * currentScale;
+    const focusOffsetY = (focusY - canvas.height / 2) * displayScaleY * currentScale;
+
+    // ズーム率は維持したまま、キャラクター中心がプレビュー画面中央になるようにパン位置を更新
     panOffsetX = previewRect.left + previewRect.width / 2 - baseCenterX - focusOffsetX;
     panOffsetY = previewRect.top + previewRect.height / 2 - baseCenterY - focusOffsetY;
-    updateViewZoom(fittedZoom);
+    updateCanvasTransform();
   }
 
   zoomFitBtn.addEventListener('click', autoFitPreview);
@@ -5062,11 +5063,49 @@
     updateCharaLockUI();
   });
 
-  zoomResetBtn.addEventListener('click', () => {
-    panOffsetX = 0;
-    panOffsetY = 0;
-    updateViewZoom(100);
-  });
+  function resetZoomToFit() {
+    const previewRect = previewContainer.getBoundingClientRect();
+    const topbar = previewContainer.querySelector('.preview-topbar');
+    const bottombar = previewContainer.querySelector('.preview-bottombar');
+
+    // 上部ツールバーと下部ズームバーの実際の画面位置を取得
+    const topbarRect = topbar ? topbar.getBoundingClientRect() : null;
+    const bottombarRect = bottombar ? bottombar.getBoundingClientRect() : null;
+
+    // バーや画面端と重ならず、キャンバスが1ピクセルも見切れない安全表示領域（Safe Area）を算出
+    const safeTop = topbarRect ? topbarRect.bottom + 8 : previewRect.top + 50;
+    const safeBottom = bottombarRect ? bottombarRect.top - 8 : previewRect.bottom - 50;
+    const safeLeft = previewRect.left + 12;
+    const safeRight = previewRect.right - 12;
+
+    const safeW = Math.max(80, safeRight - safeLeft);
+    const safeH = Math.max(80, safeBottom - safeTop);
+
+    // 安全領域の中心点（画面ピクセル座標）
+    const targetCenterX = (safeLeft + safeRight) / 2;
+    const targetCenterY = (safeTop + safeBottom) / 2;
+
+    // 変形前のラッパーの寸法（offsetWidth/offsetHeight は CSS transform の影響を受けない正確な寸法）
+    const baseW = canvasWrapper.offsetWidth || canvas.offsetWidth || 300;
+    const baseH = canvasWrapper.offsetHeight || canvas.offsetHeight || 300;
+
+    // キャンバスが安全領域に完全に収まる（見切れない）最大倍率（確実に収まるようfloorで丸め）
+    const fitScale = Math.min(safeW / baseW, safeH / baseH);
+    const fittedZoom = Math.max(100, Math.min(500, Math.floor(fitScale * 100)));
+
+    // 現在の変形前のラッパー中心を算出
+    const wrapperRect = canvasWrapper.getBoundingClientRect();
+    const baseCenterX = (wrapperRect.left + wrapperRect.right) / 2 - panOffsetX;
+    const baseCenterY = (wrapperRect.top + wrapperRect.bottom) / 2 - panOffsetY;
+
+    // 安全領域の中心へキャンバスをぴったりセンタリング
+    panOffsetX = Math.round(targetCenterX - baseCenterX);
+    panOffsetY = Math.round(targetCenterY - baseCenterY);
+
+    updateViewZoom(fittedZoom);
+  }
+
+  zoomResetBtn.addEventListener('click', resetZoomToFit);
 
   // 初回2本指操作ガイド通知
   let guideToastTimeout = null;
@@ -5787,7 +5826,7 @@
 
       // 2本指ピンチでのズーム
       const ratio = currentDist / initTouchDist;
-      currentViewZoom = Math.max(50, Math.min(500, Math.round(initZoomLevel * ratio)));
+      currentViewZoom = Math.max(100, Math.min(500, Math.round(initZoomLevel * ratio)));
       viewZoomInput.value = currentViewZoom;
       viewZoomVal.textContent = currentViewZoom + '%';
 
