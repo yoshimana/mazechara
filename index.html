@@ -2456,6 +2456,30 @@
   let isBgBlurSliderInteracting = false;
   let isBgBlurSliderPointerActive = false;
   let bgBlurSliderIdleTimer = null;
+  let interactionPreviewOriginalSize = null;
+
+  function beginLowResolutionInteractionPreview() {
+    if (interactionPreviewOriginalSize || canvas.width < 2 || canvas.height < 2) return;
+    const maxDimension = window.innerWidth <= 900 || navigator.maxTouchPoints > 0 ? 640 : 960;
+    const scale = Math.min(1, maxDimension / Math.max(canvas.width, canvas.height));
+    if (scale >= 1) return;
+
+    interactionPreviewOriginalSize = { width: canvas.width, height: canvas.height };
+    canvas.width = Math.max(2, Math.round(canvas.width * scale));
+    canvas.height = Math.max(2, Math.round(canvas.height * scale));
+    cachedBgDisplayKey = '';
+    invalidateAll();
+  }
+
+  function finishLowResolutionInteractionPreview() {
+    if (!interactionPreviewOriginalSize || isGradingSliderInteracting || isBgBlurSliderInteracting) return;
+    const { width, height } = interactionPreviewOriginalSize;
+    interactionPreviewOriginalSize = null;
+    canvas.width = width;
+    canvas.height = height;
+    cachedBgDisplayKey = '';
+    invalidateAll();
+  }
 
   const dofCanvas = document.createElement('canvas');
   const cachedBgDisplayCanvas = document.createElement('canvas');
@@ -4371,11 +4395,13 @@
     bgBlurSliderIdleTimer = null;
     isBgBlurDirty = true;
     cachedBgDisplayKey = '';
+    finishLowResolutionInteractionPreview();
     requestRender();
   }
 
   function beginBgBlurSliderInteraction() {
     isBgBlurSliderInteracting = true;
+    beginLowResolutionInteractionPreview();
     clearTimeout(bgBlurSliderIdleTimer);
     bgBlurSliderIdleTimer = null;
     if (!isBgBlurSliderPointerActive) {
@@ -4396,12 +4422,14 @@
       isCharaBaseDirty = true;
     }
     cachedBgDisplayKey = '';
+    finishLowResolutionInteractionPreview();
     requestRender();
   }
 
   function beginGradingSliderInteraction(target) {
     isGradingSliderInteracting = true;
     gradingInteractionTarget = target;
+    beginLowResolutionInteractionPreview();
     clearTimeout(gradingSliderIdleTimer);
     gradingSliderIdleTimer = null;
     if (!isGradingSliderPointerActive) {
