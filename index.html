@@ -2451,6 +2451,11 @@
 
   let bgBlurredCanvas = document.createElement('canvas');
   let isBgBlurDirty = true;
+  const bgBlurPreviewSourceCanvas = document.createElement('canvas');
+  const bgBlurPreviewCanvas = document.createElement('canvas');
+  let isBgBlurSliderInteracting = false;
+  let isBgBlurSliderPointerActive = false;
+  let bgBlurSliderIdleTimer = null;
 
   const dofCanvas = document.createElement('canvas');
   const cachedBgDisplayCanvas = document.createElement('canvas');
@@ -3546,6 +3551,31 @@
     const maxDim = Math.max(canvas.width, canvas.height);
     const blurPx = Math.max(0, (maxDim * (bgBlurPercent / 100)));
     const procBg = getProcessedBgCanvas();
+
+    if (isBgBlurSliderInteracting) {
+      const previewLimit = window.innerWidth <= 900 || navigator.maxTouchPoints > 0 ? 640 : 960;
+      const previewScale = Math.min(1, previewLimit / maxDim);
+      const previewW = Math.max(2, Math.round(canvas.width * previewScale));
+      const previewH = Math.max(2, Math.round(canvas.height * previewScale));
+      const previewSrcCtx = prepareCanvas(bgBlurPreviewSourceCanvas, previewW, previewH);
+      previewSrcCtx.imageSmoothingEnabled = true;
+      previewSrcCtx.imageSmoothingQuality = 'medium';
+      previewSrcCtx.drawImage(procBg || bgImg, 0, 0, previewW, previewH);
+      bgBlurredCanvas = createFastBlurredCanvas(
+        bgBlurPreviewSourceCanvas,
+        previewW,
+        previewH,
+        blurPx * previewScale,
+        bgBlurPreviewCanvas,
+        null,
+        true,
+        false,
+        previewLimit
+      );
+      isBgBlurDirty = false;
+      return;
+    }
+
     const fallbackLimit = getSafariBlurWorkingLimit(1280, 768);
     bgBlurredCanvas = createFastBlurredCanvas(procBg || bgImg, canvas.width, canvas.height, blurPx, null, null, true, false, fallbackLimit);
     isBgBlurDirty = false;
@@ -4332,6 +4362,26 @@
   syncMobileCharaScale();
 
   const gradingSliderIds = new Set(['bright', 'contrast', 'saturation', 'temp', 'bgBright', 'bgContrast', 'bgSaturation', 'bgTemp']);
+  const bgBlurSliderIds = new Set(['bgBlur', 'dofBoundary', 'dofFade']);
+
+  function finishBgBlurSliderInteraction() {
+    if (!isBgBlurSliderInteracting) return;
+    isBgBlurSliderInteracting = false;
+    clearTimeout(bgBlurSliderIdleTimer);
+    bgBlurSliderIdleTimer = null;
+    isBgBlurDirty = true;
+    cachedBgDisplayKey = '';
+    requestRender();
+  }
+
+  function beginBgBlurSliderInteraction() {
+    isBgBlurSliderInteracting = true;
+    clearTimeout(bgBlurSliderIdleTimer);
+    bgBlurSliderIdleTimer = null;
+    if (!isBgBlurSliderPointerActive) {
+      bgBlurSliderIdleTimer = setTimeout(finishBgBlurSliderInteraction, 350);
+    }
+  }
 
   function finishGradingSliderInteraction() {
     if (!isGradingSliderInteracting) return;
@@ -4446,8 +4496,14 @@
 
       const isGradingParam = gradingSliderIds.has(p.id);
       if (isGradingParam) beginGradingSliderInteraction(p.id.startsWith('bg') ? 'bg' : 'chara');
+      const isBgBlurParam = bgBlurSliderIds.has(p.id);
+      if (isBgBlurParam) beginBgBlurSliderInteraction();
 
-      if (p.id.startsWith('bg') || p.id === 'bgBlur') {
+      if (p.id === 'bgBlur') {
+        // ぼかし量の変更では背景色調キャッシュを維持し、ぼかしだけを更新する。
+        isBgBlurDirty = true;
+        updateBgBlurCache();
+      } else if (p.id.startsWith('bg')) {
         invalidateBg();
         // 背景色調の操作中は高解像度の背景ボケ再生成を指を離すまで遅延する。
         if (!isGradingParam) updateBgBlurCache();
@@ -4487,6 +4543,29 @@
     if (!isGradingSliderPointerActive) return;
     isGradingSliderPointerActive = false;
     finishGradingSliderInteraction();
+  });
+
+  bgBlurSliderIds.forEach((id) => {
+    const input = document.getElementById(id);
+    if (!input) return;
+    input.addEventListener('pointerdown', () => {
+      isBgBlurSliderPointerActive = true;
+      beginBgBlurSliderInteraction();
+    });
+    const finishPointer = () => {
+      if (!isBgBlurSliderPointerActive) return;
+      isBgBlurSliderPointerActive = false;
+      finishBgBlurSliderInteraction();
+    };
+    input.addEventListener('pointerup', finishPointer);
+    input.addEventListener('pointercancel', finishPointer);
+    input.addEventListener('change', finishPointer);
+  });
+
+  window.addEventListener('pointerup', () => {
+    if (!isBgBlurSliderPointerActive) return;
+    isBgBlurSliderPointerActive = false;
+    finishBgBlurSliderInteraction();
   });
 
   mobileCharaScaleInput.addEventListener('input', () => {
@@ -5311,6 +5390,10 @@
     isSpacePressed = false;
     isCharaScalePointerActive = false;
     finishCharaScaleInteraction();
+    isGradingSliderPointerActive = false;
+    finishGradingSliderInteraction();
+    isBgBlurSliderPointerActive = false;
+    finishBgBlurSliderInteraction();
   });
 
   canvas.addEventListener('mousedown', (e) => {
@@ -5584,6 +5667,7 @@
         bgBlur,
         dofBoundary,
         dofFade,
+        isBgBlurSliderInteracting ? 1 : 0,
         isGradingSliderInteracting && gradingInteractionTarget === 'bg' ? 1 : 0,
         isGrainOn && grainTarget === 'bg' ? 1 : 0,
         isGrainOn && grainTarget === 'bg' ? grainOpacity : 0,
