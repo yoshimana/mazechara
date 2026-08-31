@@ -5345,6 +5345,7 @@
     charaScaleInput.value = newScale.toFixed(0);
     document.getElementById('charaScaleVal').textContent = charaScaleInput.value + '%';
     syncMobileCharaScale();
+    invalidateChara();
     requestRender();
   }
 
@@ -6016,7 +6017,7 @@
       const blurPad = Math.ceil(contactBlur * 3.0 + 16);
 
       const canReuseContactDuringScale = isCharaScaling && cachedContactShadowCanvas.width > 0 && cachedContactCharaW > 0;
-      if (!canReuseContactDuringScale && (isContactShadowDirty || cachedContactShadowCanvas.width === 0)) {
+      if (!canReuseContactDuringScale && (isContactShadowDirty || cachedContactCharaW !== charaW || cachedContactShadowCanvas.width === 0)) {
         const shadowW = Math.round(radiusX * 2 + blurPad * 2);
         const shadowH = Math.round(radiusY * 2 + blurPad * 2);
         const csCtx = prepareCanvas(contactShadowBaseCanvas, shadowW, shadowH);
