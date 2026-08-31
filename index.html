@@ -1229,6 +1229,39 @@
     border-color: var(--accent);
     color: var(--accent);
   }
+  .crop-orientation-btn {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 30;
+    display: none;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    font-size: 0.8rem;
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.14);
+    border: 1.5px solid var(--border);
+  }
+  .crop-orientation-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: #ffffff;
+    box-shadow: 0 6px 18px rgba(199, 53, 87, 0.2);
+    transform: translateY(-1px);
+  }
+  .crop-orientation-btn:active {
+    transform: translateY(0);
+  }
+  .crop-orientation-btn.disabled,
+  .crop-orientation-btn[disabled] {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+    box-shadow: none;
+  }
   .cleanup-btn.active {
     border-color: #3b82f6;
     background: #eaf3ff;
@@ -1745,6 +1778,13 @@
     .crop-body {
       padding: 10px;
     }
+    .crop-orientation-btn {
+      top: 10px;
+      right: 10px;
+      padding: 6px 11px;
+      font-size: 0.75rem;
+      gap: 4px;
+    }
     #cropCanvas {
       max-width: 92vw;
       max-height: 52vh;
@@ -1798,7 +1838,6 @@
         <button class="aspect-btn" data-aspect="4:3">4:3</button>
         <button class="aspect-btn" data-aspect="3:2">3:2</button>
       </div>
-      <button class="orientation-btn" id="toggleOrientationBtn">縦 / 横</button>
       <label class="cleanup-control" id="cleanupControl">
         <span>除去サイズ</span>
         <input type="range" id="cleanupThreshold" min="0" max="100" value="20" step="1">
@@ -1808,6 +1847,10 @@
     </div>
   </div>
   <div class="crop-body" id="cropBody">
+    <button class="orientation-btn crop-orientation-btn" id="toggleOrientationBtn" type="button" title="縦横の向きを切り替え">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+      <span>縦 / 横</span>
+    </button>
     <div class="crop-canvas-container">
       <canvas id="cropCanvas"></canvas>
     </div>
@@ -3891,9 +3934,10 @@
     updateCropTitle();
     if (type === 'bg') {
       cropAspectContainer.style.display = 'flex';
-      toggleOrientationBtn.style.display = 'block';
+      toggleOrientationBtn.style.display = 'inline-flex';
       cleanupBtn.style.display = 'none';
       cleanupControl.classList.remove('active');
+      updateOrientationBtnState();
     } else {
       cropAspectContainer.style.display = 'none';
       toggleOrientationBtn.style.display = 'none';
@@ -3951,11 +3995,18 @@
     };
   }
 
+  function updateOrientationBtnState() {
+    const isFixedNonSquare = currentAspectRatio !== 'free' && currentAspectRatio !== '1:1';
+    toggleOrientationBtn.disabled = !isFixedNonSquare;
+    toggleOrientationBtn.classList.toggle('disabled', !isFixedNonSquare);
+  }
+
   document.querySelectorAll('.aspect-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.aspect-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       currentAspectRatio = btn.getAttribute('data-aspect');
+      updateOrientationBtnState();
       initCropRect();
       renderCropCanvas();
     });
