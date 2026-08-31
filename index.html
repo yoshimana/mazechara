@@ -4806,12 +4806,16 @@
 
     if (pipetteTarget === 'shadow') {
       document.getElementById('shadowColor').value = hexColor;
+      invalidateChara();
+      invalidateShadows();
     } else if (pipetteTarget === 'light') {
       document.getElementById('lightColor').value = hexColor;
+      invalidateChara();
     } else if (pipetteTarget === 'spot') {
       document.getElementById('spotColor').value = hexColor;
     } else if (pipetteTarget === 'rim') {
       document.getElementById('rimColor').value = hexColor;
+      invalidateChara();
     }
 
     setPipetteMode('none');
