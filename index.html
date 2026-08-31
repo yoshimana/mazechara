@@ -6010,8 +6010,8 @@
 
     if (isContactOn && contactOpacity > 0 && contactSizeScale > 0) {
       const radiusX = (charaW * 0.4) * contactSizeScale;
-      // 接地影の高さを半分（0.08 -> 0.04）へ引き締め、より自然で平坦な足元の接地感を再現
-      const radiusY = Math.max(1, (charaW * 0.04) * contactSizeScale);
+      // 接地影のサイズパラメータは幅（radiusX）のみを変更し、高さ（radiusY）は平坦な厚みを維持
+      const radiusY = Math.max(1, charaW * 0.04);
       // ぼかしを強めた際に上部（および周囲）がキャンバス端で直線状に見切れる現象を防ぐため、
       // ぼかし減衰が完全にゼロになる十分なパディング（contactBlur * 3.0 + 16）を確保
       const blurPad = Math.ceil(contactBlur * 3.0 + 16);
