@@ -4143,13 +4143,21 @@
     let { x, y, w, h } = cropStartRect;
 
     if (cropDragMode === 'move') {
+      // 移動モード: 枠サイズは変更せず、キャンバス内に完全に収まるよう位置のみをクランプ
       x = Math.max(0, Math.min(cropCanvas.width - w, x + dx));
       y = Math.max(0, Math.min(cropCanvas.height - h, y + dy));
-    } else {
-      const targetAspect = getTargetAspect();
+      cropRect = { x, y, w, h };
+      renderCropCanvas();
+      return;
+    }
+
+    const isFree = currentAspectRatio === 'free';
+    const targetAspect = getTargetAspect();
+
+    if (isFree) {
       if (cropDragMode === 'br') {
         w = Math.max(30, Math.min(cropCanvas.width - x, w + dx));
-        h = currentAspectRatio === 'free' ? Math.max(30, Math.min(cropCanvas.height - y, h + dy)) : w / targetAspect;
+        h = Math.max(30, Math.min(cropCanvas.height - y, h + dy));
       } else if (cropDragMode === 'tl') {
         const newX = Math.min(x + w - 30, Math.max(0, x + dx));
         const newY = Math.min(y + h - 30, Math.max(0, y + dy));
@@ -4157,44 +4165,92 @@
         h += (y - newY);
         x = newX;
         y = newY;
-        if (currentAspectRatio !== 'free') h = w / targetAspect;
       } else if (cropDragMode === 'tr') {
         w = Math.max(30, Math.min(cropCanvas.width - x, w + dx));
         const newY = Math.min(y + h - 30, Math.max(0, y + dy));
         h += (y - newY);
         y = newY;
-        if (currentAspectRatio !== 'free') h = w / targetAspect;
       } else if (cropDragMode === 'bl') {
         const newX = Math.min(x + w - 30, Math.max(0, x + dx));
         w += (x - newX);
         x = newX;
         h = Math.max(30, Math.min(cropCanvas.height - y, h + dy));
-        if (currentAspectRatio !== 'free') h = w / targetAspect;
       } else if (cropDragMode === 'r') {
-        // 右辺ドラッグ
         w = Math.max(30, Math.min(cropCanvas.width - x, w + dx));
-        if (currentAspectRatio !== 'free') h = w / targetAspect;
       } else if (cropDragMode === 'l') {
-        // 左辺ドラッグ
         const newX = Math.min(x + w - 30, Math.max(0, x + dx));
         w += (x - newX);
         x = newX;
-        if (currentAspectRatio !== 'free') h = w / targetAspect;
       } else if (cropDragMode === 'b') {
-        // 下辺ドラッグ
         h = Math.max(30, Math.min(cropCanvas.height - y, h + dy));
-        if (currentAspectRatio !== 'free') w = h * targetAspect;
       } else if (cropDragMode === 't') {
-        // 上辺ドラッグ
         const newY = Math.min(y + h - 30, Math.max(0, y + dy));
         h += (y - newY);
         y = newY;
-        if (currentAspectRatio !== 'free') w = h * targetAspect;
+      }
+      if (x + w > cropCanvas.width) w = cropCanvas.width - x;
+      if (y + h > cropCanvas.height) h = cropCanvas.height - y;
+    } else {
+      // 固定アスペクト比モード: 枠のどの辺・どの角が画像端に接触しても縦横比（w = h * targetAspect）を完全保持
+      const minW = Math.max(30, 30 * targetAspect);
+      const minH = minW / targetAspect;
+
+      if (cropDragMode === 'br' || cropDragMode === 'r' || cropDragMode === 'b') {
+        // 右下・右辺・下辺（アンカー: 左上 [x, y]）
+        const maxW = cropCanvas.width - x;
+        const maxH = cropCanvas.height - y;
+        const maxAllowedW = Math.min(maxW, maxH * targetAspect);
+
+        let desiredW = w;
+        if (cropDragMode === 'b') {
+          desiredW = (h + dy) * targetAspect;
+        } else if (cropDragMode === 'br' && Math.abs(dy / targetAspect) > Math.abs(dx)) {
+          desiredW = (h + dy) * targetAspect;
+        } else {
+          desiredW = w + dx;
+        }
+        w = Math.max(minW, Math.min(maxAllowedW, desiredW));
+        h = w / targetAspect;
+      } else if (cropDragMode === 'tl') {
+        // 左上（アンカー: 右下 [x + w, y + h]）
+        const right = x + w;
+        const bottom = y + h;
+        const maxAllowedW = Math.min(right, bottom * targetAspect);
+        const desiredW = Math.max(minW, Math.min(maxAllowedW, Math.abs(dy / targetAspect) > Math.abs(dx) ? (h - dy) * targetAspect : w - dx));
+        w = desiredW;
+        h = w / targetAspect;
+        x = right - w;
+        y = bottom - h;
+      } else if (cropDragMode === 'tr' || cropDragMode === 't') {
+        // 右上・上辺（アンカー: 左下 [x, y + h]）
+        const bottom = y + h;
+        const maxW = cropCanvas.width - x;
+        const maxAllowedW = Math.min(maxW, bottom * targetAspect);
+        let desiredW = w;
+        if (cropDragMode === 't' || (cropDragMode === 'tr' && Math.abs(dy / targetAspect) > Math.abs(dx))) {
+          desiredW = (h - dy) * targetAspect;
+        } else {
+          desiredW = w + dx;
+        }
+        w = Math.max(minW, Math.min(maxAllowedW, desiredW));
+        h = w / targetAspect;
+        y = bottom - h;
+      } else if (cropDragMode === 'bl' || cropDragMode === 'l') {
+        // 左下・左辺（アンカー: 右上 [x + w, y]）
+        const right = x + w;
+        const maxH = cropCanvas.height - y;
+        const maxAllowedW = Math.min(right, maxH * targetAspect);
+        let desiredW = w;
+        if (cropDragMode === 'bl' && Math.abs(dy / targetAspect) > Math.abs(dx)) {
+          desiredW = (h + dy) * targetAspect;
+        } else {
+          desiredW = w - dx;
+        }
+        w = Math.max(minW, Math.min(maxAllowedW, desiredW));
+        h = w / targetAspect;
+        x = right - w;
       }
     }
-
-    if (x + w > cropCanvas.width) w = cropCanvas.width - x;
-    if (y + h > cropCanvas.height) h = cropCanvas.height - y;
 
     cropRect = { x, y, w, h };
     renderCropCanvas();
