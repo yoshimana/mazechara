@@ -2552,6 +2552,15 @@
     isContactShadowDirty = true;
   }
 
+  function invalidateCastShadow() {
+    isCastShadowDirty = true;
+    cachedPerspectiveShadowKey = '';
+  }
+
+  function invalidateContactShadow() {
+    isContactShadowDirty = true;
+  }
+
   function invalidateAll() {
     invalidateBg();
     invalidateChara();
