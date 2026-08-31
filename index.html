@@ -4418,26 +4418,32 @@
 
   const gradingSliderIds = new Set(['bright', 'contrast', 'saturation', 'temp', 'bgBright', 'bgContrast', 'bgSaturation', 'bgTemp']);
   const bgBlurSliderIds = new Set(['bgBlur', 'dofBoundary', 'dofFade']);
+  const wrapSliderIds = new Set(['wrapRadius', 'wrapThreshold']);
   const lightingSliderIds = new Set([
     'multiplyOpacity', 'overlayOpacity', 'lightAngle',
-    'rimOpacity', 'rimWidth', 'rimBlur'
+    'rimOpacity', 'rimWidth', 'rimBlur',
+    ...wrapSliderIds
   ]);
   let isLightingSliderInteracting = false;
   let isLightingSliderPointerActive = false;
+  let isWrapSliderInteracting = false;
   let lightingSliderIdleTimer = null;
 
   function finishLightingSliderInteraction() {
     if (!isLightingSliderInteracting) return;
     isLightingSliderInteracting = false;
+    isWrapSliderInteracting = false;
     clearTimeout(lightingSliderIdleTimer);
     lightingSliderIdleTimer = null;
     isCharaBaseDirty = true;
+    cachedWrapKey = '';
     finishLowResolutionInteractionPreview();
     requestRender();
   }
 
-  function beginLightingSliderInteraction() {
+  function beginLightingSliderInteraction(id) {
     isLightingSliderInteracting = true;
+    if (wrapSliderIds.has(id)) isWrapSliderInteracting = true;
     beginLowResolutionInteractionPreview();
     clearTimeout(lightingSliderIdleTimer);
     lightingSliderIdleTimer = null;
@@ -4585,7 +4591,7 @@
       const isBgBlurParam = bgBlurSliderIds.has(p.id);
       if (isBgBlurParam) beginBgBlurSliderInteraction();
       const isLightingParam = lightingSliderIds.has(p.id);
-      if (isLightingParam) beginLightingSliderInteraction();
+      if (isLightingParam) beginLightingSliderInteraction(p.id);
 
       if (p.id === 'bgBlur') {
         // ぼかし量の変更では背景色調キャッシュを維持し、ぼかしだけを更新する。
@@ -4661,7 +4667,7 @@
     if (!input) return;
     input.addEventListener('pointerdown', () => {
       isLightingSliderPointerActive = true;
-      beginLightingSliderInteraction();
+      beginLightingSliderInteraction(id);
     });
     const finishPointer = () => {
       if (!isLightingSliderPointerActive) return;
@@ -6290,7 +6296,9 @@
       const wrapW = Math.round(cW + wrapPad * 2);
       const wrapH = Math.round(cH + wrapPad * 2);
       // 背景色の抽出・ぼかしだけ半解像度で処理し、輪郭マスクは原寸を維持する。
-      const wrapSampleScale = 0.5;
+      // 操作中は画素数を通常の1/4まで落とし、Safariで重い明度走査とぼかしを軽量化する。
+      // 指を離した後は0.5へ戻し、高品位な結果を一度だけ再生成する。
+      const wrapSampleScale = isWrapSliderInteracting ? 0.25 : 0.5;
       const wrapSampleW = Math.max(1, Math.round(wrapW * wrapSampleScale));
       const wrapSampleH = Math.max(1, Math.round(wrapH * wrapSampleScale));
 
@@ -6306,6 +6314,7 @@
         isCharaFlipped ? 1 : 0,
         wrapRadiusStrength,
         wrapThreshold,
+        wrapSampleScale,
         document.getElementById('gradingToggle').checked ? 1 : 0,
         document.getElementById('bgBright').value,
         document.getElementById('bgContrast').value,
