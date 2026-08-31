@@ -2457,6 +2457,7 @@
   let isBgBlurSliderPointerActive = false;
   let bgBlurSliderIdleTimer = null;
   let interactionPreviewOriginalSize = null;
+  const interactionPreviewSnapshotCanvas = document.createElement('canvas');
 
   function beginLowResolutionInteractionPreview() {
     if (interactionPreviewOriginalSize || canvas.width < 2 || canvas.height < 2) return;
@@ -2464,9 +2465,19 @@
     const scale = Math.min(1, maxDimension / Math.max(canvas.width, canvas.height));
     if (scale >= 1) return;
 
+    const previewWidth = Math.max(2, Math.round(canvas.width * scale));
+    const previewHeight = Math.max(2, Math.round(canvas.height * scale));
+    const snapshotCtx = prepareCanvas(interactionPreviewSnapshotCanvas, previewWidth, previewHeight);
+    snapshotCtx.imageSmoothingEnabled = true;
+    snapshotCtx.imageSmoothingQuality = 'medium';
+    snapshotCtx.drawImage(canvas, 0, 0, previewWidth, previewHeight);
+
     interactionPreviewOriginalSize = { width: canvas.width, height: canvas.height };
-    canvas.width = Math.max(2, Math.round(canvas.width * scale));
-    canvas.height = Math.max(2, Math.round(canvas.height * scale));
+    canvas.width = previewWidth;
+    canvas.height = previewHeight;
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'medium';
+    ctx.drawImage(interactionPreviewSnapshotCanvas, 0, 0, previewWidth, previewHeight);
     cachedBgDisplayKey = '';
     invalidateAll();
   }
@@ -2474,9 +2485,16 @@
   function finishLowResolutionInteractionPreview() {
     if (!interactionPreviewOriginalSize || isGradingSliderInteracting || isBgBlurSliderInteracting) return;
     const { width, height } = interactionPreviewOriginalSize;
+    const snapshotCtx = prepareCanvas(interactionPreviewSnapshotCanvas, canvas.width, canvas.height);
+    snapshotCtx.imageSmoothingEnabled = true;
+    snapshotCtx.imageSmoothingQuality = 'medium';
+    snapshotCtx.drawImage(canvas, 0, 0);
     interactionPreviewOriginalSize = null;
     canvas.width = width;
     canvas.height = height;
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'medium';
+    ctx.drawImage(interactionPreviewSnapshotCanvas, 0, 0, width, height);
     cachedBgDisplayKey = '';
     invalidateAll();
   }
