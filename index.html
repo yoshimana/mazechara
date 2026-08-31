@@ -2522,6 +2522,7 @@
   let castShadowVersion = 0;
 
   let cachedContactShadowCanvas = document.createElement('canvas');
+  const contactShadowBaseCanvas = document.createElement('canvas');
   let isContactShadowDirty = true;
   let cachedContactCenterX = 0;
   let cachedContactCenterY = 0;
@@ -6008,18 +6009,20 @@
 
     if (isContactOn && contactOpacity > 0 && contactSizeScale > 0) {
       const radiusX = (charaW * 0.4) * contactSizeScale;
-      const radiusY = Math.max(2, (charaW * 0.08) * contactSizeScale);
-      const blurPad = Math.ceil(contactBlur * 1.5);
+      // 接地影の高さを半分（0.08 -> 0.04）へ引き締め、より自然で平坦な足元の接地感を再現
+      const radiusY = Math.max(1, (charaW * 0.04) * contactSizeScale);
+      // ぼかしを強めた際に上部（および周囲）がキャンバス端で直線状に見切れる現象を防ぐため、
+      // ぼかし減衰が完全にゼロになる十分なパディング（contactBlur * 3.0 + 16）を確保
+      const blurPad = Math.ceil(contactBlur * 3.0 + 16);
 
       const canReuseContactDuringScale = isCharaScaling && cachedContactShadowCanvas.width > 0 && cachedContactCharaW > 0;
       if (!canReuseContactDuringScale && (isContactShadowDirty || cachedContactShadowCanvas.width === 0)) {
-        const cShadowCanvas = document.createElement('canvas');
-        cShadowCanvas.width = Math.round(radiusX * 2 + blurPad * 2);
-        cShadowCanvas.height = Math.round(radiusY * 2 + blurPad * 2);
-        const csCtx = cShadowCanvas.getContext('2d');
+        const shadowW = Math.round(radiusX * 2 + blurPad * 2);
+        const shadowH = Math.round(radiusY * 2 + blurPad * 2);
+        const csCtx = prepareCanvas(contactShadowBaseCanvas, shadowW, shadowH);
 
-        cachedContactCenterX = cShadowCanvas.width / 2;
-        cachedContactCenterY = cShadowCanvas.height / 2;
+        cachedContactCenterX = shadowW / 2;
+        cachedContactCenterY = shadowH / 2;
         cachedContactCharaW = charaW;
 
         const grad = csCtx.createRadialGradient(cachedContactCenterX, cachedContactCenterY, 0, cachedContactCenterX, cachedContactCenterY, radiusX);
@@ -6032,8 +6035,8 @@
         csCtx.fill();
 
         cachedContactShadowCanvas = contactBlur > 0
-          ? createFastBlurredCanvas(cShadowCanvas, cShadowCanvas.width, cShadowCanvas.height, contactBlur, null, null, true, true, getSafariBlurWorkingLimit(768, 512), shadowColor)
-          : cShadowCanvas;
+          ? createFastBlurredCanvas(contactShadowBaseCanvas, shadowW, shadowH, contactBlur, null, null, true, true, getSafariBlurWorkingLimit(768, 512), shadowColor)
+          : contactShadowBaseCanvas;
 
         isContactShadowDirty = false;
       }
