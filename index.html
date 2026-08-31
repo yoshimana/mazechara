@@ -5531,6 +5531,8 @@
           displayCtx.save();
           displayCtx.globalCompositeOperation = 'overlay';
           displayCtx.globalAlpha = grainOpacity;
+          // Safariがランダム粒子を拡大補間して均一な灰色へ潰すのを防ぐ。
+          displayCtx.imageSmoothingEnabled = false;
           displayCtx.drawImage(bgNoise, 0, 0, canvas.width, canvas.height);
           displayCtx.restore();
         }
@@ -5913,6 +5915,7 @@
         cCtx.save();
         cCtx.globalCompositeOperation = 'overlay';
         cCtx.globalAlpha = grainOpacity;
+        cCtx.imageSmoothingEnabled = false;
         cCtx.drawImage(grainTex, 0, 0, cW, cH);
         cCtx.restore();
       }
@@ -6174,6 +6177,7 @@
       ctx.save();
       ctx.globalCompositeOperation = 'overlay';
       ctx.globalAlpha = grainOpacity;
+      ctx.imageSmoothingEnabled = false;
       ctx.drawImage(wholeNoise, 0, 0, canvas.width, canvas.height);
       ctx.restore();
     }
