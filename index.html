@@ -2443,6 +2443,11 @@
   // 高性能キャッシュバッファ
   let cachedBgCanvas = document.createElement('canvas');
   let isBgDirty = true;
+  const gradingPreviewBgCanvas = document.createElement('canvas');
+  let isGradingSliderInteracting = false;
+  let isGradingSliderPointerActive = false;
+  let gradingInteractionTarget = null;
+  let gradingSliderIdleTimer = null;
 
   let bgBlurredCanvas = document.createElement('canvas');
   let isBgBlurDirty = true;
@@ -3485,18 +3490,41 @@
     if (!isBgDirty && cachedBgCanvas && cachedBgCanvas.width === canvas.width && cachedBgCanvas.height === canvas.height) {
       return cachedBgCanvas;
     }
+
+    const isGradingOn = !isComparingBefore && document.getElementById('gradingToggle').checked;
+    const bgBright = isGradingOn ? parseFloat(document.getElementById('bgBright').value) : 0;
+    const bgContrast = isGradingOn ? parseFloat(document.getElementById('bgContrast').value) : 0;
+    const bgSaturation = isGradingOn ? parseFloat(document.getElementById('bgSaturation').value) : 0;
+    const bgTemp = isGradingOn ? parseFloat(document.getElementById('bgTemp').value) : 0;
+
+    if (isGradingSliderInteracting && gradingInteractionTarget === 'bg') {
+      // 操作中は全画素処理を小さなCanvasで行い、結果だけを表示サイズへ拡大する。
+      const previewLimit = window.innerWidth <= 900 || navigator.maxTouchPoints > 0 ? 720 : 1080;
+      const previewScale = Math.min(1, previewLimit / Math.max(canvas.width, canvas.height));
+      const previewW = Math.max(2, Math.round(canvas.width * previewScale));
+      const previewH = Math.max(2, Math.round(canvas.height * previewScale));
+      const previewCtx = prepareCanvas(gradingPreviewBgCanvas, previewW, previewH);
+      previewCtx.imageSmoothingEnabled = true;
+      previewCtx.imageSmoothingQuality = 'medium';
+      previewCtx.drawImage(bgImg, 0, 0, previewW, previewH);
+      if (bgBright !== 0 || bgContrast !== 0 || bgSaturation !== 0 || bgTemp !== 0) {
+        applyColorGradingToCanvas(gradingPreviewBgCanvas, bgBright, bgContrast, bgSaturation, bgTemp);
+      }
+
+      const bCtx = prepareCanvas(cachedBgCanvas, canvas.width, canvas.height);
+      bCtx.imageSmoothingEnabled = true;
+      bCtx.imageSmoothingQuality = 'medium';
+      bCtx.drawImage(gradingPreviewBgCanvas, 0, 0, canvas.width, canvas.height);
+      isBgDirty = false;
+      return cachedBgCanvas;
+    }
+
     cachedBgCanvas.width = canvas.width;
     cachedBgCanvas.height = canvas.height;
     const bCtx = cachedBgCanvas.getContext('2d');
     bCtx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
 
-    const isGradingOn = !isComparingBefore && document.getElementById('gradingToggle').checked;
     if (isGradingOn) {
-      const bgBright = parseFloat(document.getElementById('bgBright').value);
-      const bgContrast = parseFloat(document.getElementById('bgContrast').value);
-      const bgSaturation = parseFloat(document.getElementById('bgSaturation').value);
-      const bgTemp = parseFloat(document.getElementById('bgTemp').value);
-
       if (bgBright !== 0 || bgContrast !== 0 || bgSaturation !== 0 || bgTemp !== 0) {
         applyColorGradingToCanvas(cachedBgCanvas, bgBright, bgContrast, bgSaturation, bgTemp);
       }
@@ -4303,6 +4331,34 @@
 
   syncMobileCharaScale();
 
+  const gradingSliderIds = new Set(['bright', 'contrast', 'saturation', 'temp', 'bgBright', 'bgContrast', 'bgSaturation', 'bgTemp']);
+
+  function finishGradingSliderInteraction() {
+    if (!isGradingSliderInteracting) return;
+    const finishedTarget = gradingInteractionTarget;
+    isGradingSliderInteracting = false;
+    gradingInteractionTarget = null;
+    clearTimeout(gradingSliderIdleTimer);
+    gradingSliderIdleTimer = null;
+    if (finishedTarget === 'bg') {
+      invalidateBg();
+    } else {
+      isCharaBaseDirty = true;
+    }
+    cachedBgDisplayKey = '';
+    requestRender();
+  }
+
+  function beginGradingSliderInteraction(target) {
+    isGradingSliderInteracting = true;
+    gradingInteractionTarget = target;
+    clearTimeout(gradingSliderIdleTimer);
+    gradingSliderIdleTimer = null;
+    if (!isGradingSliderPointerActive) {
+      gradingSliderIdleTimer = setTimeout(finishGradingSliderInteraction, 350);
+    }
+  }
+
   const standardParams = [
     { id: 'charaX', unit: '%' },
     { id: 'charaY', unit: '%' },
@@ -4388,9 +4444,16 @@
         beginCharaScaleInteraction();
       }
 
+      const isGradingParam = gradingSliderIds.has(p.id);
+      if (isGradingParam) beginGradingSliderInteraction(p.id.startsWith('bg') ? 'bg' : 'chara');
+
       if (p.id.startsWith('bg') || p.id === 'bgBlur') {
         invalidateBg();
-        updateBgBlurCache();
+        // 背景色調の操作中は高解像度の背景ボケ再生成を指を離すまで遅延する。
+        if (!isGradingParam) updateBgBlurCache();
+      } else if (isGradingParam) {
+        // 色調変更はキャラ本体の見た目だけなので、影キャッシュは作り直さない。
+        isCharaBaseDirty = true;
       } else if (['charaScale', 'multiplyOpacity', 'overlayOpacity', 'lightAngle', 'rimOpacity', 'rimWidth', 'rimBlur', 'bright', 'contrast', 'saturation', 'temp', 'grainOpacity', 'grainScale'].includes(p.id)) {
         invalidateChara();
       } else if (['shadowBlur', 'shadowWaveAmp', 'shadowWaveAngle'].includes(p.id)) {
@@ -4401,6 +4464,29 @@
 
       requestRender();
     });
+  });
+
+  gradingSliderIds.forEach((id) => {
+    const input = document.getElementById(id);
+    if (!input) return;
+    input.addEventListener('pointerdown', () => {
+      isGradingSliderPointerActive = true;
+      beginGradingSliderInteraction(id.startsWith('bg') ? 'bg' : 'chara');
+    });
+    const finishPointer = () => {
+      if (!isGradingSliderPointerActive) return;
+      isGradingSliderPointerActive = false;
+      finishGradingSliderInteraction();
+    };
+    input.addEventListener('pointerup', finishPointer);
+    input.addEventListener('pointercancel', finishPointer);
+    input.addEventListener('change', finishPointer);
+  });
+
+  window.addEventListener('pointerup', () => {
+    if (!isGradingSliderPointerActive) return;
+    isGradingSliderPointerActive = false;
+    finishGradingSliderInteraction();
   });
 
   mobileCharaScaleInput.addEventListener('input', () => {
@@ -5498,6 +5584,7 @@
         bgBlur,
         dofBoundary,
         dofFade,
+        isGradingSliderInteracting && gradingInteractionTarget === 'bg' ? 1 : 0,
         isGrainOn && grainTarget === 'bg' ? 1 : 0,
         isGrainOn && grainTarget === 'bg' ? grainOpacity : 0,
         isGrainOn && grainTarget === 'bg' ? grainScale : 0
@@ -5508,7 +5595,7 @@
         const procBg = getProcessedBgCanvas();
         displayCtx.drawImage(procBg || bgImg, 0, 0, canvas.width, canvas.height);
 
-        if (isBgBlurOn && bgBlur > 0) {
+        if (isBgBlurOn && bgBlur > 0 && !(isGradingSliderInteracting && gradingInteractionTarget === 'bg')) {
           if (isBgBlurDirty) updateBgBlurCache();
           const dofCtx = prepareCanvas(dofCanvas, canvas.width, canvas.height);
           dofCtx.drawImage(bgBlurredCanvas, 0, 0, canvas.width, canvas.height);
@@ -5780,7 +5867,20 @@
       const cCtx = cachedCharaBaseCanvas.getContext('2d');
       cCtx.clearRect(0, 0, cW, cH);
 
+      const isGradingOn = document.getElementById('gradingToggle').checked;
+      const bright = isGradingOn ? parseFloat(document.getElementById('bright').value) : 0;
+      const contrast = isGradingOn ? parseFloat(document.getElementById('contrast').value) : 0;
+      const saturation = isGradingOn ? parseFloat(document.getElementById('saturation').value) : 0;
+      const temp = isGradingOn ? parseFloat(document.getElementById('temp').value) : 0;
+      const useFastGradingPreview = isGradingOn && isGradingSliderInteracting && gradingInteractionTarget === 'chara';
+
       cCtx.save();
+      if (useFastGradingPreview) {
+        const previewBrightness = Math.max(25, 100 + bright * 1.5);
+        const previewContrast = Math.max(10, 100 + contrast * 2);
+        const previewSaturation = Math.max(0, 100 + saturation * 2);
+        cCtx.filter = `brightness(${previewBrightness}%) contrast(${previewContrast}%) saturate(${previewSaturation}%)`;
+      }
       if (isCharaFlipped) {
         cCtx.translate(cW, 0);
         cCtx.scale(-1, 1);
@@ -5789,14 +5889,19 @@
       cCtx.restore();
 
       // 4-0. Pro Mode: キャラクター色調・トーン補正（ピクセル直接操作）
-      const isGradingOn = document.getElementById('gradingToggle').checked;
       if (isGradingOn) {
-        const bright = parseFloat(document.getElementById('bright').value);
-        const contrast = parseFloat(document.getElementById('contrast').value);
-        const saturation = parseFloat(document.getElementById('saturation').value);
-        const temp = parseFloat(document.getElementById('temp').value);
-
-        applyColorGradingToCanvas(cachedCharaBaseCanvas, bright, contrast, saturation, temp);
+        if (useFastGradingPreview) {
+          if (temp !== 0) {
+            cCtx.save();
+            cCtx.globalCompositeOperation = 'source-atop';
+            cCtx.globalAlpha = Math.min(0.22, Math.abs(temp) / 250);
+            cCtx.fillStyle = temp > 0 ? '#ff9b55' : '#559bff';
+            cCtx.fillRect(0, 0, cW, cH);
+            cCtx.restore();
+          }
+        } else {
+          applyColorGradingToCanvas(cachedCharaBaseCanvas, bright, contrast, saturation, temp);
+        }
       }
 
       // 4-1. 環境光グラデーション
