@@ -2507,6 +2507,9 @@
   let isCharaBaseDirty = true;
   const scalePreviewCharaCanvas = document.createElement('canvas');
   const environmentLightCanvas = document.createElement('canvas');
+  const rimMaskCanvas = document.createElement('canvas');
+  const cachedRimCanvas = document.createElement('canvas');
+  let cachedRimKey = '';
   let cachedCharaBaseImageVersion = -1;
 
   let cachedCastShadowCanvas = document.createElement('canvas');
@@ -4415,7 +4418,10 @@
 
   const gradingSliderIds = new Set(['bright', 'contrast', 'saturation', 'temp', 'bgBright', 'bgContrast', 'bgSaturation', 'bgTemp']);
   const bgBlurSliderIds = new Set(['bgBlur', 'dofBoundary', 'dofFade']);
-  const lightingSliderIds = new Set(['multiplyOpacity', 'overlayOpacity', 'lightAngle']);
+  const lightingSliderIds = new Set([
+    'multiplyOpacity', 'overlayOpacity', 'lightAngle',
+    'rimOpacity', 'rimWidth', 'rimBlur'
+  ]);
   let isLightingSliderInteracting = false;
   let isLightingSliderPointerActive = false;
   let lightingSliderIdleTimer = null;
@@ -6161,40 +6167,66 @@
         const offsetX = -Math.cos(rimAngleRad) * rimWidth;
         const offsetY = -Math.sin(rimAngleRad) * rimWidth;
 
-        const rCanvas = document.createElement('canvas');
-        rCanvas.width = cW;
-        rCanvas.height = cH;
-        const rCtx = rCanvas.getContext('2d');
+        // 強度変更だけでは輪郭抽出・ぼかしをやり直さず、完成済みリムを再利用する。
+        const rimKey = [
+          charaImageVersion,
+          cW,
+          cH,
+          isCharaFlipped ? 1 : 0,
+          rimWidth.toFixed(3),
+          rimBlur.toFixed(3),
+          lightAngle.toFixed(3),
+          rimColor
+        ].join('|');
 
-        rCtx.save();
-        if (isCharaFlipped) {
-          rCtx.translate(cW, 0);
-          rCtx.scale(-1, 1);
+        if (rimKey !== cachedRimKey) {
+          const rCtx = prepareCanvas(rimMaskCanvas, cW, cH);
+
+          rCtx.save();
+          if (isCharaFlipped) {
+            rCtx.translate(cW, 0);
+            rCtx.scale(-1, 1);
+          }
+          rCtx.drawImage(charaImg, 0, 0, cW, cH);
+          rCtx.restore();
+
+          rCtx.globalCompositeOperation = 'destination-out';
+          rCtx.save();
+          if (isCharaFlipped) {
+            rCtx.translate(cW, 0);
+            rCtx.scale(-1, 1);
+          }
+          rCtx.drawImage(charaImg, offsetX, offsetY, cW, cH);
+          rCtx.restore();
+
+          rCtx.globalCompositeOperation = 'source-in';
+          rCtx.fillStyle = rimColor;
+          rCtx.fillRect(0, 0, cW, cH);
+
+          if (rimBlur > 0) {
+            createFastBlurredCanvas(
+              rimMaskCanvas,
+              cW,
+              cH,
+              rimBlur,
+              cachedRimCanvas,
+              null,
+              true,
+              true,
+              getSafariBlurWorkingLimit(1024, 768),
+              rimColor
+            );
+          } else {
+            const cachedRimCtx = prepareCanvas(cachedRimCanvas, cW, cH);
+            cachedRimCtx.drawImage(rimMaskCanvas, 0, 0);
+          }
+          cachedRimKey = rimKey;
         }
-        rCtx.drawImage(charaImg, 0, 0, cW, cH);
-        rCtx.restore();
-
-        rCtx.globalCompositeOperation = 'destination-out';
-        rCtx.save();
-        if (isCharaFlipped) {
-          rCtx.translate(cW, 0);
-          rCtx.scale(-1, 1);
-        }
-        rCtx.drawImage(charaImg, offsetX, offsetY, cW, cH);
-        rCtx.restore();
-
-        rCtx.globalCompositeOperation = 'source-in';
-        rCtx.fillStyle = rimColor;
-        rCtx.fillRect(0, 0, cW, cH);
-
-        const blurredRim = rimBlur > 0
-          ? createFastBlurredCanvas(rCanvas, cW, cH, rimBlur, null, null, true, true, getSafariBlurWorkingLimit(1024, 768), rimColor)
-          : rCanvas;
 
         cCtx.save();
         cCtx.globalCompositeOperation = 'screen';
         cCtx.globalAlpha = rimOpacity;
-        cCtx.drawImage(blurredRim, 0, 0);
+        cCtx.drawImage(cachedRimCanvas, 0, 0);
         cCtx.restore();
       }
 
