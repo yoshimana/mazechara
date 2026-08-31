@@ -2483,7 +2483,7 @@
   }
 
   function finishLowResolutionInteractionPreview() {
-    if (!interactionPreviewOriginalSize || isGradingSliderInteracting || isBgBlurSliderInteracting) return;
+    if (!interactionPreviewOriginalSize || isGradingSliderInteracting || isBgBlurSliderInteracting || isLightingSliderInteracting) return;
     const { width, height } = interactionPreviewOriginalSize;
     const snapshotCtx = prepareCanvas(interactionPreviewSnapshotCanvas, canvas.width, canvas.height);
     snapshotCtx.imageSmoothingEnabled = true;
@@ -2506,6 +2506,7 @@
   let cachedCharaBaseCanvas = document.createElement('canvas');
   let isCharaBaseDirty = true;
   const scalePreviewCharaCanvas = document.createElement('canvas');
+  const environmentLightCanvas = document.createElement('canvas');
   let cachedCharaBaseImageVersion = -1;
 
   let cachedCastShadowCanvas = document.createElement('canvas');
@@ -4414,6 +4415,30 @@
 
   const gradingSliderIds = new Set(['bright', 'contrast', 'saturation', 'temp', 'bgBright', 'bgContrast', 'bgSaturation', 'bgTemp']);
   const bgBlurSliderIds = new Set(['bgBlur', 'dofBoundary', 'dofFade']);
+  const lightingSliderIds = new Set(['multiplyOpacity', 'overlayOpacity', 'lightAngle']);
+  let isLightingSliderInteracting = false;
+  let isLightingSliderPointerActive = false;
+  let lightingSliderIdleTimer = null;
+
+  function finishLightingSliderInteraction() {
+    if (!isLightingSliderInteracting) return;
+    isLightingSliderInteracting = false;
+    clearTimeout(lightingSliderIdleTimer);
+    lightingSliderIdleTimer = null;
+    isCharaBaseDirty = true;
+    finishLowResolutionInteractionPreview();
+    requestRender();
+  }
+
+  function beginLightingSliderInteraction() {
+    isLightingSliderInteracting = true;
+    beginLowResolutionInteractionPreview();
+    clearTimeout(lightingSliderIdleTimer);
+    lightingSliderIdleTimer = null;
+    if (!isLightingSliderPointerActive) {
+      lightingSliderIdleTimer = setTimeout(finishLightingSliderInteraction, 350);
+    }
+  }
 
   function finishBgBlurSliderInteraction() {
     if (!isBgBlurSliderInteracting) return;
@@ -4553,6 +4578,8 @@
       if (isGradingParam) beginGradingSliderInteraction(p.id.startsWith('bg') ? 'bg' : 'chara');
       const isBgBlurParam = bgBlurSliderIds.has(p.id);
       if (isBgBlurParam) beginBgBlurSliderInteraction();
+      const isLightingParam = lightingSliderIds.has(p.id);
+      if (isLightingParam) beginLightingSliderInteraction();
 
       if (p.id === 'bgBlur') {
         // ぼかし量の変更では背景色調キャッシュを維持し、ぼかしだけを更新する。
@@ -4621,6 +4648,29 @@
     if (!isBgBlurSliderPointerActive) return;
     isBgBlurSliderPointerActive = false;
     finishBgBlurSliderInteraction();
+  });
+
+  lightingSliderIds.forEach((id) => {
+    const input = document.getElementById(id);
+    if (!input) return;
+    input.addEventListener('pointerdown', () => {
+      isLightingSliderPointerActive = true;
+      beginLightingSliderInteraction();
+    });
+    const finishPointer = () => {
+      if (!isLightingSliderPointerActive) return;
+      isLightingSliderPointerActive = false;
+      finishLightingSliderInteraction();
+    };
+    input.addEventListener('pointerup', finishPointer);
+    input.addEventListener('pointercancel', finishPointer);
+    input.addEventListener('change', finishPointer);
+  });
+
+  window.addEventListener('pointerup', () => {
+    if (!isLightingSliderPointerActive) return;
+    isLightingSliderPointerActive = false;
+    finishLightingSliderInteraction();
   });
 
   mobileCharaScaleInput.addEventListener('input', () => {
@@ -6063,10 +6113,7 @@
       // 乗算レイヤー合成
       const multOpacity = parseFloat(document.getElementById('multiplyOpacity').value) / 100;
       if (multOpacity > 0) {
-        const mCanvas = document.createElement('canvas');
-        mCanvas.width = cW;
-        mCanvas.height = cH;
-        const mCtx = mCanvas.getContext('2d');
+        const mCtx = prepareCanvas(environmentLightCanvas, cW, cH);
 
         mCtx.drawImage(cachedCharaBaseCanvas, 0, 0);
         mCtx.globalCompositeOperation = 'source-atop';
@@ -6076,17 +6123,14 @@
         cCtx.save();
         cCtx.globalCompositeOperation = 'multiply';
         cCtx.globalAlpha = multOpacity;
-        cCtx.drawImage(mCanvas, 0, 0);
+        cCtx.drawImage(environmentLightCanvas, 0, 0);
         cCtx.restore();
       }
 
       // オーバーレイレイヤー合成
       const overOpacity = parseFloat(document.getElementById('overlayOpacity').value) / 100;
       if (overOpacity > 0) {
-        const oCanvas = document.createElement('canvas');
-        oCanvas.width = cW;
-        oCanvas.height = cH;
-        const oCtx = oCanvas.getContext('2d');
+        const oCtx = prepareCanvas(environmentLightCanvas, cW, cH);
 
         oCtx.drawImage(cachedCharaBaseCanvas, 0, 0);
         oCtx.globalCompositeOperation = 'source-atop';
@@ -6096,7 +6140,7 @@
         cCtx.save();
         cCtx.globalCompositeOperation = 'overlay';
         cCtx.globalAlpha = overOpacity;
-        cCtx.drawImage(oCanvas, 0, 0);
+        cCtx.drawImage(environmentLightCanvas, 0, 0);
         cCtx.restore();
       }
 
