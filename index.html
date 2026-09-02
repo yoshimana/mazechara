@@ -2479,6 +2479,11 @@
   const canvas = document.getElementById('mainCanvas');
   const ctx = canvas.getContext('2d');
 
+  function trackAnalyticsEvent(eventName, parameters = {}) {
+    if (typeof window.gtag !== 'function') return;
+    window.gtag('event', eventName, parameters);
+  }
+
   let bgImg = null;
   let charaImg = null;
   let bgImageVersion = 0;
@@ -4401,7 +4406,13 @@
   });
 
   // 自動マッチボタン
-  function runAutoMatch() {
+  function runAutoMatch(event) {
+    trackAnalyticsEvent('auto_match_click', {
+      button_location: event?.currentTarget?.id === 'previewQuickMatchBtn' ? 'preview' : 'settings',
+      has_background: Boolean(bgImg),
+      has_character: Boolean(charaImg)
+    });
+
     if (!bgImg) {
       showPreviewOverlay('背景写真を読み込んでください', 'Please load a background photo first', false, 1400);
       return;
@@ -6707,6 +6718,11 @@
 
   // スマートフォン・タブレットは保存／共有、PCは常にファイルへダウンロードする。
   document.getElementById('exportBtn').addEventListener('click', () => {
+    trackAnalyticsEvent('image_save_share_click', {
+      has_background: Boolean(bgImg),
+      has_character: Boolean(charaImg)
+    });
+
     if (!bgImg && !charaImg) return;
     const exportCanvas = createExportCanvas();
     exportCanvas.toBlob(async (blob) => {
