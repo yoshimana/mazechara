@@ -268,7 +268,13 @@
     'リムライトを有効にする': 'Enable rim light',
     'フィルムグレインを有効にする': 'Enable film grain',
     'ビネット効果を有効にする': 'Enable vignette',
-    '暗': 'Dark', '明': 'Bright'
+    '暗': 'Dark', '明': 'Bright',
+    '回転': 'Rotate',
+    '0°にリセット': 'Reset to 0°',
+    '0°リセット': 'Reset to 0°',
+    'キャラクター画像の回転': 'Rotate character image',
+    '枠フィット': 'Fit box',
+    '枠をキャラクターに自動フィット': 'Auto-fit box to character'
   };
 
   const attributeOriginals = new WeakMap();

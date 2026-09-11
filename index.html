@@ -1316,12 +1316,103 @@
     -webkit-user-select: none;
   }
   .crop-footer {
-    padding: 14px 24px;
+    padding: 12px 24px;
     background: #ffffff;
     border-top: 1.5px solid var(--border);
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .crop-rotation-control {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 14px;
+    background: var(--bg-input);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-md);
+    color: var(--text-main);
+    font-family: 'Zen Maru Gothic', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .crop-rotation-label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--text-sub);
+    white-space: nowrap;
+    font-size: 0.78rem;
+  }
+  .crop-rotation-label svg {
+    color: var(--accent);
+  }
+  .crop-rotation-control input[type="range"] {
+    width: 140px;
+    height: 5px;
+    cursor: pointer;
+    accent-color: var(--accent);
+  }
+  .crop-rotation-val {
+    min-width: 38px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 0.8rem;
+  }
+  .crop-rotation-reset-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    background: #ffffff;
+    color: var(--text-sub);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .crop-rotation-reset-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    transform: rotate(-45deg);
+  }
+  .crop-auto-fit-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: #ffffff;
+    color: var(--text-main);
+    font-size: 0.74rem;
+    font-family: 'Zen Maru Gothic', sans-serif;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .crop-auto-fit-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: #fff5f7;
+  }
+  .crop-auto-fit-btn svg {
+    color: var(--accent);
+  }
+  .crop-action-buttons {
+    display: flex;
+    align-items: center;
     gap: 12px;
+    margin-left: auto;
   }
   .btn-cancel {
     padding: 9px 20px;
@@ -1791,6 +1882,21 @@
     }
     .crop-footer {
       padding: 10px 14px;
+      gap: 10px;
+    }
+    .crop-rotation-control {
+      width: 100%;
+      justify-content: space-between;
+      order: 1;
+    }
+    .crop-rotation-control input[type="range"] {
+      flex: 1;
+      min-width: 80px;
+    }
+    .crop-action-buttons {
+      width: 100%;
+      justify-content: flex-end;
+      order: 2;
     }
   }
 
@@ -1856,8 +1962,26 @@
     </div>
   </div>
   <div class="crop-footer">
-    <button class="btn-cancel" id="cropCancelBtn">キャンセル</button>
-    <button class="btn-apply" id="cropApplyBtn">トリミングを適用</button>
+    <div class="crop-rotation-control" id="cropRotationControl">
+      <div class="crop-rotation-label">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+        <span>回転</span>
+      </div>
+      <input type="range" id="cropRotationInput" min="-180" max="180" value="0" step="1" aria-label="キャラクター画像の回転">
+      <span class="crop-rotation-val" id="cropRotationVal">0°</span>
+      <button type="button" class="crop-rotation-reset-btn" id="cropRotationResetBtn" title="0°にリセット">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+        <span class="sr-only">0°にリセット</span>
+      </button>
+      <button type="button" class="crop-auto-fit-btn" id="cropAutoFitBtn" title="枠をキャラクターに自動フィット">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/><circle cx="12" cy="12" r="3"/></svg>
+        <span>枠フィット</span>
+      </button>
+    </div>
+    <div class="crop-action-buttons">
+      <button class="btn-cancel" id="cropCancelBtn">キャンセル</button>
+      <button class="btn-apply" id="cropApplyBtn">トリミングを適用</button>
+    </div>
   </div>
 </div>
 
@@ -3700,6 +3824,11 @@
   const cleanupControl = document.getElementById('cleanupControl');
   const cleanupThreshold = document.getElementById('cleanupThreshold');
   const cleanupThresholdVal = document.getElementById('cleanupThresholdVal');
+  const cropRotationControl = document.getElementById('cropRotationControl');
+  const cropRotationInput = document.getElementById('cropRotationInput');
+  const cropRotationVal = document.getElementById('cropRotationVal');
+  const cropRotationResetBtn = document.getElementById('cropRotationResetBtn');
+  const cropAutoFitBtn = document.getElementById('cropAutoFitBtn');
 
   function updateCleanupBtnLabel(isActive) {
     const isEnglish = localStorage.getItem('mazechara-language') === 'en';
@@ -3729,6 +3858,8 @@
   let cropTargetType = 'bg';
   let currentAspectRatio = 'free';
   let isPortraitOrientation = false;
+  let cropRotationAngle = 0;
+  let rawCharaBBox = null;
 
   let cropRect = { x: 0, y: 0, w: 0, h: 0 };
   let isCropDragging = false;
@@ -3917,18 +4048,275 @@
     return cleanedCanvas;
   }
 
+  // 画像回転時の外接バウンディング矩形サイズを算出
+  function getRotatedDimensions(w, h, angleDeg) {
+    if (!angleDeg) return { width: w, height: h };
+    const rad = (angleDeg * Math.PI) / 180;
+    const cos = Math.abs(Math.cos(rad));
+    const sin = Math.abs(Math.sin(rad));
+    return {
+      width: Math.max(1, Math.ceil(w * cos + h * sin)),
+      height: Math.max(1, Math.ceil(w * sin + h * cos))
+    };
+  }
+
+  // キャンバス中心へ角度を指定して元画像を滑らかに描画
+  function drawRotatedImage(ctx, img, angleDeg, targetW, targetH) {
+    if (!angleDeg) {
+      const ox = (targetW - img.width) / 2;
+      const oy = (targetH - img.height) / 2;
+      ctx.drawImage(img, ox, oy);
+      return;
+    }
+    const rad = (angleDeg * Math.PI) / 180;
+    ctx.save();
+    ctx.translate(targetW / 2, targetH / 2);
+    ctx.rotate(rad);
+    ctx.drawImage(img, -img.width / 2, -img.height / 2);
+    ctx.restore();
+  }
+
+  // キャラクターの元のバウンディングボックスを回転角に応じて幾何学的に追従変換
+  function getRotatedBoundingBox(bbox, origW, origH, angleDeg) {
+    if (!bbox || !angleDeg) return bbox ? { ...bbox } : { x: 0, y: 0, w: origW, h: origH };
+    const rad = (angleDeg * Math.PI) / 180;
+    const cos = Math.cos(rad);
+    const sin = Math.sin(rad);
+    const cx = origW / 2;
+    const cy = origH / 2;
+
+    const { width: newW, height: newH } = getRotatedDimensions(origW, origH, angleDeg);
+    const ncx = newW / 2;
+    const ncy = newH / 2;
+
+    const corners = [
+      { x: bbox.x - cx, y: bbox.y - cy },
+      { x: bbox.x + bbox.w - cx, y: bbox.y - cy },
+      { x: bbox.x + bbox.w - cx, y: bbox.y + bbox.h - cy },
+      { x: bbox.x - cx, y: bbox.y + bbox.h - cy }
+    ];
+
+    let minX = Infinity, maxX = -Infinity;
+    let minY = Infinity, maxY = -Infinity;
+
+    for (let i = 0; i < 4; i++) {
+      const rx = corners[i].x * cos - corners[i].y * sin + ncx;
+      const ry = corners[i].x * sin + corners[i].y * cos + ncy;
+      if (rx < minX) minX = rx;
+      if (rx > maxX) maxX = rx;
+      if (ry < minY) minY = ry;
+      if (ry > maxY) maxY = ry;
+    }
+
+    minX = Math.max(0, Math.min(newW - 1, Math.floor(minX)));
+    minY = Math.max(0, Math.min(newH - 1, Math.floor(minY)));
+    maxX = Math.max(minX + 1, Math.min(newW, Math.ceil(maxX)));
+    maxY = Math.max(minY + 1, Math.min(newH, Math.ceil(maxY)));
+
+    return {
+      x: minX,
+      y: minY,
+      w: Math.max(1, maxX - minX),
+      h: Math.max(1, maxY - minY)
+    };
+  }
+
+  function updateCropRotation(newAngle, shouldAutoFitBox = true) {
+    cropRotationAngle = Math.max(-180, Math.min(180, parseInt(newAngle, 10) || 0));
+    cropRotationInput.value = cropRotationAngle;
+    cropRotationVal.textContent = `${cropRotationAngle}°`;
+
+    if (!rawLoadedImg) return;
+
+    const { width: newW, height: newH } = getRotatedDimensions(rawLoadedImg.width, rawLoadedImg.height, cropRotationAngle);
+    cropCanvas.width = newW;
+    cropCanvas.height = newH;
+
+    if (cropTargetType === 'chara' && rawCharaBBox && shouldAutoFitBox) {
+      cropRect = getRotatedBoundingBox(rawCharaBBox, rawLoadedImg.width, rawLoadedImg.height, cropRotationAngle);
+    } else if (cropTargetType === 'bg') {
+      initCropRect();
+    } else {
+      cropRect.x = Math.max(0, Math.min(newW - cropRect.w, cropRect.x));
+      cropRect.y = Math.max(0, Math.min(newH - cropRect.h, cropRect.y));
+      cropRect.w = Math.min(newW, cropRect.w);
+      cropRect.h = Math.min(newH, cropRect.h);
+    }
+
+    renderCropCanvas();
+  }
+
+  // 回転後の実ピクセル（非透明領域）を高速かつ精密に検出する（最大1000pxへ安全にサンプリングして瞬時検出・省メモリ）
+  function getRotatedPreciseBoundingBox(img, angleDeg, targetW, targetH) {
+    if (!img || targetW <= 0 || targetH <= 0) return { x: 0, y: 0, w: targetW, h: targetH };
+
+    // 角度0°でかつ初期計算済みのrawCharaBBoxがあれば、原寸大の完全精密境界をそのまま使用
+    if (!angleDeg && rawCharaBBox) {
+      return {
+        x: Math.max(0, Math.min(targetW - 1, rawCharaBBox.x)),
+        y: Math.max(0, Math.min(targetH - 1, rawCharaBBox.y)),
+        w: Math.max(1, Math.min(targetW - rawCharaBBox.x, rawCharaBBox.w)),
+        h: Math.max(1, Math.min(targetH - rawCharaBBox.y, rawCharaBBox.h))
+      };
+    }
+
+    const maxSampleDim = 1000;
+    const scale = Math.min(1, maxSampleDim / Math.max(targetW, targetH));
+    const sw = Math.max(16, Math.round(targetW * scale));
+    const sh = Math.max(16, Math.round(targetH * scale));
+
+    const sCanvas = document.createElement('canvas');
+    sCanvas.width = sw;
+    sCanvas.height = sh;
+    const sCtx = sCanvas.getContext('2d', { willReadFrequently: true });
+
+    sCtx.save();
+    // 描画座標系を cropCanvas (targetW x targetH) から sCanvas (sw x sh) へ均一にスケーリング
+    sCtx.setTransform(sw / targetW, 0, 0, sh / targetH, 0, 0);
+    drawRotatedImage(sCtx, img, angleDeg, targetW, targetH);
+    sCtx.restore();
+
+    const imgData = sCtx.getImageData(0, 0, sw, sh);
+    const data = imgData.data;
+
+    let minY = -1, maxY = -1;
+    for (let y = 0; y < sh; y++) {
+      const row = y * sw * 4;
+      for (let x = 0; x < sw; x++) {
+        if (data[row + x * 4 + 3] > 8) {
+          minY = y;
+          break;
+        }
+      }
+      if (minY !== -1) break;
+    }
+
+    if (minY === -1) {
+      sCanvas.width = sCanvas.height = 1;
+      return { x: 0, y: 0, w: targetW, h: targetH };
+    }
+
+    for (let y = sh - 1; y >= minY; y--) {
+      const row = y * sw * 4;
+      for (let x = 0; x < sw; x++) {
+        if (data[row + x * 4 + 3] > 8) {
+          maxY = y;
+          break;
+        }
+      }
+      if (maxY !== -1) break;
+    }
+
+    let minX = sw, maxX = -1;
+    for (let y = minY; y <= maxY; y++) {
+      const row = y * sw * 4;
+      for (let x = 0; x < minX; x++) {
+        if (data[row + x * 4 + 3] > 8) {
+          minX = x;
+          break;
+        }
+      }
+      for (let x = sw - 1; x > maxX; x--) {
+        if (data[row + x * 4 + 3] > 8) {
+          maxX = x;
+          break;
+        }
+      }
+    }
+
+    sCanvas.width = sCanvas.height = 1;
+
+    const scaleXInv = targetW / sw;
+    const scaleYInv = targetH / sh;
+    const padX = Math.ceil(scaleXInv * 1.0);
+    const padY = Math.ceil(scaleYInv * 1.0);
+
+    const finalMinX = Math.max(0, Math.floor(minX * scaleXInv) - padX);
+    const finalMinY = Math.max(0, Math.floor(minY * scaleYInv) - padY);
+    const finalMaxX = Math.min(targetW, Math.ceil((maxX + 1) * scaleXInv) + padX);
+    const finalMaxY = Math.min(targetH, Math.ceil((maxY + 1) * scaleYInv) + padY);
+
+    return {
+      x: finalMinX,
+      y: finalMinY,
+      w: Math.max(10, finalMaxX - finalMinX),
+      h: Math.max(10, finalMaxY - finalMinY)
+    };
+  }
+
+  let rotationSnapTimer = null;
+
+  function snapCropRectToRotatedContent() {
+    clearTimeout(rotationSnapTimer);
+    if (!rawLoadedImg || cropTargetType !== 'chara') return;
+    const bbox = getRotatedPreciseBoundingBox(rawLoadedImg, cropRotationAngle, cropCanvas.width, cropCanvas.height);
+    if (currentAspectRatio !== 'free') {
+      const parts = currentAspectRatio.split(':').map(Number);
+      let targetAspect = parts[0] / parts[1];
+      if (isPortraitOrientation) targetAspect = 1 / targetAspect;
+      let { x, y, w, h } = bbox;
+      const currentAspect = w / h;
+      if (currentAspect < targetAspect) {
+        const newW = h * targetAspect;
+        const diffW = newW - w;
+        x = Math.max(0, Math.min(cropCanvas.width - newW, x - diffW / 2));
+        w = newW;
+      } else {
+        const newH = w / targetAspect;
+        const diffH = newH - h;
+        y = Math.max(0, Math.min(cropCanvas.height - newH, y - diffH / 2));
+        h = newH;
+      }
+      cropRect = {
+        x: Math.max(0, Math.min(cropCanvas.width - w, x)),
+        y: Math.max(0, Math.min(cropCanvas.height - h, y)),
+        w: Math.min(cropCanvas.width, w),
+        h: Math.min(cropCanvas.height, h)
+      };
+    } else {
+      cropRect = bbox;
+    }
+    renderCropCanvas();
+  }
+
+  cropRotationInput.addEventListener('input', (e) => {
+    updateCropRotation(e.target.value, true);
+    clearTimeout(rotationSnapTimer);
+    // 操作中は滑らかに回転し、動きが止まって70ms後に実ピクセル境界へ自動吸着
+    rotationSnapTimer = setTimeout(snapCropRectToRotatedContent, 70);
+  });
+
+  cropRotationInput.addEventListener('change', () => {
+    snapCropRectToRotatedContent();
+  });
+
+  cropRotationResetBtn.addEventListener('click', () => {
+    updateCropRotation(0, true);
+    snapCropRectToRotatedContent();
+  });
+
+  cropAutoFitBtn.addEventListener('click', () => {
+    snapCropRectToRotatedContent();
+  });
+
   function applyCleanupThreshold(shouldAutoFit = true) {
     const value = Number(cleanupThreshold.value);
     cleanupThresholdVal.textContent = `${value}%`;
     rawLoadedImg = createCleanedCharacterImage(value);
+    rawCharaBBox = getNonTransparentBoundingBox(rawLoadedImg);
     if (shouldAutoFit) {
-      const autoBox = getNonTransparentBoundingBox(rawLoadedImg);
-      cropRect = { x: autoBox.x, y: autoBox.y, w: autoBox.w, h: autoBox.h };
+      if (cropRotationAngle !== 0) {
+        cropRect = getRotatedPreciseBoundingBox(rawLoadedImg, cropRotationAngle, cropCanvas.width, cropCanvas.height);
+      } else {
+        cropRect = getRotatedBoundingBox(rawCharaBBox, rawLoadedImg.width, rawLoadedImg.height, 0);
+      }
     }
     renderCropCanvas();
   }
 
   function openCropper(img, type) {
+    clearTimeout(cleanupInputTimer);
+    clearTimeout(rotationSnapTimer);
     rawLoadedImg = img;
     originalCropImg = img;
     cleanupAnalysis = null;
@@ -3936,6 +4324,9 @@
     cropModal.classList.add('active');
     cropHeader.classList.remove('cleanup-active');
     isPortraitOrientation = false;
+    cropRotationAngle = 0;
+    cropRotationInput.value = '0';
+    cropRotationVal.textContent = '0°';
 
     updateCropTitle();
     if (type === 'bg') {
@@ -3943,6 +4334,7 @@
       toggleOrientationBtn.style.display = 'inline-flex';
       cleanupBtn.style.display = 'none';
       cleanupControl.classList.remove('active');
+      cropRotationControl.style.display = 'none';
       updateOrientationBtnState();
     } else {
       cropAspectContainer.style.display = 'none';
@@ -3950,6 +4342,7 @@
       cleanupBtn.style.display = 'block';
       cleanupBtn.classList.remove('active');
       cleanupControl.classList.remove('active');
+      cropRotationControl.style.display = 'inline-flex';
       updateCleanupBtnLabel(false);
       cleanupThreshold.value = '20';
       cleanupThresholdVal.textContent = '20%';
@@ -3961,15 +4354,11 @@
 
     if (type === 'chara') {
       // キャラクター透過PNGの場合、透明領域を除いた最適なバウンディングボックスを自動指定
-      const autoBox = getNonTransparentBoundingBox(img);
-      cropRect = {
-        x: autoBox.x,
-        y: autoBox.y,
-        w: autoBox.w,
-        h: autoBox.h
-      };
+      rawCharaBBox = getNonTransparentBoundingBox(img);
+      cropRect = { ...rawCharaBBox };
       currentAspectRatio = 'free';
     } else {
+      rawCharaBBox = null;
       initCropRect();
     }
     renderCropCanvas();
@@ -4064,14 +4453,19 @@
   function renderCropCanvas() {
     if (!rawLoadedImg) return;
     cropCtx.clearRect(0, 0, cropCanvas.width, cropCanvas.height);
-    cropCtx.drawImage(rawLoadedImg, 0, 0);
+    drawRotatedImage(cropCtx, rawLoadedImg, cropRotationAngle, cropCanvas.width, cropCanvas.height);
 
     cropCtx.save();
     cropCtx.fillStyle = 'rgba(45, 52, 54, 0.6)';
     cropCtx.fillRect(0, 0, cropCanvas.width, cropCanvas.height);
 
     cropCtx.clearRect(cropRect.x, cropRect.y, cropRect.w, cropRect.h);
-    cropCtx.drawImage(rawLoadedImg, cropRect.x, cropRect.y, cropRect.w, cropRect.h, cropRect.x, cropRect.y, cropRect.w, cropRect.h);
+    cropCtx.save();
+    cropCtx.beginPath();
+    cropCtx.rect(cropRect.x, cropRect.y, cropRect.w, cropRect.h);
+    cropCtx.clip();
+    drawRotatedImage(cropCtx, rawLoadedImg, cropRotationAngle, cropCanvas.width, cropCanvas.height);
+    cropCtx.restore();
 
     cropCtx.strokeStyle = '#ff6b8b';
     cropCtx.lineWidth = Math.max(2, cropCanvas.width * 0.003);
@@ -4266,8 +4660,9 @@
     const pos = getCropCanvasPointerPos(e);
     const mode = getCropHandleAt(pos, false);
     if (!mode) return;
-    // 手動調整を始めた後に、遅延中のゴミ除去処理で枠を自動位置へ戻さない。
+    // 手動調整を始めた後に、遅延中のゴミ除去処理や回転スナップで枠を自動位置へ戻さない。
     clearTimeout(cleanupInputTimer);
+    clearTimeout(rotationSnapTimer);
     isCropDragging = true;
     cropDragMode = mode;
     cropStartPos = pos;
@@ -4287,8 +4682,9 @@
     const mode = getCropHandleAt(pos, true);
     if (!mode) return;
     e.preventDefault();
-    // 手動調整を始めた後に、遅延中のゴミ除去処理で枠を自動位置へ戻さない。
+    // 手動調整を始めた後に、遅延中のゴミ除去処理や回転スナップで枠を自動位置へ戻さない。
     clearTimeout(cleanupInputTimer);
+    clearTimeout(rotationSnapTimer);
     isCropDragging = true;
     cropDragMode = mode;
     cropStartPos = pos;
@@ -4306,15 +4702,20 @@
 
   document.getElementById('cropApplyBtn').addEventListener('click', () => {
     clearTimeout(cleanupInputTimer);
+    clearTimeout(rotationSnapTimer);
     // 除去結果は最新化するが、ユーザーが手動調整したトリミング枠は維持する。
     if (cropTargetType === 'chara' && cleanupBtn.classList.contains('active')) applyCleanupThreshold(false);
     const cutCanvas = document.createElement('canvas');
     cutCanvas.width = Math.round(cropRect.w);
     cutCanvas.height = Math.round(cropRect.h);
     const cCtx = cutCanvas.getContext('2d');
-    cCtx.drawImage(rawLoadedImg, cropRect.x, cropRect.y, cropRect.w, cropRect.h, 0, 0, cutCanvas.width, cutCanvas.height);
+    cCtx.save();
+    cCtx.translate(-cropRect.x, -cropRect.y);
+    drawRotatedImage(cCtx, rawLoadedImg, cropRotationAngle, cropCanvas.width, cropCanvas.height);
+    cCtx.restore();
 
     cutCanvas.toBlob((blob) => {
+      cutCanvas.width = cutCanvas.height = 1;
       if (!blob) return;
       const blobUrl = URL.createObjectURL(blob);
       const croppedImg = new Image();
@@ -4336,8 +4737,11 @@
           invalidateChara();
         }
         cropModal.classList.remove('active');
+        rawLoadedImg = null;
         originalCropImg = null;
         cleanupAnalysis = null;
+        rawCharaBBox = null;
+        cropCanvas.width = cropCanvas.height = 1;
         URL.revokeObjectURL(blobUrl);
         requestRender();
       };
@@ -4349,10 +4753,13 @@
     // 選択した画像を適用せず、現在の編集状態をそのまま維持する。
     isCropDragging = false;
     clearTimeout(cleanupInputTimer);
+    clearTimeout(rotationSnapTimer);
     cropModal.classList.remove('active');
     rawLoadedImg = null;
     originalCropImg = null;
     cleanupAnalysis = null;
+    rawCharaBBox = null;
+    cropCanvas.width = cropCanvas.height = 1;
     setUploadStatus('');
   });
 
