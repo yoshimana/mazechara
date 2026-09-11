@@ -10,3 +10,5 @@ dist/
 build/
 .cache/
 UI_Picture/
+.agent/
+robots.txt
