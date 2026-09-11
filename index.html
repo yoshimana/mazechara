@@ -929,6 +929,7 @@
   #subWrap { order: 3; }
   #subGrain { order: 4; }
   #subVignette { order: 5; }
+  #subOcclusion { order: 6; }
   .sub-accordion-header {
     display: flex;
     justify-content: space-between;
@@ -1438,6 +1439,425 @@
     box-shadow: 0 4px 12px rgba(255, 107, 139, 0.3);
   }
 
+  /* 遮蔽マスク編集モーダル */
+  .mask-modal {
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(45, 52, 54, 0.6);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: none;
+    flex-direction: column;
+    z-index: 9999;
+  }
+  .mask-modal.active { display: flex; }
+  .mask-header {
+    padding: 12px 24px;
+    background: #ffffff;
+    border-bottom: 1.5px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .mask-title-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .mask-title-group h2 {
+    font-size: 0.98rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0;
+  }
+  .mask-badge {
+    font-size: 0.7rem;
+    padding: 2px 7px;
+    border-radius: var(--radius-full);
+    background: #fff0f3;
+    color: var(--accent);
+    border: 1px solid rgba(255, 107, 139, 0.3);
+    font-weight: 700;
+  }
+  .mask-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .mask-tool-buttons {
+    display: inline-flex;
+    background: var(--bg-input);
+    border-radius: var(--radius-sm);
+    padding: 2px;
+    border: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .mask-tool-btn {
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    border: none;
+    background: transparent;
+    border-radius: calc(var(--radius-sm) - 2px);
+    font-size: 0.78rem;
+    font-family: 'Zen Maru Gothic', sans-serif;
+    font-weight: 700;
+    color: var(--text-sub);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap !important;
+    word-break: keep-all;
+    flex-shrink: 0;
+  }
+  .mask-tool-btn span {
+    white-space: nowrap !important;
+  }
+  .mask-tool-btn.active {
+    background: #ffffff;
+    color: var(--accent);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  }
+  .mask-param-control {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: var(--text-sub);
+  }
+  .mask-param-control input[type="range"] {
+    width: 105px;
+    height: 4px;
+  }
+  .mask-param-val {
+    font-size: 0.74rem;
+    color: var(--text-main);
+    min-width: 32px;
+  }
+  .mask-action-btn {
+    padding: 5px 11px;
+    font-size: 0.76rem;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-sub);
+    font-family: 'Zen Maru Gothic', sans-serif;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .mask-action-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  /* 遮蔽調整ポップオーバー */
+  .mask-adjust-container {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+  }
+  .mask-adjust-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+  }
+  .mask-adjust-btn svg {
+    flex-shrink: 0;
+  }
+  .mask-adjust-btn.active {
+    background: #ffffff;
+    border-color: var(--accent);
+    color: var(--accent);
+    box-shadow: 0 1px 4px rgba(255, 107, 139, 0.25);
+  }
+  .mask-adjust-popover {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    background: #ffffff;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.16);
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    z-index: 100;
+    width: 300px;
+    min-width: 280px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-4px);
+    transition: opacity 0.16s ease, transform 0.16s ease, visibility 0.16s;
+    pointer-events: none;
+  }
+  .mask-adjust-popover.open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+  .mask-popover-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .mask-popover-label {
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: var(--text-sub);
+    white-space: nowrap;
+    min-width: 76px;
+  }
+  .mask-popover-item input[type="range"] {
+    flex: 1;
+    min-width: 70px;
+    height: 4px;
+  }
+  .mask-popover-item .mask-param-val {
+    font-size: 0.74rem;
+    min-width: 34px;
+    text-align: right;
+  }
+  .mask-body {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    user-select: none;
+    touch-action: none;
+    min-height: 0;
+  }
+  .mask-canvas-container {
+    max-width: 100%;
+    max-height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transform-origin: center center;
+    will-change: transform;
+  }
+  #maskCanvas {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: var(--radius-sm);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+    background: repeating-conic-gradient(#f0f0f0 0% 25%, #ffffff 0% 50%) 50% / 16px 16px;
+    cursor: crosshair;
+  }
+  .mask-body.mode-hand #maskCanvas,
+  .mask-body.space-grab #maskCanvas {
+    cursor: grab !important;
+  }
+  .mask-body.is-panning #maskCanvas {
+    cursor: grabbing !important;
+  }
+
+  /* ヒントテキスト（上にフロート配置、5秒フェードアウトおよびスマホ時モードバッジ表示） */
+  .mask-guide-hint {
+    position: absolute;
+    top: 12px;
+    bottom: auto;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(30, 39, 46, 0.82);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    color: #ffffff;
+    font-size: 0.72rem;
+    line-height: 1.45;
+    padding: 6px 14px;
+    border-radius: var(--radius-full);
+    pointer-events: none;
+    white-space: normal;
+    text-align: center;
+    width: max-content;
+    max-width: calc(100% - 24px);
+    box-sizing: border-box;
+    z-index: 20;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    transition: opacity 0.35s ease, transform 0.35s ease, padding 0.2s ease, background-color 0.2s ease;
+  }
+  .mask-guide-hint.hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(-50%) translateY(-6px);
+  }
+  .mask-guide-hint.mode-badge {
+    padding: 3px 12px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    background: rgba(30, 39, 46, 0.88);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    letter-spacing: 0.04em;
+  }
+
+  /* プレビュー下部 ズームコントロールバー (通常モードと同じ浮かせスタイル) */
+  .mask-bottombar {
+    position: absolute;
+    bottom: 14px;
+    left: 16px;
+    right: 16px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    pointer-events: none;
+    z-index: 25;
+  }
+  .mask-zoom-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-full);
+    box-shadow: var(--shadow-soft);
+    pointer-events: auto;
+    user-select: none;
+  }
+  .mask-zoom-wrap input[type="range"] {
+    width: 85px;
+    height: 5px;
+    accent-color: #3b82f6;
+    cursor: pointer;
+  }
+  .mask-zoom-val {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text-main);
+    min-width: 32px;
+    font-variant-numeric: tabular-nums;
+  }
+  .mask-pan-hint {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 8px;
+    padding: 5px 10px;
+    border-radius: var(--radius-full);
+    background: rgba(255, 255, 255, 0.85);
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    font-weight: 700;
+    box-shadow: var(--shadow-soft);
+  }
+
+  .mask-footer {
+    padding: 10px 20px;
+    background: #ffffff;
+    border-top: 1.5px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .mask-view-toggle {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .mask-checkbox-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--text-main);
+    cursor: pointer;
+  }
+  .mask-checkbox-label input[type="checkbox"] {
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+  .mask-action-buttons {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-left: auto;
+  }
+
+  /* 詳細設定の遮蔽マスクUI */
+  .occlusion-notice {
+    font-size: 0.75rem;
+    line-height: 1.5;
+    color: var(--text-sub);
+    background: #fdfaf6;
+    border-left: 3px solid #f39c12;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    margin-bottom: 10px;
+  }
+  .occlusion-action-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-occlusion-edit {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: var(--bg-input);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-main);
+    font-size: 0.8rem;
+    font-family: 'Zen Maru Gothic', sans-serif;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-occlusion-edit:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: #fff5f7;
+  }
+  .btn-occlusion-clear {
+    padding: 8px 12px;
+    background: var(--bg-input);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-sub);
+    font-size: 0.78rem;
+    font-family: 'Zen Maru Gothic', sans-serif;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-occlusion-clear:hover {
+    border-color: #e74c3c;
+    color: #e74c3c;
+    background: #fdf3f2;
+  }
+  .occlusion-status-text {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-top: 6px;
+    padding-left: 2px;
+  }
+  .occlusion-status-text.active {
+    color: #27ae60;
+    font-weight: 700;
+  }
+
   /* 比較用バナー */
   .compare-badge {
     display: none;
@@ -1533,6 +1953,65 @@
   }
   @keyframes presetSpin {
     to { transform: rotate(360deg); }
+  }
+
+  /* 全画面ブロック・ローディングオーバーレイ（画像読み込み・適用時の操作ガード） */
+  .global-loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10001;
+    pointer-events: auto;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+                visibility 0.2s;
+  }
+  .global-loading-overlay.visible {
+    opacity: 1;
+    visibility: visible;
+  }
+  .global-loading-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 22px 30px;
+    background: #ffffff;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.2);
+    transform: scale(0.94);
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .global-loading-overlay.visible .global-loading-card {
+    transform: scale(1);
+  }
+  .global-loading-spinner {
+    width: 28px;
+    height: 28px;
+    border: 3px solid rgba(255, 107, 139, 0.2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: globalLoadingSpin 0.75s linear infinite;
+  }
+  @keyframes globalLoadingSpin {
+    to { transform: rotate(360deg); }
+  }
+  .global-loading-text {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--text-main);
+    letter-spacing: 0.02em;
   }
 
   /* ============================================
@@ -1929,6 +2408,188 @@
       font-size: 0.72rem;
     }
   }
+
+  /* 遮蔽モードのスマホ・タブレット最適化（ヘッダー・フッターの圧迫解消＆すっきり整列） */
+  @media (max-width: 768px) {
+    .mask-header {
+      padding: 6px 6px;
+      gap: 5px;
+      flex-direction: column;
+      align-items: stretch;
+      overflow: visible;
+      position: relative;
+      z-index: 50;
+    }
+    .mask-title-group {
+      justify-content: space-between;
+      width: 100%;
+    }
+    .mask-title-group h2 {
+      font-size: 0.82rem;
+    }
+    .mask-badge {
+      font-size: 0.62rem;
+      padding: 1px 6px;
+    }
+    .mask-toolbar {
+      width: 100%;
+      justify-content: space-between;
+      gap: 3px;
+      flex-wrap: nowrap;
+      overflow: visible;
+      padding-bottom: 2px;
+    }
+    .mask-tool-buttons {
+      flex-shrink: 0;
+    }
+    .mask-tool-btn {
+      padding: 5px 7px;
+      font-size: 0.67rem;
+      gap: 0;
+      white-space: nowrap !important;
+      flex-shrink: 0;
+    }
+    .mask-tool-btn span {
+      display: none !important;
+    }
+    .mask-tool-btn svg {
+      width: 13px;
+      height: 13px;
+      flex-shrink: 0;
+    }
+    .mask-param-control {
+      font-size: 0.68rem;
+      gap: 4px;
+      flex: 1;
+      min-width: 0;
+      display: inline-flex;
+      align-items: center;
+    }
+    .mask-param-control input[type="range"] {
+      flex: 1;
+      width: 100%;
+      min-width: 45px;
+    }
+    .mask-param-val {
+      font-size: 0.68rem;
+      min-width: 26px;
+    }
+    .mask-action-btn {
+      padding: 4px 6px;
+      font-size: 0.67rem;
+      flex-shrink: 0;
+    }
+    .mask-adjust-container {
+      position: static;
+    }
+    .mask-adjust-popover {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 8px;
+      right: 8px;
+      width: auto;
+      min-width: 0;
+      box-sizing: border-box;
+      padding: 12px 14px;
+      gap: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+      z-index: 200;
+    }
+    .mask-popover-label {
+      font-size: 0.74rem;
+      min-width: 72px;
+    }
+    .mask-popover-item input[type="range"] {
+      flex: 1;
+      min-width: 80px;
+    }
+
+    .mask-body {
+      padding: 6px;
+    }
+    .mask-guide-hint {
+      top: 6px;
+      font-size: 0.66rem;
+      line-height: 1.35;
+      padding: 4px 10px;
+      border-radius: 12px;
+      max-width: calc(100% - 16px);
+    }
+    .mask-guide-hint.mode-badge {
+      padding: 2px 10px;
+      font-size: 0.68rem;
+    }
+    .mask-bottombar {
+      bottom: 8px;
+      left: 10px;
+      right: 10px;
+    }
+    .mask-zoom-wrap {
+      padding: 2px 8px;
+      height: 26px;
+      gap: 4px;
+      box-sizing: border-box;
+    }
+    .mask-zoom-wrap .zoom-icon {
+      width: 12px;
+      height: 12px;
+    }
+    .mask-zoom-wrap input[type="range"] {
+      width: 60px;
+      height: 3px;
+    }
+    .mask-zoom-wrap .mask-zoom-val {
+      font-size: 0.65rem;
+      min-width: 26px;
+    }
+    .mask-zoom-wrap .zoom-reset-btn {
+      padding: 1px;
+    }
+    .mask-zoom-wrap .zoom-reset-btn svg {
+      width: 11px;
+      height: 11px;
+    }
+    .mask-pan-hint {
+      display: none; /* スマホではタッチドラッグが基本のため非表示にして画面を広く */
+    }
+
+    .mask-footer {
+      padding: 6px 10px;
+      gap: 8px;
+      flex-wrap: nowrap;
+    }
+    .mask-view-toggle {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 2px;
+      flex-shrink: 0;
+    }
+    .mask-checkbox-label {
+      font-size: 0.68rem;
+      gap: 4px;
+      white-space: nowrap;
+    }
+    .mask-action-buttons {
+      gap: 6px;
+    }
+    .mask-action-buttons .btn-cancel,
+    .mask-action-buttons .btn-apply {
+      padding: 6px 10px;
+      font-size: 0.74rem;
+      border-radius: var(--radius-sm);
+    }
+  }
+
+  @media (max-width: 360px) {
+    .mask-title-group h2 {
+      font-size: 0.76rem;
+    }
+    .mask-action-buttons .btn-cancel,
+    .mask-action-buttons .btn-apply {
+      padding: 5px 8px;
+      font-size: 0.7rem;
+    }
+  }
 </style>
 </head>
 <body data-page="index">
@@ -1985,6 +2646,91 @@
   </div>
 </div>
 
+<!-- 遮蔽マスク編集モーダル（前景マスク） -->
+<div class="mask-modal" id="maskModal">
+  <div class="mask-header">
+    <div class="mask-title-group">
+      <h2>手前の物をなぞって前面に出す</h2>
+      <span class="mask-badge">実験的機能</span>
+    </div>
+    <div class="mask-toolbar">
+      <div class="mask-tool-buttons">
+        <button type="button" class="mask-tool-btn active" id="maskBrushBtn" title="ブラシ（手前の物をなぞる）">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/></svg>
+          <span>なぞる</span>
+        </button>
+        <button type="button" class="mask-tool-btn" id="maskEraserBtn" title="消しゴム（はみ出た部分を消去）">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20H7L3 16C2 15 2 13 3 12L13 2L22 11L18 15"/><path d="M18 15l-6-6"/></svg>
+          <span>消しゴム</span>
+        </button>
+        <button type="button" class="mask-tool-btn" id="maskHandBtn" title="手のひら（キャンバス移動・グラブ）">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/><path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg>
+          <span>移動</span>
+        </button>
+      </div>
+      <label class="mask-param-control">
+        <span>太さ</span>
+        <input type="range" id="maskBrushSize" min="3" max="100" value="32" step="1">
+        <span class="mask-param-val" id="maskBrushSizeVal">32px</span>
+      </label>
+      <div class="mask-adjust-container" id="maskAdjustContainer">
+        <button type="button" class="mask-action-btn mask-adjust-btn" id="maskAdjustBtn" title="境界感度・滲み調整">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+          <span>調整</span>
+        </button>
+        <div class="mask-adjust-popover" id="maskAdjustPopover">
+          <div class="mask-popover-item">
+            <label for="maskSensitivity" class="mask-popover-label">境界感度</label>
+            <input type="range" id="maskSensitivity" min="0" max="100" value="50" step="1">
+            <span class="mask-param-val" id="maskSensitivityVal">50%</span>
+          </div>
+          <div class="mask-popover-item">
+            <label for="maskBlur" class="mask-popover-label">境界の滲み</label>
+            <input type="range" id="maskBlur" min="0" max="10" value="0" step="1">
+            <span class="mask-param-val" id="maskBlurVal">0px</span>
+          </div>
+        </div>
+      </div>
+      <button type="button" class="mask-action-btn" id="maskClearBtn" title="すべて消去">クリア</button>
+    </div>
+  </div>
+  <div class="mask-body" id="maskBody">
+    <div class="mask-guide-hint" id="maskGuideHint">※手前の物を大まかになぞると輪郭に自動吸着します。キャラとの重なりを見ながら調整できます。</div>
+    <div class="mask-canvas-container" id="maskCanvasContainer">
+      <canvas id="maskCanvas"></canvas>
+    </div>
+    <!-- プレビュー下部 ズームコントロールバー (通常モードと同等の浮かせ配置) -->
+    <div class="mask-bottombar">
+      <div class="mask-zoom-wrap" title="表示ズーム">
+        <svg class="zoom-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/><path d="M11 8v6"/><path d="M8 11h6"/></svg>
+        <input type="range" id="maskZoom" min="100" max="500" value="100" step="5" aria-label="表示ズーム">
+        <span class="mask-zoom-val" id="maskZoomVal">100%</span>
+        <button class="zoom-reset-btn" id="maskZoomResetBtn" type="button" title="画像全体表示（ズームリセット）">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/><rect width="10" height="10" x="7" y="7" rx="1.5"/></svg>
+          <span class="sr-only">画像全体表示</span>
+        </button>
+      </div>
+      <span class="mask-pan-hint">Space+ドラッグで表示を移動</span>
+    </div>
+  </div>
+  <div class="mask-footer">
+    <div class="mask-view-toggle">
+      <label class="mask-checkbox-label">
+        <input type="checkbox" id="maskCharaGhostToggle" checked>
+        <span>キャラを透かして表示</span>
+      </label>
+      <label class="mask-checkbox-label">
+        <input type="checkbox" id="maskShadowGhostToggle" checked>
+        <span>影を表示</span>
+      </label>
+    </div>
+    <div class="mask-action-buttons">
+      <button type="button" class="btn-cancel" id="maskCancelBtn">キャンセル</button>
+      <button type="button" class="btn-apply" id="maskApplyBtn">適用</button>
+    </div>
+  </div>
+</div>
+
 <!-- プレビューエリア -->
 <main class="preview-container" id="previewContainer">
   <h1 class="sr-only">まぜキャラ：二次元✖️三次元・キャラ溶け込みツール</h1>
@@ -2021,6 +2767,14 @@
       </div>
     </div>
     <span class="preset-apply-text" id="presetApplyText"></span>
+  </div>
+
+  <!-- 全画面ブロック・ローディングオーバーレイ（画像読み込み・適用時の操作ガード） -->
+  <div class="global-loading-overlay" id="globalLoadingOverlay" aria-live="assertive" aria-busy="true">
+    <div class="global-loading-card">
+      <div class="global-loading-spinner"></div>
+      <span class="global-loading-text" id="globalLoadingText">画像を読み込み中...</span>
+    </div>
   </div>
 
   <!-- 初回2本指操作ガイドトースト -->
@@ -2573,6 +3327,36 @@
           </div>
         </div>
 
+        <!-- 実験的機能: 手前の物を前面に出す (遮蔽マスク) -->
+        <div class="sub-accordion-item" id="subOcclusion">
+          <div class="sub-accordion-header">
+            <span>実験的機能: 手前の物を前面に出す</span>
+            <label class="switch">
+              <input type="checkbox" id="occlusionToggle" checked>
+              <span class="slider-toggle"></span>
+            </label>
+          </div>
+          <div class="sub-accordion-body">
+            <p class="occlusion-notice">
+              【実験的機能】写真の手前にある物（木・柱・机など）をなぞることで、キャラクターやその影が物の後ろに回り込んだような自然な奥行きを作ります。境界線のコントラストや色味によって自動判定の精度が異なります。
+            </p>
+            <div class="occlusion-action-row">
+              <button type="button" class="btn-occlusion-edit" id="occlusionEditBtn">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/></svg>
+                <span>手前の物をなぞって設定</span>
+              </button>
+              <button type="button" class="btn-occlusion-clear" id="occlusionClearBtn" style="display: none;" title="消去">
+                <span>消去</span>
+              </button>
+            </div>
+            <div id="occlusionStatusText" class="occlusion-status-text">未作成</div>
+            <div class="param-row" style="margin-top: 10px;">
+              <div class="param-label"><span>キャラへの影</span><span id="occShadowValDisplay" class="param-value">オフ</span></div>
+              <input type="range" id="occShadowVal" min="0" max="100" value="0">
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
 
@@ -2961,6 +3745,7 @@
   setupSubAccordion('subGrain', 'grainToggle');
   setupSubAccordion('subColorGrading', 'gradingToggle');
   setupSubAccordion('subVignette', 'vignetteToggle');
+  setupSubAccordion('subOcclusion', 'occlusionToggle');
 
   // フィルムグレイン対象セグメント切り替え
   document.querySelectorAll('#grainTargetSegment .segment-btn').forEach(btn => {
@@ -4315,6 +5100,7 @@
   }
 
   function openCropper(img, type) {
+    hideGlobalLoading();
     clearTimeout(cleanupInputTimer);
     clearTimeout(rotationSnapTimer);
     rawLoadedImg = img;
@@ -4701,6 +5487,10 @@
   window.addEventListener('touchcancel', () => { isCropDragging = false; });
 
   document.getElementById('cropApplyBtn').addEventListener('click', () => {
+    showGlobalLoading(
+      cropTargetType === 'bg' ? '背景写真を適用中...' : 'キャラクターを適用中...',
+      cropTargetType === 'bg' ? 'Applying background photo...' : 'Applying character image...'
+    );
     clearTimeout(cleanupInputTimer);
     clearTimeout(rotationSnapTimer);
     // 除去結果は最新化するが、ユーザーが手動調整したトリミング枠は維持する。
@@ -4716,7 +5506,10 @@
 
     cutCanvas.toBlob((blob) => {
       cutCanvas.width = cutCanvas.height = 1;
-      if (!blob) return;
+      if (!blob) {
+        hideGlobalLoading();
+        return;
+      }
       const blobUrl = URL.createObjectURL(blob);
       const croppedImg = new Image();
       croppedImg.onload = () => {
@@ -4728,6 +5521,7 @@
           bgImageVersion++;
           canvas.width = bgImg.width;
           canvas.height = bgImg.height;
+          clearOcclusionMask();
           invalidateBg();
           applyPreset('standard');
           showGestureGuideToast();
@@ -4744,12 +5538,17 @@
         cropCanvas.width = cropCanvas.height = 1;
         URL.revokeObjectURL(blobUrl);
         requestRender();
+        hideGlobalLoading();
+      };
+      croppedImg.onerror = () => {
+        hideGlobalLoading();
       };
       croppedImg.src = blobUrl;
     }, 'image/png');
   });
 
   document.getElementById('cropCancelBtn').addEventListener('click', () => {
+    hideGlobalLoading();
     // 選択した画像を適用せず、現在の編集状態をそのまま維持する。
     isCropDragging = false;
     clearTimeout(cleanupInputTimer);
@@ -4761,6 +5560,1060 @@
     rawCharaBBox = null;
     cropCanvas.width = cropCanvas.height = 1;
     setUploadStatus('');
+  });
+
+  // ----------------------------------------------------
+  // 前景遮蔽マスク機能（実験的機能: 手前の物体で隠す）
+  // ----------------------------------------------------
+  const occlusionToggle = document.getElementById('occlusionToggle');
+  const occlusionEditBtn = document.getElementById('occlusionEditBtn');
+  const occlusionClearBtn = document.getElementById('occlusionClearBtn');
+  const occlusionStatusText = document.getElementById('occlusionStatusText');
+
+  const maskModal = document.getElementById('maskModal');
+  const maskCanvas = document.getElementById('maskCanvas');
+  const maskCtx = maskCanvas.getContext('2d');
+  const maskBrushBtn = document.getElementById('maskBrushBtn');
+  const maskEraserBtn = document.getElementById('maskEraserBtn');
+  const maskHandBtn = document.getElementById('maskHandBtn');
+  const maskBrushSize = document.getElementById('maskBrushSize');
+  const maskBrushSizeVal = document.getElementById('maskBrushSizeVal');
+  const maskSensitivity = document.getElementById('maskSensitivity');
+  const maskSensitivityVal = document.getElementById('maskSensitivityVal');
+  const maskAdjustBtn = document.getElementById('maskAdjustBtn');
+  const maskAdjustPopover = document.getElementById('maskAdjustPopover');
+  const maskBlur = document.getElementById('maskBlur');
+  const maskBlurVal = document.getElementById('maskBlurVal');
+  const maskZoom = document.getElementById('maskZoom');
+  const maskZoomVal = document.getElementById('maskZoomVal');
+  const maskZoomResetBtn = document.getElementById('maskZoomResetBtn');
+  const maskClearBtn = document.getElementById('maskClearBtn');
+  const maskCharaGhostToggle = document.getElementById('maskCharaGhostToggle');
+  const maskShadowGhostToggle = document.getElementById('maskShadowGhostToggle');
+  const maskCancelBtn = document.getElementById('maskCancelBtn');
+  const maskApplyBtn = document.getElementById('maskApplyBtn');
+  const maskBody = document.getElementById('maskBody');
+  const maskCanvasContainer = document.getElementById('maskCanvasContainer');
+
+  // 本番用遮蔽マスクバッファ（背景写真の原寸大または編集解像度）
+  const occlusionMaskCanvas = document.createElement('canvas');
+  occlusionMaskCanvas.width = occlusionMaskCanvas.height = 1;
+  const cachedOcclusionCanvas = document.createElement('canvas');
+  cachedOcclusionCanvas.width = cachedOcclusionCanvas.height = 1;
+  const cachedBleedMaskCanvas = document.createElement('canvas');
+  cachedBleedMaskCanvas.width = cachedBleedMaskCanvas.height = 1;
+  const cachedOccShadowCanvas = document.createElement('canvas');
+  cachedOccShadowCanvas.width = cachedOccShadowCanvas.height = 1;
+
+  // モーダル編集用中間バッファ
+  const maskRawStrokeCanvas = document.createElement('canvas');
+  maskRawStrokeCanvas.width = maskRawStrokeCanvas.height = 1;
+  const maskRefinedCanvas = document.createElement('canvas');
+  maskRefinedCanvas.width = maskRefinedCanvas.height = 1;
+
+  let maskMode = 'brush'; // 'brush', 'eraser', 'hand'
+  let isMaskDrawing = false;
+  let maskLastX = 0;
+  let maskLastY = 0;
+  let maskCursorX = -100;
+  let maskCursorY = -100;
+  let isMaskCursorIn = false;
+  let maskRefineTimer = null;
+  let isBrushSizePreviewActive = false;
+  let brushSizePreviewTimer = null;
+  let maskSeedPoints = []; // ユーザーがなぞったストロークの中心線（芯）のサンプリング座標
+
+  const maskGuideHint = document.getElementById('maskGuideHint');
+  let maskHintTimer = null;
+  const MASK_MODE_LABELS_JA = { brush: 'なぞる', eraser: '消しゴム', hand: '移動' };
+  const MASK_MODE_LABELS_EN = { brush: 'Brush', eraser: 'Eraser', hand: 'Pan' };
+
+  function updateMaskGuideHint(isModeChange = false) {
+    if (!maskGuideHint) return;
+    const isMobile = window.innerWidth <= 768;
+    const isEn = localStorage.getItem('mazechara-language') === 'en';
+    const modeName = (isEn ? MASK_MODE_LABELS_EN : MASK_MODE_LABELS_JA)[maskMode] || '';
+
+    if (isModeChange) {
+      clearTimeout(maskHintTimer);
+      if (isMobile) {
+        maskGuideHint.textContent = modeName;
+        maskGuideHint.classList.add('mode-badge');
+        maskGuideHint.classList.remove('hidden');
+      } else {
+        maskGuideHint.classList.add('hidden');
+      }
+      return;
+    }
+
+    clearTimeout(maskHintTimer);
+    maskGuideHint.classList.remove('mode-badge', 'hidden');
+    maskGuideHint.textContent = isEn
+      ? 'Roughly trace foreground objects to auto-snap to edges. Adjust while checking character overlap.'
+      : '※手前の物を大まかになぞると輪郭に自動吸着します。キャラとの重なりを見ながら調整できます。';
+
+    maskHintTimer = setTimeout(() => {
+      if (window.innerWidth <= 768) {
+        const curEn = localStorage.getItem('mazechara-language') === 'en';
+        maskGuideHint.textContent = (curEn ? MASK_MODE_LABELS_EN : MASK_MODE_LABELS_JA)[maskMode] || '';
+        maskGuideHint.classList.add('mode-badge');
+        maskGuideHint.classList.remove('hidden');
+      } else {
+        maskGuideHint.classList.add('hidden');
+      }
+    }, 5000);
+  }
+
+  // ズーム・パン状態変数
+  let maskZoomLevel = 100; // 100% ~ 500%
+  let maskPanX = 0;
+  let maskPanY = 0;
+  let isMaskPanning = false;
+  let maskPanStartX = 0;
+  let maskPanStartY = 0;
+  let maskPanInitialX = 0;
+  let maskPanInitialY = 0;
+  let isMaskSpacePressed = false;
+
+  function updateMaskTransform() {
+    if (!maskCanvasContainer) return;
+    const scale = maskZoomLevel / 100;
+    maskCanvasContainer.style.transform = `translate(${maskPanX}px, ${maskPanY}px) scale(${scale})`;
+    if (maskZoom) maskZoom.value = maskZoomLevel;
+    if (maskZoomVal) maskZoomVal.textContent = `${maskZoomLevel}%`;
+  }
+
+  function setMaskZoom(val, centerX, centerY) {
+    const oldZoom = maskZoomLevel;
+    const newZoom = Math.max(100, Math.min(500, Math.round(val)));
+    if (newZoom === oldZoom) return;
+
+    if (centerX !== undefined && centerY !== undefined && maskBody) {
+      const rect = maskBody.getBoundingClientRect();
+      const bodyCenterX = rect.left + rect.width / 2;
+      const bodyCenterY = rect.top + rect.height / 2;
+      const curX = centerX - bodyCenterX;
+      const curY = centerY - bodyCenterY;
+      const ratio = newZoom / oldZoom;
+      maskPanX = curX - (curX - maskPanX) * ratio;
+      maskPanY = curY - (curY - maskPanY) * ratio;
+    }
+
+    maskZoomLevel = newZoom;
+    if (maskZoomLevel === 100) {
+      maskPanX = 0;
+      maskPanY = 0;
+    }
+    updateMaskTransform();
+  }
+
+  function resetMaskZoom() {
+    maskZoomLevel = 100;
+    maskPanX = 0;
+    maskPanY = 0;
+    updateMaskTransform();
+  }
+
+  function setMaskMode(mode) {
+    maskMode = mode;
+    if (maskBrushBtn) maskBrushBtn.classList.toggle('active', mode === 'brush');
+    if (maskEraserBtn) maskEraserBtn.classList.toggle('active', mode === 'eraser');
+    if (maskHandBtn) maskHandBtn.classList.toggle('active', mode === 'hand');
+    if (maskBody) maskBody.classList.toggle('mode-hand', mode === 'hand');
+    updateMaskGuideHint(true);
+    renderMaskCanvas();
+  }
+
+  function updateOcclusionStatus() {
+    const hasMask = occlusionMaskCanvas.width > 1 && occlusionMaskCanvas.height > 1;
+    const isEnglish = localStorage.getItem('mazechara-language') === 'en';
+    if (hasMask) {
+      occlusionStatusText.textContent = isEnglish ? 'Set' : '作成済み';
+      occlusionStatusText.classList.add('active');
+      occlusionClearBtn.style.display = 'inline-block';
+    } else {
+      occlusionStatusText.textContent = isEnglish ? 'Not set' : '未作成';
+      occlusionStatusText.classList.remove('active');
+      occlusionClearBtn.style.display = 'none';
+    }
+  }
+
+  function clearOcclusionMask() {
+    occlusionMaskCanvas.width = occlusionMaskCanvas.height = 1;
+    cachedOcclusionCanvas.width = cachedOcclusionCanvas.height = 1;
+    cachedBleedMaskCanvas.width = cachedBleedMaskCanvas.height = 1;
+    maskSeedPoints = [];
+    updateOcclusionStatus();
+    requestRender();
+  }
+
+  occlusionClearBtn.addEventListener('click', () => {
+    clearOcclusionMask();
+  });
+
+  function openMaskModal() {
+    if (!bgImg) {
+      const isEn = localStorage.getItem('mazechara-language') === 'en';
+      alert(isEn ? 'Please load a background photo first.' : '先に背景写真を読み込んでください。');
+      return;
+    }
+    if (!charaImg) {
+      const isEn = localStorage.getItem('mazechara-language') === 'en';
+      alert(isEn ? 'Please load a character image first.' : '先にキャラクター画像を読み込んでください。');
+      return;
+    }
+
+    // メインキャンバスの描画キャッシュ（影・キャラ）を最新化
+    render();
+
+    const w = canvas.width;
+    const h = canvas.height;
+    maskCanvas.width = w;
+    maskCanvas.height = h;
+
+    maskRawStrokeCanvas.width = w;
+    maskRawStrokeCanvas.height = h;
+    const rawCtx = maskRawStrokeCanvas.getContext('2d');
+    rawCtx.clearRect(0, 0, w, h);
+
+    maskRefinedCanvas.width = w;
+    maskRefinedCanvas.height = h;
+    const refCtx = maskRefinedCanvas.getContext('2d');
+    refCtx.clearRect(0, 0, w, h);
+
+    maskSeedPoints = [];
+
+    // 既存のマスクがあれば引き継ぐ
+    if (occlusionMaskCanvas.width === w && occlusionMaskCanvas.height === h) {
+      rawCtx.drawImage(occlusionMaskCanvas, 0, 0);
+      refCtx.drawImage(occlusionMaskCanvas, 0, 0);
+    }
+
+    setMaskMode('brush');
+    resetMaskZoom();
+    updateMaskGuideHint(false);
+    maskAdjustPopover.classList.remove('open');
+    maskAdjustBtn.classList.remove('active');
+
+    maskModal.classList.add('active');
+    renderMaskCanvas();
+  }
+
+  occlusionEditBtn.addEventListener('click', openMaskModal);
+
+  // マスク描画位置取得（CSS表示スケールをCanvas内部解像度へ補正）
+  function getMaskCanvasPointerPos(e) {
+    const rect = maskCanvas.getBoundingClientRect();
+    const clientX = e.touches && e.touches.length ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches && e.touches.length ? e.touches[0].clientY : e.clientY;
+    const scaleX = maskCanvas.width / (rect.width || 1);
+    const scaleY = maskCanvas.height / (rect.height || 1);
+    return {
+      x: (clientX - rect.left) * scaleX,
+      y: (clientY - rect.top) * scaleY
+    };
+  }
+
+  // ストローク描画（線分補間）
+  function drawMaskStrokeSegment(x0, y0, x1, y1, size, mode) {
+    const rawCtx = maskRawStrokeCanvas.getContext('2d');
+    rawCtx.save();
+    rawCtx.lineCap = 'round';
+    rawCtx.lineJoin = 'round';
+    rawCtx.lineWidth = size;
+    if (mode === 'eraser') {
+      rawCtx.globalCompositeOperation = 'destination-out';
+    } else {
+      rawCtx.globalCompositeOperation = 'source-over';
+      rawCtx.strokeStyle = '#ffffff';
+    }
+    rawCtx.beginPath();
+    rawCtx.moveTo(x0, y0);
+    rawCtx.lineTo(x1, y1);
+    rawCtx.stroke();
+    rawCtx.restore();
+
+    // 操作中の即時フィードバック用（refinedCanvasへも直接反映）
+    const refCtx = maskRefinedCanvas.getContext('2d');
+    refCtx.save();
+    refCtx.lineCap = 'round';
+    refCtx.lineJoin = 'round';
+    refCtx.lineWidth = size;
+    if (mode === 'eraser') {
+      refCtx.globalCompositeOperation = 'destination-out';
+    } else {
+      refCtx.globalCompositeOperation = 'source-over';
+      refCtx.strokeStyle = '#ffffff';
+    }
+    refCtx.beginPath();
+    refCtx.moveTo(x0, y0);
+    refCtx.lineTo(x1, y1);
+    refCtx.stroke();
+    refCtx.restore();
+
+    // シード座標（なぞった中心線の芯）の追跡
+    if (mode === 'brush') {
+      const dist = Math.hypot(x1 - x0, y1 - y0);
+      const steps = Math.max(1, Math.ceil(dist / 4));
+      for (let i = 0; i <= steps; i++) {
+        const t = i / steps;
+        maskSeedPoints.push({
+          x: Math.round(x0 + (x1 - x0) * t),
+          y: Math.round(y0 + (y1 - y0) * t)
+        });
+      }
+    } else if (mode === 'eraser') {
+      const rSq = (size * 0.55) ** 2;
+      maskSeedPoints = maskSeedPoints.filter(p => {
+        const dx = p.x - x1;
+        const dy = p.y - y1;
+        return (dx * dx + dy * dy) > rSq;
+      });
+    }
+  }
+
+  // 自動境界吸着処理（なぞった領域から写真のコントラスト境界へ高精度に吸着）
+  function updateRefinedMask() {
+    clearTimeout(maskRefineTimer);
+    const w = maskCanvas.width;
+    const h = maskCanvas.height;
+    if (w <= 1 || h <= 1) return;
+
+    const rawCtx = maskRawStrokeCanvas.getContext('2d');
+    const rawData = rawCtx.getImageData(0, 0, w, h).data;
+
+    // 1. ストロークのバウンディングボックスと最大アルファを走査
+    let minX = w, maxX = -1, minY = h, maxY = -1;
+    let maxStrokeAlpha = 0;
+    for (let y = 0; y < h; y++) {
+      const row = y * w * 4;
+      for (let x = 0; x < w; x++) {
+        const a = rawData[row + x * 4 + 3];
+        if (a > 15) {
+          if (x < minX) minX = x;
+          if (x > maxX) maxX = x;
+          if (y < minY) minY = y;
+          if (y > maxY) maxY = y;
+          if (a > maxStrokeAlpha) maxStrokeAlpha = a;
+        }
+      }
+    }
+
+    const refCtx = maskRefinedCanvas.getContext('2d');
+    refCtx.clearRect(0, 0, w, h);
+
+    if (maxX === -1 || maxStrokeAlpha < 20) {
+      renderMaskCanvas();
+      return;
+    }
+
+    const sens = parseInt(maskSensitivity.value, 10);
+    // 感度0%: 吸着オフ（なぞったブラシの太さそのまま）
+    if (sens === 0) {
+      refCtx.drawImage(maskRawStrokeCanvas, 0, 0);
+      renderMaskCanvas();
+      return;
+    }
+
+    // マージン付与
+    const currentSize = parseInt(maskBrushSize.value, 10) || 32;
+    const pad = Math.max(16, Math.round(currentSize * 0.75));
+    const rx = Math.max(0, minX - pad);
+    const ry = Math.max(0, minY - pad);
+    const rw = Math.min(w - rx, (maxX - minX + 1) + pad * 2);
+    const rh = Math.min(h - ry, (maxY - minY + 1) + pad * 2);
+
+    // 背景画像からROIを取得
+    const bgCanvas = getProcessedBgCanvas() || bgImg;
+    const tempBgCanvas = document.createElement('canvas');
+    tempBgCanvas.width = rw;
+    tempBgCanvas.height = rh;
+    const tBgCtx = tempBgCanvas.getContext('2d');
+    tBgCtx.drawImage(bgCanvas, rx, ry, rw, rh, 0, 0, rw, rh);
+    const bgPixels = tBgCtx.getImageData(0, 0, rw, rh).data;
+    tempBgCanvas.width = tempBgCanvas.height = 1;
+
+    // ストロークROI
+    const tempStrokeCanvas = document.createElement('canvas');
+    tempStrokeCanvas.width = rw;
+    tempStrokeCanvas.height = rh;
+    const tStrokeCtx = tempStrokeCanvas.getContext('2d');
+    tStrokeCtx.drawImage(maskRawStrokeCanvas, rx, ry, rw, rh, 0, 0, rw, rh);
+    const strokePixels = tStrokeCtx.getImageData(0, 0, rw, rh).data;
+    tempStrokeCanvas.width = tempStrokeCanvas.height = 1;
+
+    // 輝度とSobel勾配（エッジバリア）の計算
+    const luma = new Float32Array(rw * rh);
+    for (let i = 0; i < rw * rh; i++) {
+      luma[i] = 0.299 * bgPixels[i * 4] + 0.587 * bgPixels[i * 4 + 1] + 0.114 * bgPixels[i * 4 + 2];
+    }
+
+    const grad = new Float32Array(rw * rh);
+    for (let y = 1; y < rh - 1; y++) {
+      const row = y * rw;
+      for (let x = 1; x < rw - 1; x++) {
+        const gx = -luma[row - rw + x - 1] + luma[row - rw + x + 1]
+                   -2 * luma[row + x - 1] + 2 * luma[row + x + 1]
+                   -luma[row + rw + x - 1] + luma[row + rw + x + 1];
+        const gy = -luma[row - rw + x - 1] - 2 * luma[row - rw + x] - luma[row - rw + x + 1]
+                   +luma[row + rw + x - 1] + 2 * luma[row + rw + x] + luma[row + rw + x + 1];
+        grad[row + x] = Math.hypot(gx, gy);
+      }
+    }
+
+    // 境界感度パラメータ（1〜100）のダイナミックレンジ設定
+    // sensが高いほど、エッジバリアを低く（少しの段差で停止）、色差許容範囲を狭く（色違いで停止）
+    const sensNorm = sens / 100;
+    const edgeBarrier = Math.max(16, Math.round(270 - sensNorm * 235)); // sens=10: 246, sens=50: 152, sens=90: 58
+    const maxColorDist = Math.max(16, Math.round(175 - sensNorm * 145)); // sens=10: 160, sens=50: 102, sens=90: 44
+    const maxColorDistSq = maxColorDist * maxColorDist;
+    const coreColorDistSq = maxColorDistSq * 3.0; // 中心部でのパーツ許容（ベルト・髪飾り等）
+    const coreEdgeBarrier = edgeBarrier * 1.6;
+
+    // シード抽出：ユーザーがなぞった「中心線（芯）」の点から抽出＋多色代表パレットの構築
+    const seeds = [];
+    const palR = [];
+    const palG = [];
+    const palB = [];
+
+    for (let i = 0; i < maskSeedPoints.length; i++) {
+      const pt = maskSeedPoints[i];
+      if (pt.x >= rx && pt.x < rx + rw && pt.y >= ry && pt.y < ry + rh) {
+        const lx = pt.x - rx;
+        const ly = pt.y - ry;
+        const pIdx = ly * rw + lx;
+        const idx = pIdx * 4;
+
+        if (strokePixels[idx + 3] > 60) {
+          const r = bgPixels[idx];
+          const g = bgPixels[idx + 1];
+          const b = bgPixels[idx + 2];
+
+          seeds.push(pIdx);
+
+          // 代表色パレットに追加（最大10色、白いベルト・ワッペン・服など物体内の多様な色を登録）
+          let isDistinct = true;
+          for (let p = 0; p < palR.length; p++) {
+            const dr = r - palR[p];
+            const dg = g - palG[p];
+            const db = b - palB[p];
+            if (dr * dr + dg * dg + db * db < 900) { // 30^2 = 900
+              isDistinct = false;
+              break;
+            }
+          }
+          if (isDistinct && palR.length < 10) {
+            palR.push(r);
+            palG.push(g);
+            palB.push(b);
+          }
+        }
+      }
+    }
+
+    // フォールバック（maskSeedPointsが無い場合：既存マスク読み込み時など）
+    if (seeds.length === 0) {
+      for (let y = 0; y < rh; y += 2) {
+        const row = y * rw;
+        for (let x = 0; x < rw; x += 2) {
+          const pIdx = row + x;
+          const idx = pIdx * 4;
+          if (strokePixels[idx + 3] >= 220 && grad[pIdx] < edgeBarrier * 0.8) {
+            const r = bgPixels[idx];
+            const g = bgPixels[idx + 1];
+            const b = bgPixels[idx + 2];
+            seeds.push(pIdx);
+
+            let isDistinct = true;
+            for (let p = 0; p < palR.length; p++) {
+              const dr = r - palR[p];
+              const dg = g - palG[p];
+              const db = b - palB[p];
+              if (dr * dr + dg * dg + db * db < 900) {
+                isDistinct = false;
+                break;
+              }
+            }
+            if (isDistinct && palR.length < 10) {
+              palR.push(r);
+              palG.push(g);
+              palB.push(b);
+            }
+          }
+        }
+      }
+    }
+
+    if (seeds.length === 0 || palR.length === 0) {
+      refCtx.drawImage(maskRawStrokeCanvas, 0, 0);
+      renderMaskCanvas();
+      return;
+    }
+
+    const palLen = palR.length;
+    // 超高速パレット最小2乗距離関数（Math.hypot不使用）
+    function getMinPaletteDistSq(pr, pg, pb) {
+      let minD = 999999;
+      for (let p = 0; p < palLen; p++) {
+        const dr = pr - palR[p];
+        const dg = pg - palG[p];
+        const db = pb - palB[p];
+        const d = dr * dr + dg * dg + db * db;
+        if (d < minD) minD = d;
+      }
+      return minD;
+    }
+
+    // 制約付き領域成長（BFS Flood）
+    const outMask = new Uint8Array(rw * rh);
+    const queue = new Int32Array(rw * rh);
+    let head = 0, tail = 0;
+
+    for (let i = 0; i < seeds.length; i++) {
+      const s = seeds[i];
+      if (!outMask[s]) {
+        outMask[s] = 255;
+        queue[tail++] = s;
+      }
+    }
+
+    while (head < tail) {
+      const curr = queue[head++];
+      const cx = curr % rw;
+      const cy = (curr / rw) | 0;
+
+      // 4近傍展開
+      const neighbors = [curr - 1, curr + 1, curr - rw, curr + rw];
+      for (let i = 0; i < 4; i++) {
+        const n = neighbors[i];
+        if (n < 0 || n >= rw * rh) continue;
+        const nx = n % rw;
+        const ny = (n / rw) | 0;
+        if (Math.abs(nx - cx) + Math.abs(ny - cy) !== 1) continue;
+        if (outMask[n]) continue;
+
+        // なぞったストローク内のみ探索
+        const strokeA = strokePixels[n * 4 + 3];
+        if (strokeA < 20) continue;
+
+        const gradVal = grad[n];
+        const distSq = getMinPaletteDistSq(bgPixels[n * 4], bgPixels[n * 4 + 1], bgPixels[n * 4 + 2]);
+
+        // 境界感度判定：輪郭エッジまたは色差で外部背景をブロック！
+        if (gradVal > edgeBarrier || distSq > maxColorDistSq) continue;
+
+        outMask[n] = 255;
+        queue[tail++] = n;
+      }
+    }
+
+    // 輪郭ピーク吸着（Edge Ridge Snapping）
+    // 内側で止まりがちな輪郭線を、エッジ勾配のピーク（最大傾斜・真の外縁）まで正確に前進させて密着
+    // ※背景側へ突き抜けないよう、勾配がピークへ向かって上昇中、かつ物体色から乖離していない場合のみ1px前進
+    const frontier = [];
+    for (let y = 1; y < rh - 1; y++) {
+      const row = y * rw;
+      for (let x = 1; x < rw - 1; x++) {
+        const idx = row + x;
+        if (outMask[idx] || strokePixels[idx * 4 + 3] < 15) continue;
+        // 隣接するマスク済みピクセルを探す
+        let hasMaskNeighbor = false;
+        let maxInGrad = 0;
+        if (outMask[idx - 1]) { hasMaskNeighbor = true; if (grad[idx - 1] > maxInGrad) maxInGrad = grad[idx - 1]; }
+        if (outMask[idx + 1]) { hasMaskNeighbor = true; if (grad[idx + 1] > maxInGrad) maxInGrad = grad[idx + 1]; }
+        if (outMask[idx - rw]) { hasMaskNeighbor = true; if (grad[idx - rw] > maxInGrad) maxInGrad = grad[idx - rw]; }
+        if (outMask[idx + rw]) { hasMaskNeighbor = true; if (grad[idx + rw] > maxInGrad) maxInGrad = grad[idx + rw]; }
+
+        if (hasMaskNeighbor) {
+          const currGrad = grad[idx];
+          const distSq = getMinPaletteDistSq(bgPixels[idx * 4], bgPixels[idx * 4 + 1], bgPixels[idx * 4 + 2]);
+          // ピークへ向かって勾配が上昇しており、かつ物体色から乖離していない場合のみ前進（背景への飛び出しを厳格に阻止）
+          if (currGrad >= maxInGrad && currGrad > 25 && distSq <= maxColorDistSq) {
+            frontier.push(idx);
+          }
+        }
+      }
+    }
+    for (let i = 0; i < frontier.length; i++) {
+      outMask[frontier[i]] = 255;
+    }
+
+    // 位相幾何学的穴埋め（Topological Hole Filling）
+    // 白いベルト、胸ワッペン、衣服内の隙間など、マスクに囲まれた内部の穴を100%自動で埋める！
+    const ext = new Uint8Array(rw * rh);
+    const extQueue = new Int32Array(rw * rh);
+    let extHead = 0, extTail = 0;
+
+    // ROIの外枠（上下左右の端）から外部背景領域を探索
+    for (let x = 0; x < rw; x++) {
+      if (!outMask[x]) { ext[x] = 1; extQueue[extTail++] = x; }
+      const bIdx = (rh - 1) * rw + x;
+      if (!outMask[bIdx] && !ext[bIdx]) { ext[bIdx] = 1; extQueue[extTail++] = bIdx; }
+    }
+    for (let y = 0; y < rh; y++) {
+      const lIdx = y * rw;
+      if (!outMask[lIdx] && !ext[lIdx]) { ext[lIdx] = 1; extQueue[extTail++] = lIdx; }
+      const rIdx = y * rw + (rw - 1);
+      if (!outMask[rIdx] && !ext[rIdx]) { ext[rIdx] = 1; extQueue[extTail++] = rIdx; }
+    }
+
+    while (extHead < extTail) {
+      const curr = extQueue[extHead++];
+      const cx = curr % rw;
+      const cy = (curr / rw) | 0;
+
+      const neighbors = [curr - 1, curr + 1, curr - rw, curr + rw];
+      for (let i = 0; i < 4; i++) {
+        const n = neighbors[i];
+        if (n < 0 || n >= rw * rh) continue;
+        const nx = n % rw;
+        const ny = (n / rw) | 0;
+        if (Math.abs(nx - cx) + Math.abs(ny - cy) !== 1) continue;
+        if (outMask[n] || ext[n]) continue;
+        ext[n] = 1;
+        extQueue[extTail++] = n;
+      }
+    }
+
+    // 外部と繋がっていない未マスク領域（ext===0 かつ outMask===0）はすべて内部パーツなので埋める
+    for (let i = 0; i < rw * rh; i++) {
+      if (!outMask[i] && !ext[i]) {
+        outMask[i] = 255;
+      }
+    }
+
+    // 結果をROIへ書き込み
+    const outImgData = refCtx.createImageData(rw, rh);
+    const outData = outImgData.data;
+    for (let i = 0; i < rw * rh; i++) {
+      if (outMask[i]) {
+        const idx = i * 4;
+        outData[idx] = 255;
+        outData[idx + 1] = 255;
+        outData[idx + 2] = 255;
+        outData[idx + 3] = 255;
+      }
+    }
+    refCtx.putImageData(outImgData, rx, ry);
+
+    renderMaskCanvas();
+  }
+
+  // 編集モーダル描画
+  function renderMaskCanvas() {
+    if (!maskCanvas || maskCanvas.width <= 1) return;
+    const w = maskCanvas.width;
+    const h = maskCanvas.height;
+    maskCtx.clearRect(0, 0, w, h);
+
+    // 1. 背景写真
+    const bg = getProcessedBgCanvas() || bgImg;
+    if (bg) maskCtx.drawImage(bg, 0, 0, w, h);
+
+    // キャラクターおよび影の配置計算（メイン画面と完全同期）
+    let posX = 0, posY = 0, charaW = 0, charaH = 0, charaLeft = 0, charaTop = 0;
+    if (charaImg) {
+      const scaleFactor = parseFloat(document.getElementById('charaScale').value) / 100;
+      const baseHeight = h * 0.75;
+      const aspect = charaImg.width / charaImg.height;
+      charaH = Math.max(1, baseHeight * scaleFactor);
+      charaW = Math.max(1, charaH * aspect);
+
+      posX = (w * (parseFloat(document.getElementById('charaX').value) / 100));
+      posY = (h * (parseFloat(document.getElementById('charaY').value) / 100));
+
+      charaLeft = posX - charaW / 2;
+      charaTop = posY - charaH;
+    }
+
+    // 2. 影ゴースト表示
+    if (maskShadowGhostToggle.checked && charaImg) {
+      const castOpacity = parseFloat(document.getElementById('castShadowOpacity').value) / 100;
+      const shadowLengthScale = parseFloat(document.getElementById('shadowLength').value) / 100;
+      const shadowAngle = parseFloat(document.getElementById('shadowAngle').value);
+      const shadowAngleRad = (shadowAngle * Math.PI) / 180;
+      const shadowSkewX = shadowLengthScale * Math.cos(shadowAngleRad);
+      const shadowDepthSign = shadowAngle > 180 ? -1 : 1;
+      const shadowDepthScale = shadowDepthSign * Math.max(Math.abs(shadowLengthScale * Math.sin(shadowAngleRad)), shadowLengthScale * 0.04);
+      const cachedShadowScale = charaH / (cachedCastH || charaH || 1);
+      const shadowBaseY = -charaH - cachedCastPad * cachedShadowScale;
+
+      maskCtx.save();
+      // 落ち影
+      if (castOpacity > 0 && cachedPerspectiveShadowCanvas && cachedPerspectiveShadowCanvas.width > 1) {
+        maskCtx.save();
+        maskCtx.globalAlpha = Math.min(0.85, Math.max(0.45, castOpacity));
+        maskCtx.translate(posX, posY);
+        maskCtx.transform(1, 0, shadowSkewX, shadowDepthScale, 0, 0);
+        maskCtx.drawImage(
+          cachedPerspectiveShadowCanvas,
+          -cachedPerspectiveShadowCanvas.width * cachedShadowScale / 2,
+          shadowBaseY,
+          cachedPerspectiveShadowCanvas.width * cachedShadowScale,
+          cachedPerspectiveShadowCanvas.height * cachedShadowScale
+        );
+        maskCtx.restore();
+      }
+      // 接地影
+      const isContactOn = document.getElementById('contactToggle').checked;
+      const contactOpacity = parseFloat(document.getElementById('contactOpacity').value) / 100;
+      const contactOffsetX = charaW * 0.5 * (parseFloat(document.getElementById('contactOffsetX').value) / 100);
+      if (isContactOn && contactOpacity > 0 && cachedContactShadowCanvas && cachedContactShadowCanvas.width > 1) {
+        maskCtx.save();
+        maskCtx.globalAlpha = Math.min(0.85, Math.max(0.45, contactOpacity));
+        const cachedContactScale = charaW / (cachedContactCharaW || charaW || 1);
+        maskCtx.drawImage(
+          cachedContactShadowCanvas,
+          posX + contactOffsetX - cachedContactCenterX * cachedContactScale,
+          posY - cachedContactCenterY * cachedContactScale,
+          cachedContactShadowCanvas.width * cachedContactScale,
+          cachedContactShadowCanvas.height * cachedContactScale
+        );
+        maskCtx.restore();
+      }
+      maskCtx.restore();
+    }
+
+    // 3. キャラクターゴースト表示
+    if (maskCharaGhostToggle.checked && charaImg) {
+      maskCtx.save();
+      maskCtx.globalAlpha = 0.6; // すかして表示
+      if (cachedCharaBaseCanvas && cachedCharaBaseCanvas.width > 1) {
+        maskCtx.drawImage(cachedCharaBaseCanvas, charaLeft, charaTop, charaW, charaH);
+      } else {
+        if (isCharaFlipped) {
+          maskCtx.translate(charaLeft + charaW, charaTop);
+          maskCtx.scale(-1, 1);
+          maskCtx.drawImage(charaImg, 0, 0, charaW, charaH);
+        } else {
+          maskCtx.drawImage(charaImg, charaLeft, charaTop, charaW, charaH);
+        }
+      }
+      maskCtx.restore();
+    }
+
+    // 4. マスクハイライト表示（半透明ネオンシアン＋鮮明輪郭）
+    if (maskRefinedCanvas.width > 1) {
+      maskCtx.save();
+      const tempMaskDisplay = document.createElement('canvas');
+      tempMaskDisplay.width = w;
+      tempMaskDisplay.height = h;
+      const tmCtx = tempMaskDisplay.getContext('2d');
+      const userBlurVal = parseFloat(maskBlur ? maskBlur.value : 0) || 0;
+      if (userBlurVal > 0 && supportsCanvasBlurFilter()) {
+        const sigma = userBlurVal * 0.35;
+        tmCtx.filter = `blur(${sigma.toFixed(2)}px)`;
+        tmCtx.drawImage(maskRefinedCanvas, 0, 0);
+        tmCtx.filter = 'none';
+        // 内側の不透明度を保ち、外側のみを柔らかく滲ませる
+        tmCtx.drawImage(maskRefinedCanvas, 0, 0);
+      } else {
+        tmCtx.drawImage(maskRefinedCanvas, 0, 0);
+      }
+      tmCtx.globalCompositeOperation = 'source-in';
+      tmCtx.fillStyle = '#00e5ff';
+      tmCtx.fillRect(0, 0, w, h);
+
+      // キャラや影の上にもしっかりと覆いかぶさる半透明レイヤー（alpha 0.58）
+      maskCtx.globalAlpha = 0.58;
+      maskCtx.drawImage(tempMaskDisplay, 0, 0);
+
+      // 輪郭のエッジ強調（1pxシフトで外周エッジをクッキリ可視化）
+      maskCtx.globalAlpha = 0.75;
+      tmCtx.fillStyle = '#ffffff';
+      tmCtx.fillRect(0, 0, w, h);
+      maskCtx.drawImage(tempMaskDisplay, 1, 0);
+      maskCtx.drawImage(tempMaskDisplay, -1, 0);
+      maskCtx.drawImage(tempMaskDisplay, 0, 1);
+      maskCtx.drawImage(tempMaskDisplay, 0, -1);
+      maskCtx.globalCompositeOperation = 'source-over';
+      maskCtx.globalAlpha = 0.58;
+      tmCtx.fillStyle = '#00e5ff';
+      tmCtx.fillRect(0, 0, w, h);
+      maskCtx.drawImage(tempMaskDisplay, 0, 0);
+
+      maskCtx.restore();
+      tempMaskDisplay.width = tempMaskDisplay.height = 1;
+    }
+
+    // 5. ブラシサイズ変更時の画面プレビューインジケーター / カーソル表示
+    const size = parseInt(maskBrushSize.value, 10) || 32;
+    const showCursorRing = maskMode !== 'hand' && !isMaskSpacePressed && !isMaskPanning;
+    if (isBrushSizePreviewActive) {
+      const pX = (isMaskCursorIn && maskCursorX >= 0) ? maskCursorX : w / 2;
+      const pY = (isMaskCursorIn && maskCursorY >= 0) ? maskCursorY : h / 2;
+      const r = size / 2;
+
+      maskCtx.save();
+      // 半透明塗り
+      maskCtx.beginPath();
+      maskCtx.arc(pX, pY, r, 0, Math.PI * 2);
+      maskCtx.fillStyle = maskMode === 'eraser' ? 'rgba(255, 71, 87, 0.28)' : 'rgba(0, 229, 255, 0.28)';
+      maskCtx.fill();
+
+      // 二重リング
+      maskCtx.lineWidth = Math.max(3, w * 0.003);
+      maskCtx.strokeStyle = 'rgba(0, 0, 0, 0.6)';
+      maskCtx.stroke();
+
+      maskCtx.lineWidth = Math.max(1.5, w * 0.0015);
+      maskCtx.strokeStyle = maskMode === 'eraser' ? '#ff4757' : '#00e5ff';
+      maskCtx.stroke();
+
+      // 中央バッジ（サイズ数値）
+      const badgeText = `${size}px`;
+      const fontSize = Math.max(13, Math.min(22, Math.round(w * 0.016)));
+      maskCtx.font = `bold ${fontSize}px sans-serif`;
+      const textMetrics = maskCtx.measureText(badgeText);
+      const bW = textMetrics.width + 16;
+      const bH = fontSize + 10;
+
+      maskCtx.fillStyle = 'rgba(26, 29, 36, 0.85)';
+      maskCtx.beginPath();
+      maskCtx.roundRect(pX - bW / 2, pY - bH / 2, bW, bH, 6);
+      maskCtx.fill();
+
+      maskCtx.fillStyle = '#ffffff';
+      maskCtx.textAlign = 'center';
+      maskCtx.textBaseline = 'middle';
+      maskCtx.fillText(badgeText, pX, pY);
+      maskCtx.restore();
+    } else if (showCursorRing && isMaskCursorIn && maskCursorX >= 0 && maskCursorY >= 0) {
+      maskCtx.save();
+      maskCtx.beginPath();
+      maskCtx.arc(maskCursorX, maskCursorY, size / 2, 0, Math.PI * 2);
+      maskCtx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+      maskCtx.lineWidth = Math.max(2.5, maskCanvas.width * 0.0025);
+      maskCtx.stroke();
+
+      maskCtx.beginPath();
+      maskCtx.arc(maskCursorX, maskCursorY, size / 2, 0, Math.PI * 2);
+      maskCtx.strokeStyle = maskMode === 'eraser' ? '#ff4757' : '#00e5ff';
+      maskCtx.lineWidth = Math.max(1.2, maskCanvas.width * 0.0012);
+      maskCtx.stroke();
+      maskCtx.restore();
+    }
+  }
+
+  // ポインターイベント登録
+  maskCanvas.addEventListener('pointerdown', (e) => {
+    const isPanTrigger = maskMode === 'hand' || isMaskSpacePressed || e.button === 1 || e.button === 2;
+    if (isPanTrigger) {
+      isMaskPanning = true;
+      maskPanStartX = e.clientX;
+      maskPanStartY = e.clientY;
+      maskPanInitialX = maskPanX;
+      maskPanInitialY = maskPanY;
+      if (maskBody) maskBody.classList.add('is-panning');
+      try { maskCanvas.setPointerCapture(e.pointerId); } catch (_) {}
+      return;
+    }
+
+    if (e.button !== 0) return; // ブラシ・消しゴム描画は左クリックのみ
+
+    isMaskDrawing = true;
+    isMaskCursorIn = true;
+    const pos = getMaskCanvasPointerPos(e);
+    maskLastX = pos.x;
+    maskLastY = pos.y;
+    maskCursorX = pos.x;
+    maskCursorY = pos.y;
+
+    const size = parseInt(maskBrushSize.value, 10) || 32;
+    drawMaskStrokeSegment(pos.x, pos.y, pos.x + 0.1, pos.y + 0.1, size, maskMode);
+    renderMaskCanvas();
+  });
+
+  window.addEventListener('pointermove', (e) => {
+    if (!maskModal.classList.contains('active')) return;
+
+    if (isMaskPanning) {
+      const dx = e.clientX - maskPanStartX;
+      const dy = e.clientY - maskPanStartY;
+      maskPanX = maskPanInitialX + dx;
+      maskPanY = maskPanInitialY + dy;
+      updateMaskTransform();
+      return;
+    }
+
+    const pos = getMaskCanvasPointerPos(e);
+    maskCursorX = pos.x;
+    maskCursorY = pos.y;
+
+    if (isMaskDrawing) {
+      const size = parseInt(maskBrushSize.value, 10) || 32;
+      drawMaskStrokeSegment(maskLastX, maskLastY, pos.x, pos.y, size, maskMode);
+      maskLastX = pos.x;
+      maskLastY = pos.y;
+      renderMaskCanvas();
+    } else if (isMaskCursorIn) {
+      renderMaskCanvas();
+    }
+  });
+
+  maskCanvas.addEventListener('pointerenter', () => {
+    isMaskCursorIn = true;
+  });
+
+  maskCanvas.addEventListener('pointerleave', () => {
+    isMaskCursorIn = false;
+    if (!isMaskDrawing && !isBrushSizePreviewActive) renderMaskCanvas();
+  });
+
+  window.addEventListener('pointerup', (e) => {
+    if (isMaskPanning) {
+      isMaskPanning = false;
+      if (maskBody) maskBody.classList.remove('is-panning');
+      try { maskCanvas.releasePointerCapture(e.pointerId); } catch (_) {}
+    }
+    if (isMaskDrawing) {
+      isMaskDrawing = false;
+      clearTimeout(maskRefineTimer);
+      maskRefineTimer = setTimeout(updateRefinedMask, 30);
+    }
+  });
+
+  window.addEventListener('pointercancel', (e) => {
+    if (isMaskPanning) {
+      isMaskPanning = false;
+      if (maskBody) maskBody.classList.remove('is-panning');
+      try { maskCanvas.releasePointerCapture(e.pointerId); } catch (_) {}
+    }
+    isMaskDrawing = false;
+  });
+
+  // ツール切り替え
+  maskBrushBtn.addEventListener('click', () => setMaskMode('brush'));
+  maskEraserBtn.addEventListener('click', () => setMaskMode('eraser'));
+  if (maskHandBtn) maskHandBtn.addEventListener('click', () => setMaskMode('hand'));
+
+  // ズームコントロール
+  if (maskZoom) {
+    maskZoom.addEventListener('input', (e) => {
+      setMaskZoom(parseInt(e.target.value, 10) || 100);
+    });
+  }
+  if (maskZoomResetBtn) {
+    maskZoomResetBtn.addEventListener('click', () => {
+      resetMaskZoom();
+    });
+  }
+
+  // マウスホイールによるズーム
+  if (maskBody) {
+    maskBody.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const delta = e.deltaY < 0 ? 15 : -15;
+      setMaskZoom(maskZoomLevel + delta, e.clientX, e.clientY);
+    }, { passive: false });
+  }
+
+  // スペースキー長押しによる一時ハンド（グラブ）モード
+  window.addEventListener('keydown', (e) => {
+    if (!maskModal.classList.contains('active')) return;
+    if (e.code === 'Space' && !e.repeat && e.target.tagName !== 'INPUT') {
+      e.preventDefault();
+      isMaskSpacePressed = true;
+      if (maskBody) maskBody.classList.add('space-grab');
+      renderMaskCanvas();
+    }
+  });
+  window.addEventListener('keyup', (e) => {
+    if (e.code === 'Space') {
+      isMaskSpacePressed = false;
+      if (maskBody) maskBody.classList.remove('space-grab');
+      renderMaskCanvas();
+    }
+  });
+
+  maskBrushSize.addEventListener('input', (e) => {
+    maskBrushSizeVal.textContent = `${e.target.value}px`;
+    isBrushSizePreviewActive = true;
+    clearTimeout(brushSizePreviewTimer);
+    brushSizePreviewTimer = setTimeout(() => {
+      isBrushSizePreviewActive = false;
+      renderMaskCanvas();
+    }, 1200);
+    renderMaskCanvas();
+  });
+
+  maskSensitivity.addEventListener('input', (e) => {
+    maskSensitivityVal.textContent = `${e.target.value}%`;
+    clearTimeout(maskRefineTimer);
+    maskRefineTimer = setTimeout(updateRefinedMask, 40);
+  });
+
+  // 「調整」パネルのトグル開閉制御
+  maskAdjustBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isOpen = maskAdjustPopover.classList.toggle('open');
+    maskAdjustBtn.classList.toggle('active', isOpen);
+  });
+
+  document.addEventListener('click', (e) => {
+    if (maskAdjustPopover && !maskAdjustPopover.contains(e.target) && !maskAdjustBtn.contains(e.target)) {
+      maskAdjustPopover.classList.remove('open');
+      maskAdjustBtn.classList.remove('active');
+    }
+  });
+
+  maskBlur.addEventListener('input', (e) => {
+    maskBlurVal.textContent = `${e.target.value}px`;
+    renderMaskCanvas();
+    if (occlusionMaskCanvas && occlusionMaskCanvas.width > 1) {
+      requestRender();
+    }
+  });
+
+  const occShadowVal = document.getElementById('occShadowVal');
+  const occShadowValDisplay = document.getElementById('occShadowValDisplay');
+  function updateOccShadowDisplay() {
+    if (!occShadowVal || !occShadowValDisplay) return;
+    const v = parseInt(occShadowVal.value, 10);
+    const isEn = localStorage.getItem('mazechara-language') === 'en';
+    occShadowValDisplay.textContent = v === 0 ? (isEn ? 'Off' : 'オフ') : `${v}%`;
+  }
+  if (occShadowVal) {
+    occShadowVal.addEventListener('input', () => {
+      updateOccShadowDisplay();
+      requestRender();
+    });
+    updateOccShadowDisplay();
+  }
+
+  maskClearBtn.addEventListener('click', () => {
+    const w = maskCanvas.width;
+    const h = maskCanvas.height;
+    maskRawStrokeCanvas.getContext('2d').clearRect(0, 0, w, h);
+    maskRefinedCanvas.getContext('2d').clearRect(0, 0, w, h);
+    renderMaskCanvas();
+  });
+
+  maskCharaGhostToggle.addEventListener('change', renderMaskCanvas);
+  maskShadowGhostToggle.addEventListener('change', renderMaskCanvas);
+
+  maskCancelBtn.addEventListener('click', () => {
+    clearTimeout(maskHintTimer);
+    maskAdjustPopover.classList.remove('open');
+    maskAdjustBtn.classList.remove('active');
+    maskModal.classList.remove('active');
+  });
+
+  maskApplyBtn.addEventListener('click', () => {
+    clearTimeout(maskHintTimer);
+    maskAdjustPopover.classList.remove('open');
+    maskAdjustBtn.classList.remove('active');
+    const w = maskCanvas.width;
+    const h = maskCanvas.height;
+    occlusionMaskCanvas.width = w;
+    occlusionMaskCanvas.height = h;
+    const oCtx = occlusionMaskCanvas.getContext('2d');
+    oCtx.clearRect(0, 0, w, h);
+    oCtx.drawImage(maskRefinedCanvas, 0, 0);
+
+    maskModal.classList.remove('active');
+    updateOcclusionStatus();
+    requestRender();
   });
 
   // プレビュー適用中オーバーレイ表示制御
@@ -4803,12 +6656,34 @@
     if (overlay) overlay.classList.remove('visible');
   }
 
+  // 全画面ブロック・ローディング表示制御（画像読み込み・トリミング適用時の誤操作防止）
+  function showGlobalLoading(messageJa, messageEn) {
+    const overlay = document.getElementById('globalLoadingOverlay');
+    const textEl = document.getElementById('globalLoadingText');
+    if (!overlay || !textEl) return;
+    const isEn = localStorage.getItem('mazechara-language') === 'en';
+    textEl.textContent = isEn ? (messageEn || messageJa) : messageJa;
+    textEl.setAttribute('data-text-ja', messageJa);
+    textEl.setAttribute('data-text-en', messageEn || messageJa);
+    overlay.classList.add('visible');
+  }
+
+  function hideGlobalLoading() {
+    const overlay = document.getElementById('globalLoadingOverlay');
+    if (overlay) overlay.classList.remove('visible');
+  }
+
   window.addEventListener('mazechara-language-change', (e) => {
     const isEn = e.detail?.language === 'en';
     const textEl = document.getElementById('presetApplyText');
     if (textEl) {
       const txt = textEl.getAttribute(isEn ? 'data-text-en' : 'data-text-ja');
       if (txt) textEl.textContent = txt;
+    }
+    const gTextEl = document.getElementById('globalLoadingText');
+    if (gTextEl) {
+      const txt = gTextEl.getAttribute(isEn ? 'data-text-en' : 'data-text-ja');
+      if (txt) gTextEl.textContent = txt;
     }
   });
 
@@ -4838,10 +6713,12 @@
 
   function loadImageForEditing(file, type) {
     if (!SUPPORTED_IMAGE_TYPES.has(file.type)) {
+      hideGlobalLoading();
       setUploadStatus('format_error');
       return;
     }
     if (file.size > MAX_IMAGE_BYTES) {
+      hideGlobalLoading();
       setUploadStatus('size_error');
       return;
     }
@@ -4850,6 +6727,7 @@
     const img = new Image();
     img.onerror = () => {
       URL.revokeObjectURL(objectUrl);
+      hideGlobalLoading();
       setUploadStatus('load_error');
     };
     img.onload = () => {
@@ -4857,6 +6735,7 @@
       const rawPixels = img.width * img.height;
 
       if (rawPixels > MAX_RAW_IMAGE_PIXELS) {
+        hideGlobalLoading();
         setUploadStatus('pixel_error');
         return;
       }
@@ -4878,6 +6757,7 @@
 
         rCanvas.toBlob((blob) => {
           if (!blob) {
+            hideGlobalLoading();
             setUploadStatus('process_error');
             return;
           }
@@ -4889,6 +6769,9 @@
             const targetMp = ((targetW * targetH) / 1000000).toFixed(0);
             setUploadStatus('optimized', { mp, targetMp, targetW, targetH });
             openCropper(resizedImg, type);
+          };
+          resizedImg.onerror = () => {
+            hideGlobalLoading();
           };
           resizedImg.src = blobUrl;
         }, 'image/png');
@@ -4903,13 +6786,19 @@
 
   document.getElementById('bgInput').addEventListener('change', (e) => {
     const file = e.target.files[0];
-    if (file) loadImageForEditing(file, 'bg');
+    if (file) {
+      showGlobalLoading('背景写真を読み込み中...', 'Loading background photo...');
+      loadImageForEditing(file, 'bg');
+    }
     e.target.value = '';
   });
 
   document.getElementById('charaInput').addEventListener('change', (e) => {
     const file = e.target.files[0];
-    if (file) loadImageForEditing(file, 'chara');
+    if (file) {
+      showGlobalLoading('キャラクター画像を読み込み中...', 'Loading character image...');
+      loadImageForEditing(file, 'chara');
+    }
     e.target.value = '';
   });
 
@@ -5581,6 +7470,8 @@
     updateSpotPosBtnLabel();
     updateVignetteValDisplay();
     updateCharaLockUI();
+    updateOcclusionStatus();
+    updateOccShadowDisplay();
   });
 
   togglePanelBtn.addEventListener('click', () => {
@@ -5799,6 +7690,7 @@
     requestAnimationFrame(() => {
       setTimeout(() => {
         applyPreset('standard', { preserveShadowAngle: false });
+        clearOcclusionMask();
         invalidateAll();
         updateBgBlurCache();
         requestRender();
@@ -5813,8 +7705,8 @@
     if (!renderRequested) {
       renderRequested = true;
       requestAnimationFrame(() => {
-        render();
         renderRequested = false;
+        render();
       });
     }
   }
@@ -7030,6 +8922,102 @@
       drawSpotlight(true, false);
     }
     drawSpotlight(false, true);
+
+    // 5-1. 手前物体からキャラクターへの影（オクルージョンシャドウ）
+    const isOcclusionOn = document.getElementById('occlusionToggle')?.checked ?? true;
+    const occShadowStrength = parseFloat(document.getElementById('occShadowVal')?.value || 0) / 100;
+    if (occShadowStrength > 0 && isOcclusionOn && occlusionMaskCanvas && occlusionMaskCanvas.width > 1 && charaImg) {
+      const sAngle = parseFloat(document.getElementById('shadowAngle')?.value || 225);
+      const sLen = parseFloat(document.getElementById('shadowLength')?.value || 80);
+      const sAngleRad = (sAngle * Math.PI) / 180;
+
+      // 地面の落ち影と完全に一致する投影方向ベクトルを計算（0°=左、90°=奥、180°=右、270°=手前）
+      const dist = (sLen / 100) * Math.min(charaW, charaH) * 0.18;
+      const dirX = -Math.cos(sAngleRad);
+      const dirY = (sAngle > 180 ? 1 : -1) * Math.abs(Math.sin(sAngleRad));
+      const ox = dirX * dist;
+      const oy = dirY * dist;
+      const blurPx = Math.max(2, dist * 0.35);
+
+      const sCtx = prepareCanvas(cachedOccShadowCanvas, canvas.width, canvas.height);
+
+      // 1. キャラクターのシルエットを描画
+      const charaSource = (isCharaScaling && scalePreviewCharaCanvas.width > 1) ? scalePreviewCharaCanvas : cachedCharaBaseCanvas;
+      if (charaSource && charaSource.width > 1) {
+        sCtx.drawImage(charaSource, charaLeft, charaTop, cW, cH);
+      } else {
+        sCtx.save();
+        if (isCharaFlipped) {
+          sCtx.translate(charaLeft + cW, charaTop);
+          sCtx.scale(-1, 1);
+          sCtx.drawImage(charaImg, 0, 0, cW, cH);
+        } else {
+          sCtx.drawImage(charaImg, charaLeft, charaTop, cW, cH);
+        }
+        sCtx.restore();
+      }
+
+      // 2. 手前物体の影マスクで型抜き（source-in）
+      sCtx.save();
+      sCtx.globalCompositeOperation = 'source-in';
+      if (supportsCanvasBlurFilter()) {
+        sCtx.filter = `blur(${blurPx.toFixed(1)}px)`;
+        sCtx.drawImage(occlusionMaskCanvas, ox, oy, canvas.width, canvas.height);
+        sCtx.filter = 'none';
+      } else {
+        sCtx.drawImage(occlusionMaskCanvas, ox, oy, canvas.width, canvas.height);
+        applyThreePassBoxBlur(cachedOccShadowCanvas, Math.max(1, Math.round(blurPx)), true);
+      }
+      sCtx.restore();
+
+      // 3. 影領域を純黒に変換（source-in）
+      sCtx.save();
+      sCtx.globalCompositeOperation = 'source-in';
+      sCtx.fillStyle = '#000000';
+      sCtx.fillRect(0, 0, canvas.width, canvas.height);
+      sCtx.restore();
+
+      // 4. キャラクターの上に乗算合成
+      ctx.save();
+      ctx.globalCompositeOperation = 'multiply';
+      ctx.globalAlpha = occShadowStrength * 0.85;
+      ctx.drawImage(cachedOccShadowCanvas, 0, 0);
+      ctx.restore();
+    }
+
+    // 5-2. 実験的機能: 手前の物体による前景遮蔽マスク
+    if (isOcclusionOn && occlusionMaskCanvas && occlusionMaskCanvas.width > 1 && occlusionMaskCanvas.height > 1) {
+      const occCtx = prepareCanvas(cachedOcclusionCanvas, canvas.width, canvas.height);
+      const procBg = getProcessedBgCanvas();
+      occCtx.drawImage(procBg || bgImg, 0, 0, canvas.width, canvas.height);
+      occCtx.globalCompositeOperation = 'destination-in';
+
+      // 境界の滲み（エッジブリード）: 手前遮蔽の内側は100%不透明（キャラの透けゼロ）を保持し、
+      // 輪郭の外側のみに手前写真が柔らかく滲み出る自然なエッジ合成
+      const userBleedVal = parseFloat(document.getElementById('maskBlur')?.value ?? 0) || 0;
+      if (userBleedVal > 0) {
+        const sigma = userBleedVal * 0.35;
+        const bCtx = prepareCanvas(cachedBleedMaskCanvas, canvas.width, canvas.height);
+        if (supportsCanvasBlurFilter()) {
+          bCtx.filter = `blur(${sigma.toFixed(2)}px)`;
+          bCtx.drawImage(occlusionMaskCanvas, 0, 0, canvas.width, canvas.height);
+          bCtx.filter = 'none';
+        } else {
+          bCtx.drawImage(occlusionMaskCanvas, 0, 0, canvas.width, canvas.height);
+          applyThreePassBoxBlur(cachedBleedMaskCanvas, Math.max(1, Math.round(sigma)), true);
+        }
+        // 元マスクを上書きして内側の不透明度を100%（透け防止）に保つ
+        bCtx.drawImage(occlusionMaskCanvas, 0, 0, canvas.width, canvas.height);
+
+        occCtx.drawImage(cachedBleedMaskCanvas, 0, 0);
+      } else {
+        occCtx.drawImage(occlusionMaskCanvas, 0, 0, canvas.width, canvas.height);
+      }
+
+      ctx.save();
+      ctx.drawImage(cachedOcclusionCanvas, 0, 0);
+      ctx.restore();
+    }
 
     // 6. ビネット効果 (周辺光量調整: 左スライドで暗いビネット、右スライドで明るいビネット、中央でオフ)
     const isVignetteOn = document.getElementById('vignetteToggle')?.checked ?? true;
